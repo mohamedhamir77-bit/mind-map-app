@@ -924,3 +924,53 @@ h1 {
     color: #6b7280;
     font-style: italic;
 }
+/* Final Learning Library layout fixes */
+
+#libraryToolbar {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#createTopicBtn,
+#createFolderBtn {
+    width: auto;
+    min-height: 44px;
+    padding: 10px 16px;
+    background: #111827;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#topicList .topic-open-btn,
+#topicList .folder-open-btn {
+    flex: 1;
+    width: auto;
+    min-height: 54px;
+    padding: 14px 18px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#topicList .topic-delete-btn,
+#topicList .folder-delete-btn,
+#topicList .folder-rename-btn {
+    width: auto;
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#topicList .topic-move-select {
+    width: auto;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+.topic-list-item,
+.folder-list-item {
+    width: 100%;
+    box-sizing: border-box;
+}
