@@ -2187,7 +2187,27 @@ startHandle.setAttribute("cy", savedFreeLine.y1);
 });
 endHandle.style.pointerEvents = "all";
 endHandle.style.cursor = "grab";
+endHandle.addEventListener("click", function (event) {
 
+    event.stopPropagation();
+
+    if (selectedEndpoint === "end") {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (startHandle) {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "end";
+
+    endHandle.setAttribute("stroke", "#2563eb");
+    endHandle.setAttribute("stroke-width", "4");
+});
 endHandle.addEventListener("mousedown", function (event) {
     event.stopPropagation();
 
