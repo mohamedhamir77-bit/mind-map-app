@@ -10,6 +10,7 @@ const supabaseClient = window.supabase.createClient(
 );
 const createTopicBtn = document.getElementById("createTopicBtn");
 const createFolderBtn = document.getElementById("createFolderBtn");
+const libraryToolbar = document.getElementById("libraryToolbar");
 const topicList = document.getElementById("topicList");
 
 const topicPage = document.getElementById("topicPage");
@@ -1203,6 +1204,9 @@ folderItem.appendChild(
 folderItem.appendChild(
     deleteFolderBtn
 );
+topicList.appendChild(
+    folderItem
+);
         });
     }
 
@@ -1241,7 +1245,7 @@ folderItem.appendChild(
             "topic-open-btn"
         );
 
-        topicButton.textContent = topic;
+        topicButton.textContent = "📄 " + topic;
 
         topicButton.addEventListener(
             "click",
@@ -1423,8 +1427,8 @@ function openTopic(topic) {
 }
     localStorage.setItem("currentTopic", topic);
 
-    createTopicBtn.style.display = "none";
-    topicList.style.display = "none";
+    libraryToolbar.style.display = "none";
+topicList.style.display = "none";
 
     topicTitle.textContent = topic;
     topicPage.style.display = "block";
@@ -2061,8 +2065,8 @@ backBtn.addEventListener("click", function () {
 
     topicPage.style.display = "none";
 
-    createTopicBtn.style.display = "inline-block";
-    topicList.style.display = "block";
+    libraryToolbar.style.display = "flex";
+topicList.style.display = "block";
 
 });
 

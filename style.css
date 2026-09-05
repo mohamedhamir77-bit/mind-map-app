@@ -1037,3 +1037,24 @@ h1 {
     padding: 8px 10px;
     font-size: 14px;
 }
+/* Distinguish folders from mind maps */
+
+#topicList .folder-list-item {
+    background: #eaf2ff;
+    border: 2px solid #93c5fd;
+    box-shadow: none;
+}
+
+#topicList .folder-open-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #1e3a8a !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+}
+
+#topicList .folder-rename-btn,
+#topicList .folder-delete-btn {
+    background: white !important;
+    border: 1px solid #93c5fd !important;
+}
