@@ -835,3 +835,92 @@ h1 {
     grid-column: auto;
     flex-shrink: 0;
 }
+/* Learning Library */
+
+#topicList {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+    max-width: 700px;
+}
+
+.topic-list-item,
+.folder-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.topic-open-btn,
+.folder-open-btn {
+    flex: 1;
+    text-align: left;
+    padding: 14px 18px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.topic-open-btn:hover,
+.folder-open-btn:hover {
+    background: #f3f4f6;
+}
+
+.folder-open-btn {
+    font-weight: 600;
+}
+
+.topic-delete-btn,
+.folder-delete-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+}
+
+.topic-move-select {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+}
+
+.folder-back-btn {
+    margin-bottom: 15px;
+}
+
+.folder-heading {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+#libraryToolbar {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0 10px 0;
+    flex-wrap: wrap;
+}
+
+#createTopicBtn,
+#createFolderBtn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#createTopicBtn:hover,
+#createFolderBtn:hover {
+    background: #f3f4f6;
+}
+.folder-empty-message {
+    padding: 18px;
+    color: #6b7280;
+    font-style: italic;
+}

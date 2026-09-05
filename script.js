@@ -9,6 +9,7 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_PUBLISHABLE_KEY
 );
 const createTopicBtn = document.getElementById("createTopicBtn");
+const createFolderBtn = document.getElementById("createFolderBtn");
 const topicList = document.getElementById("topicList");
 
 const topicPage = document.getElementById("topicPage");
@@ -401,8 +402,7 @@ function removeLineHandles() {
     selectedControlPointHandle = null;
 }
 
-freeLineControlHandles = [];
-}
+
 function showFreeLineControlHandles(line, savedLine) {
 
     freeLineControlHandles.forEach(function (handle) {
@@ -517,6 +517,13 @@ let savedConnections = JSON.parse(localStorage.getItem("connections")) || {};
 let topics = JSON.parse(localStorage.getItem("topics")) || [];
 let shapes = JSON.parse(localStorage.getItem("shapes")) || {};
 let currentTopic = localStorage.getItem("currentTopic");
+let folders =
+    JSON.parse(localStorage.getItem("folders")) || [];
+
+let topicFolders =
+    JSON.parse(localStorage.getItem("topicFolders")) || {};
+
+let currentFolder = null;
 addLinkBtn.addEventListener("click", function () {
 
     if (!selectedShape) {
@@ -947,21 +954,463 @@ function displayTopics() {
 
     topicList.innerHTML = "";
 
+    // INSIDE A FOLDER
+    if (currentFolder) {
+
+        const backToTopicsBtn =
+            document.createElement("button");
+
+        backToTopicsBtn.type = "button";
+        backToTopicsBtn.classList.add("folder-back-btn");
+        backToTopicsBtn.textContent =
+            "← All Topics";
+
+        backToTopicsBtn.addEventListener(
+            "click",
+            function () {
+                currentFolder = null;
+                displayTopics();
+            }
+        );
+
+        topicList.appendChild(backToTopicsBtn);
+
+        const folderHeading =
+            document.createElement("li");
+
+        folderHeading.classList.add(
+            "folder-heading"
+        );
+
+        folderHeading.textContent =
+            "📁 " + currentFolder;
+
+        topicList.appendChild(folderHeading);
+        const topicsInFolder =
+    topics.filter(function (topic) {
+        return topicFolders[topic] === currentFolder;
+    });
+
+if (topicsInFolder.length === 0) {
+
+    const emptyMessage =
+        document.createElement("li");
+
+    emptyMessage.classList.add(
+        "folder-empty-message"
+    );
+
+    emptyMessage.textContent =
+        "This folder is empty.";
+
+    topicList.appendChild(
+        emptyMessage
+    );
+}
+    }
+
+    // SHOW FOLDERS ONLY ON MAIN PAGE
+    if (!currentFolder) {
+
+        folders.forEach(function (folder) {
+
+            const folderItem =
+                document.createElement("li");
+
+            folderItem.classList.add(
+                "folder-list-item"
+            );
+
+            const folderButton =
+                document.createElement("button");
+
+            folderButton.type = "button";
+
+            folderButton.classList.add(
+                "folder-open-btn"
+            );
+
+            const folderTopicCount =
+    topics.filter(function (topic) {
+        return topicFolders[topic] === folder;
+    }).length;
+
+folderButton.textContent =
+    "📁 " +
+    folder +
+    " (" +
+    folderTopicCount +
+    ")";
+
+            folderButton.addEventListener(
+                "click",
+                function () {
+                    currentFolder = folder;
+                    displayTopics();
+                }
+            );
+            const renameFolderBtn =
+    document.createElement("button");
+
+renameFolderBtn.type = "button";
+
+renameFolderBtn.classList.add(
+    "folder-rename-btn"
+);
+
+renameFolderBtn.textContent =
+    "Rename";
+
+renameFolderBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename folder:",
+            folder
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === folder) {
+            return;
+        }
+
+        if (folders.includes(cleanName)) {
+            alert(
+                "A folder with that name already exists."
+            );
+            return;
+        }
+
+        folders = folders.map(
+            function (item) {
+                return item === folder
+                    ? cleanName
+                    : item;
+            }
+        );
+
+        Object.keys(topicFolders).forEach(
+            function (topic) {
+
+                if (
+                    topicFolders[topic] === folder
+                ) {
+                    topicFolders[topic] =
+                        cleanName;
+                }
+            }
+        );
+
+        if (currentFolder === folder) {
+            currentFolder = cleanName;
+        }
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+folderItem.appendChild(
+    renameFolderBtn
+);
+            const deleteFolderBtn =
+    document.createElement("button");
+
+deleteFolderBtn.type = "button";
+
+deleteFolderBtn.classList.add(
+    "folder-delete-btn"
+);
+
+deleteFolderBtn.textContent =
+    "Delete Folder";
+
+deleteFolderBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const confirmed = confirm(
+            'Delete folder "' +
+            folder +
+            '"?\n\nMind maps inside it will be moved back to All Topics.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        Object.keys(topicFolders).forEach(
+            function (topic) {
+
+                if (
+                    topicFolders[topic] === folder
+                ) {
+                    delete topicFolders[topic];
+                }
+            }
+        );
+
+        folders = folders.filter(
+            function (item) {
+                return item !== folder;
+            }
+        );
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+folderItem.appendChild(
+    folderButton
+);
+
+folderItem.appendChild(
+    renameFolderBtn
+);
+
+folderItem.appendChild(
+    deleteFolderBtn
+);
+        });
+    }
+
+    // SHOW RELEVANT TOPICS
     topics.forEach(function (topic) {
 
-        const newTopic = document.createElement("li");
+        const topicFolder =
+            topicFolders[topic] || null;
 
-        const topicButton = document.createElement("button");
+        if (currentFolder) {
+
+            if (topicFolder !== currentFolder) {
+                return;
+            }
+
+        } else {
+
+            if (topicFolder) {
+                return;
+            }
+        }
+
+        const newTopic =
+            document.createElement("li");
+
+        newTopic.classList.add(
+            "topic-list-item"
+        );
+
+        const topicButton =
+            document.createElement("button");
+
         topicButton.type = "button";
+
+        topicButton.classList.add(
+            "topic-open-btn"
+        );
+
         topicButton.textContent = topic;
 
-        topicButton.addEventListener("click", function () {
-            openTopic(topic);
-        });
+        topicButton.addEventListener(
+            "click",
+            function () {
+                openTopic(topic);
+            }
+        );
+        const moveTopicSelect =
+    document.createElement("select");
 
-        newTopic.appendChild(topicButton);
-        topicList.appendChild(newTopic);
+moveTopicSelect.classList.add(
+    "topic-move-select"
+);
 
+const movePlaceholder =
+    document.createElement("option");
+
+movePlaceholder.value = "";
+movePlaceholder.textContent =
+    "Move to…";
+
+moveTopicSelect.appendChild(
+    movePlaceholder
+);
+
+// Option to move back to main page
+const rootOption =
+    document.createElement("option");
+
+rootOption.value = "__root__";
+rootOption.textContent =
+    "All Topics";
+
+moveTopicSelect.appendChild(
+    rootOption
+);
+
+// Add each folder
+folders.forEach(function (folder) {
+
+    const option =
+        document.createElement("option");
+
+    option.value = folder;
+    option.textContent =
+        "📁 " + folder;
+
+    moveTopicSelect.appendChild(
+        option
+    );
+});
+
+moveTopicSelect.addEventListener(
+    "change",
+    function () {
+
+        const destination =
+            moveTopicSelect.value;
+
+        if (!destination) {
+            return;
+        }
+
+        if (destination === "__root__") {
+            delete topicFolders[topic];
+        } else {
+            topicFolders[topic] =
+                destination;
+        }
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+        const deleteTopicBtn =
+            document.createElement("button");
+
+        deleteTopicBtn.type = "button";
+
+        deleteTopicBtn.classList.add(
+            "topic-delete-btn"
+        );
+
+        deleteTopicBtn.textContent =
+            "Delete";
+
+        deleteTopicBtn.addEventListener(
+            "click",
+            function () {
+
+                const confirmed =
+                    confirm(
+                        'Delete "' +
+                        topic +
+                        '" and its mind map?'
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                topics =
+                    topics.filter(
+                        function (item) {
+                            return item !== topic;
+                        }
+                    );
+
+                delete shapes[topic];
+                delete savedConnections[topic];
+                delete topicFolders[topic];
+
+                localStorage.setItem(
+                    "topics",
+                    JSON.stringify(topics)
+                );
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
+                );
+
+                localStorage.setItem(
+                    "connections",
+                    JSON.stringify(
+                        savedConnections
+                    )
+                );
+
+                localStorage.setItem(
+                    "topicFolders",
+                    JSON.stringify(
+                        topicFolders
+                    )
+                );
+
+                if (currentTopic === topic) {
+                    currentTopic = null;
+                    localStorage.removeItem(
+                        "currentTopic"
+                    );
+                }
+
+                displayTopics();
+                scheduleCloudSave();
+            }
+        );
+
+        newTopic.appendChild(
+    topicButton
+);
+
+newTopic.appendChild(
+    moveTopicSelect
+);
+
+newTopic.appendChild(
+    deleteTopicBtn
+);
+
+        topicList.appendChild(
+            newTopic
+        );
     });
 }
 
@@ -1634,7 +2083,32 @@ scheduleCloudSave();
     }
 
 });
+createFolderBtn.addEventListener("click", function () {
 
+    const folderName =
+        prompt("What would you like to call this folder?");
+
+    if (!folderName || !folderName.trim()) {
+        return;
+    }
+
+    const cleanName = folderName.trim();
+
+    if (folders.includes(cleanName)) {
+        alert("A folder with that name already exists.");
+        return;
+    }
+
+    folders.push(cleanName);
+
+    localStorage.setItem(
+        "folders",
+        JSON.stringify(folders)
+    );
+
+    displayTopics();
+    scheduleCloudSave();
+});
 
 addShapeBtn.addEventListener("click", function () {
 
@@ -4837,6 +5311,8 @@ async function saveUserDataToCloud() {
 
     const appData = {
         topics: topics,
+        folders: folders,
+topicFolders: topicFolders,
         shapes: shapes,
         connections: savedConnections,
         currentTopic: currentTopic,
@@ -4872,6 +5348,8 @@ function scheduleCloudSave() {
 }
 const cloudSaveKeys = [
     "topics",
+    "folders",
+    "topicFolders",
     "shapes",
     "connections",
     "currentTopic",
@@ -4943,14 +5421,25 @@ loginStatus.textContent =
 if (cloudData) {
 
     topics = cloudData.topics || [];
-    shapes = cloudData.shapes || {};
-    savedConnections = cloudData.connections || {};
-    currentTopic = cloudData.currentTopic || null;
+folders = cloudData.folders || [];
+topicFolders = cloudData.topicFolders || {};
+shapes = cloudData.shapes || {};
+savedConnections = cloudData.connections || {};
+currentTopic = cloudData.currentTopic || null;
 
     localStorage.setItem(
         "topics",
         JSON.stringify(topics)
     );
+    localStorage.setItem(
+    "folders",
+    JSON.stringify(folders)
+);
+
+localStorage.setItem(
+    "topicFolders",
+    JSON.stringify(topicFolders)
+);
 
     localStorage.setItem(
         "shapes",
@@ -4979,11 +5468,15 @@ if (cloudData) {
 }
 else {
     topics = [];
-    shapes = {};
-    savedConnections = {};
-    currentTopic = null;
+folders = [];
+topicFolders = {};
+shapes = {};
+savedConnections = {};
+currentTopic = null;
 
-    localStorage.removeItem("topics");
+  localStorage.removeItem("topics");
+localStorage.removeItem("folders");
+localStorage.removeItem("topicFolders");
 localStorage.removeItem("shapes");
 localStorage.removeItem("connections");
 localStorage.removeItem("currentTopic");
@@ -5009,11 +5502,15 @@ logoutBtn.addEventListener("click", async function () {
     alert("Signed out successfully");
     loginStatus.textContent = "Not signed in";
     topics = [];
+folders = [];
+topicFolders = {};
 shapes = {};
 savedConnections = {};
 currentTopic = null;
 
 localStorage.removeItem("topics");
+localStorage.removeItem("folders");
+localStorage.removeItem("topicFolders");
 localStorage.removeItem("shapes");
 localStorage.removeItem("connections");
 localStorage.removeItem("currentTopic");
