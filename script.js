@@ -756,7 +756,12 @@ topicTitle.addEventListener("blur", function () {
 
     delete savedConnections[oldTitle];
 
-    currentTopic = newTitle;
+if (topicFolders[oldTitle]) {
+    topicFolders[newTitle] = topicFolders[oldTitle];
+    delete topicFolders[oldTitle];
+}
+
+currentTopic = newTitle;
 
     localStorage.setItem(
         "topics",
@@ -772,6 +777,10 @@ topicTitle.addEventListener("blur", function () {
         "connections",
         JSON.stringify(savedConnections)
     );
+    localStorage.setItem(
+    "topicFolders",
+    JSON.stringify(topicFolders)
+);
 
     localStorage.setItem(
         "currentTopic",
@@ -863,10 +872,33 @@ mindMapFileInput.addEventListener("change", function (event) {
                 throw new Error("Invalid mind map file");
             }
 
-            const importedTopic =
-                mindMapData.topic || "Imported Mind Map";
+            let importedTopic =
+    mindMapData.topic || "Imported Mind Map";
 
-            currentTopic = importedTopic;
+if (topics.includes(importedTopic)) {
+
+    const newName = prompt(
+        'A mind map named "' +
+        importedTopic +
+        '" already exists.\n\nEnter a different name for the imported map:',
+        importedTopic + " (Imported)"
+    );
+
+    if (!newName || !newName.trim()) {
+        return;
+    }
+
+    const cleanName = newName.trim();
+
+    if (topics.includes(cleanName)) {
+        alert("A mind map with that name already exists.");
+        return;
+    }
+
+    importedTopic = cleanName;
+}
+
+currentTopic = importedTopic;
 
             if (!topics.includes(currentTopic)) {
                 topics.push(currentTopic);
@@ -932,9 +964,9 @@ mindMapFileInput.addEventListener("change", function (event) {
 
             topicTitle.textContent = currentTopic;
 
-            createTopicBtn.style.display = "none";
-            topicList.style.display = "none";
-            topicPage.style.display = "block";
+            libraryToolbar.style.display = "none";
+topicList.style.display = "none";
+topicPage.style.display = "block";
 
             displayShapes();
 
@@ -1130,9 +1162,7 @@ renameFolderBtn.addEventListener(
     }
 );
 
-folderItem.appendChild(
-    renameFolderBtn
-);
+
             const deleteFolderBtn =
     document.createElement("button");
 
@@ -2073,19 +2103,38 @@ topicList.style.display = "block";
 
 createTopicBtn.addEventListener("click", function () {
 
-    const topicName = prompt("What would you like to call this topic?");
+    const topicName =
+        prompt("What would you like to call this topic?");
 
-    if (topicName) {
-
-        topics.push(topicName);
-
-        localStorage.setItem("topics", JSON.stringify(topics));
-displayTopics();
-
-scheduleCloudSave();
-
+    if (!topicName || !topicName.trim()) {
+        return;
     }
 
+    const cleanName = topicName.trim();
+
+    if (topics.includes(cleanName)) {
+        alert("A mind map with that name already exists.");
+        return;
+    }
+
+    topics.push(cleanName);
+
+    if (currentFolder) {
+        topicFolders[cleanName] = currentFolder;
+    }
+
+    localStorage.setItem(
+        "topics",
+        JSON.stringify(topics)
+    );
+
+    localStorage.setItem(
+        "topicFolders",
+        JSON.stringify(topicFolders)
+    );
+
+    displayTopics();
+    scheduleCloudSave();
 });
 createFolderBtn.addEventListener("click", function () {
 
