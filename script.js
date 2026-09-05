@@ -4540,11 +4540,18 @@ localStorage.setItem("canvasHeight", "1123");
     }
 
 });
-const canvasResizeHandle = document.getElementById("canvasResizeHandle");
+canvas.addEventListener("pointerdown", function (event) {
 
-canvasResizeHandle.addEventListener("pointerdown", function (event) {
+    const resizeHandle = event.target.closest("#canvasResizeHandle");
+
+    if (!resizeHandle) {
+        return;
+    }
 
     event.preventDefault();
+
+    const canvasSizeLabel =
+        resizeHandle.querySelector("#canvasSizeLabel");
 
     const startX = event.clientX;
     const startY = event.clientY;
@@ -4552,53 +4559,75 @@ canvasResizeHandle.addEventListener("pointerdown", function (event) {
     const startWidth = canvas.offsetWidth;
     const startHeight = canvas.offsetHeight;
 
-    function resizeCanvas(event) {
+    function resizeCanvas(moveEvent) {
+
         canvasSizeSelect.value = "custom";
+
         localStorage.setItem(
-    "canvasSizeMode",
-    "custom"
-);
+            "canvasSizeMode",
+            "custom"
+        );
 
-        const newWidth =
-    Math.max(
-        300,
-        startWidth + (event.clientX - startX)
-    );
+        const newWidth = Math.max(
+            300,
+            startWidth + (moveEvent.clientX - startX)
+        );
 
-const newHeight =
-    Math.max(
-        300,
-        startHeight + (event.clientY - startY)
-    );
+        const newHeight = Math.max(
+            300,
+            startHeight + (moveEvent.clientY - startY)
+        );
 
         canvas.style.width = newWidth + "px";
         canvas.style.height = newHeight + "px";
-        canvasSizeLabel.textContent =
-    Math.round(newWidth) + " × " +
-    Math.round(newHeight) + " px";
 
-canvasSizeLabel.style.display = "block";
+        if (canvasSizeLabel) {
+            canvasSizeLabel.textContent =
+                Math.round(newWidth) +
+                " × " +
+                Math.round(newHeight) +
+                " px";
+
+            canvasSizeLabel.style.display = "block";
+        }
     }
 
-   function stopResize() {
-    canvasSizeLabel.style.display = "none";
+    function stopResize() {
 
-    localStorage.setItem(
-        "canvasWidth",
-        canvas.offsetWidth
+        if (canvasSizeLabel) {
+            canvasSizeLabel.style.display = "none";
+        }
+
+        localStorage.setItem(
+            "canvasWidth",
+            canvas.offsetWidth
+        );
+
+        localStorage.setItem(
+            "canvasHeight",
+            canvas.offsetHeight
+        );
+
+        window.removeEventListener(
+            "pointermove",
+            resizeCanvas
+        );
+
+        window.removeEventListener(
+            "pointerup",
+            stopResize
+        );
+    }
+
+    window.addEventListener(
+        "pointermove",
+        resizeCanvas
     );
 
-    localStorage.setItem(
-        "canvasHeight",
-        canvas.offsetHeight
+    window.addEventListener(
+        "pointerup",
+        stopResize
     );
-
-    window.removeEventListener("pointermove", resizeCanvas);
-    window.removeEventListener("pointerup", stopResize);
-}
-
-    window.addEventListener("pointermove", resizeCanvas);
-    window.addEventListener("pointerup", stopResize);
 });
 console.log("Supabase connected:", supabaseClient);
 const loginBtn = document.getElementById("loginBtn");
