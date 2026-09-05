@@ -4629,6 +4629,38 @@ canvas.addEventListener("pointerdown", function (event) {
         stopResize
     );
 });
+const canvasToolbar = document.getElementById("canvasToolbar");
+const canvasWorkspace = document.getElementById("canvasWorkspace");
+
+function updateToolbarPosition() {
+
+    if (!canvasToolbar || !canvasWorkspace) {
+        return;
+    }
+
+    const topicIsVisible =
+        window.getComputedStyle(topicPage).display !== "none";
+
+    if (!topicIsVisible) {
+        canvasToolbar.classList.remove("toolbar-fixed");
+        return;
+    }
+
+    const workspaceTop =
+        canvasWorkspace.getBoundingClientRect().top;
+
+    if (workspaceTop <= 12) {
+        canvasToolbar.classList.add("toolbar-fixed");
+    } else {
+        canvasToolbar.classList.remove("toolbar-fixed");
+    }
+}
+
+window.addEventListener("scroll", updateToolbarPosition, {
+    passive: true
+});
+
+window.addEventListener("resize", updateToolbarPosition);
 console.log("Supabase connected:", supabaseClient);
 const loginBtn = document.getElementById("loginBtn");
 const loginEmail = document.getElementById("loginEmail");

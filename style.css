@@ -794,6 +794,12 @@ h1 {
 /* Keep mind-map menu permanently visible while scrolling */
 
 #canvasToolbar {
+    position: relative;
+    width: 260px;
+    z-index: 500;
+}
+
+#canvasToolbar.toolbar-fixed {
     position: fixed;
     top: 12px;
     left: 30px;
@@ -801,8 +807,6 @@ h1 {
     width: 260px;
     max-height: calc(100vh - 24px);
     overflow-y: auto;
-
-    z-index: 500;
 }
 #canvasWorkspace {
     grid-template-columns: 260px minmax(0, 1fr);
