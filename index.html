@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Learning Library</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>My Learning Library</h1>
+    <div id="authBox">
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button type="button" id="loginBtn">Sign In</button>
+    <button type="button" id="logoutBtn">Sign Out</button>
+    <div id="loginStatus">Not signed in</div>
+</div>
+
+    <button type="button" id="createTopicBtn">+ Create Topic</button>
+
+    <h2>My Topics</h2>
+
+    <ul id="topicList"></ul>
+
+    <div id="topicPage" style="display:none;">
+    <button type="button" id="backBtn">← Back</button>
+
+    <h2 id="topicTitle" contenteditable="true" title="Click to rename mind map"></h2>
+
+<div id="canvasWorkspace">
+
+<div id="canvasToolbar">
+
+    <div class="toolbar-group" id="shapeToolsGroup">
+    <span class="toolbar-label">Shapes</span>
+
+        <select id="shapeType">
+            <option value="rounded">Rounded box</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="circle">Circle</option>
+            <option value="diamond">Diamond</option>
+            <option value="textbox">Text box</option>
+            <option value="hover">Hover Symbol</option>
+        </select>
+
+        <button type="button" id="addShapeBtn">+ Add</button>
+        <button type="button" id="deleteShapeBtn">Delete</button>
+        <button type="button" id="addLinkBtn">Add Link</button>
+        <button type="button" id="removeLinkBtn">Remove Link</button>
+        <button type="button" id="editLinkBtn">Edit Link</button>
+        <button type="button" id="attachFileBtn">Attach File</button>
+        <button type="button" id="deleteAttachmentBtn">Delete Attachment</button>
+        
+        <input
+    type="file"
+    id="hoverImageFileInput"
+    accept="image/*"
+    style="display:none;"
+>
+
+<input
+    type="file"
+    id="attachmentFileInput"
+    style="display:none;"
+>
+
+        <label class="colour-control">
+    <span>Fill</span>
+    <input type="color" id="colourPicker" value="#facc15" title="Shape fill colour">
+</label>
+
+<label class="colour-control">
+    <span>Border</span>
+    <input type="color" id="borderColourPicker" value="#111827" title="Shape border colour">
+</label>
+    </div>
+    <div id="hoverToolsGroup" class="toolbar-group hover-tools-group">
+    <span class="toolbar-label">ⓘ Info</span>
+    <button type="button" id="editHoverBtn" class="hover-tool">Edit Text</button>
+    <button type="button" id="addHoverLinkBtn" class="hover-tool">Add Link</button>
+    <button type="button" id="editHoverLinkBtn" class="hover-tool">Edit Link</button>
+    <button type="button" id="removeHoverLinkBtn" class="hover-tool">Remove Link</button>
+    <button type="button" id="addHoverImageBtn" class="hover-tool">Add Image</button>
+    <button type="button" id="removeHoverImageBtn" class="hover-tool">Remove Image</button>
+</div>
+
+  <div class="toolbar-group" id="textToolsGroup">
+    <span class="toolbar-label">Text</span>
+
+        <button type="button" id="boldBtn"><strong>B</strong></button>
+        <button type="button" id="underlineBtn"><u>U</u></button>
+        <button type="button" id="fontDecreaseBtn">A−</button>
+        <button type="button" id="fontIncreaseBtn">A+</button>
+        <label class="colour-control">
+    <span>Text</span>
+    <input type="color" id="fontColourPicker" value="#111827" title="Text colour">
+</label>
+    </div>
+
+   <div class="toolbar-group" id="lineToolsGroup">
+        <span class="toolbar-label">Lines</span>
+
+        <button type="button" id="connectBtn">+ Add Line</button>
+        <button type="button" id="deleteLineBtn">Delete</button>
+        <button type="button" id="addBendBtn">+ Bend</button>
+        <button type="button" id="deleteBendBtn">Delete Bend</button>
+        <button type="button" id="arrowEndBtn">Arrow</button>
+    </div>
+
+    <div class="toolbar-group" id="canvasToolsGroup">
+        <span class="toolbar-label">Canvas</span>
+
+        <select id="canvasSizeSelect">
+            <option value="custom">Custom size</option>
+            <option value="a4-portrait">A4 Portrait</option>
+            <option value="a4-landscape">A4 Landscape</option>
+        </select>
+        <button type="button" id="saveMindMapBtn">Save Mind Map</button>
+        <button type="button" id="openMindMapBtn">Open Mind Map</button>
+        <button type="button" id="printMindMapBtn">Print</button>
+
+<input
+    type="file"
+    id="mindMapFileInput"
+    accept=".json,application/json"
+    style="display:none;"
+>
+    </div>
+
+</div>
+
+<div id="attachmentPanel" style="display:none;">
+    <button type="button" id="closeAttachmentPanelBtn">×</button>
+    <h3>Attachments</h3>
+    <div id="attachmentList"></div>
+</div>
+<div id="hoverPopup" class="hover-popup"></div>
+<div id="canvas">
+    <svg id="connectionLayer"></svg>
+
+    <div id="canvasResizeHandle"></div>
+</div>
+
+</div> <!-- canvasWorkspace -->
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+
+</body>
+</html>
