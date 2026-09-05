@@ -5167,6 +5167,52 @@ editHoverBtn.addEventListener("click", function () {
 
     alert("Hover text saved");
 });
+const deleteHoverBtn =
+    document.getElementById("deleteHoverBtn");
+
+deleteHoverBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        !selectedShape.savedData ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select an info symbol first.");
+        return;
+    }
+
+    const shapeToDelete = selectedShape;
+    const savedDataToDelete = selectedShape.savedData;
+
+    shapes[currentTopic] =
+        (shapes[currentTopic] || []).filter(function (item) {
+            return item !== savedDataToDelete;
+        });
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    shapeToDelete.remove();
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    selectedShape = null;
+
+    if (hoverPopup) {
+        hoverPopup.style.display = "none";
+    }
+
+    showHoverTools(false);
+    showNormalShapeTools(true);
+    setSidebarMode("default");
+
+    updateConnections();
+});
 const hoverPopup =
     document.getElementById("hoverPopup");
     let hoverHideTimer;
