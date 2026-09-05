@@ -368,6 +368,18 @@ let startHandle = null;
 let endHandle = null;
 let freeLineControlHandles = [];
 function removeLineHandles() {
+
+    if (connectionHandle) {
+        connectionHandle.remove();
+        connectionHandle = null;
+    }
+
+    connectionHandles.forEach(function (handle) {
+        handle.remove();
+    });
+
+    connectionHandles = [];
+
     if (startHandle) {
         startHandle.remove();
         startHandle = null;
@@ -377,9 +389,17 @@ function removeLineHandles() {
         endHandle.remove();
         endHandle = null;
     }
+
     freeLineControlHandles.forEach(function (handle) {
-    handle.remove();
-});
+        handle.remove();
+    });
+
+    freeLineControlHandles = [];
+
+    selectedEndpoint = null;
+    selectedControlPointIndex = null;
+    selectedControlPointHandle = null;
+}
 
 freeLineControlHandles = [];
 }
