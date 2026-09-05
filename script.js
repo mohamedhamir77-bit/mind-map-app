@@ -102,6 +102,10 @@ const deleteLineBtn = document.getElementById("deleteLineBtn");
 const deleteBendBtn = document.getElementById("deleteBendBtn");
 const addBendBtn = document.getElementById("addBendBtn");
 const canvasSizeSelect = document.getElementById("canvasSizeSelect");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomFitBtn = document.getElementById("zoomFitBtn");
+const zoomLevel = document.getElementById("zoomLevel");
 const saveMindMapBtn = document.getElementById("saveMindMapBtn");
 const openMindMapBtn = document.getElementById("openMindMapBtn");
 const printMindMapBtn = document.getElementById("printMindMapBtn");
@@ -436,8 +440,11 @@ function showFreeLineControlHandles(line, savedLine) {
 
         const canvasRect = canvas.getBoundingClientRect();
 
-        point.x = event.clientX - canvasRect.left;
-        point.y = event.clientY - canvasRect.top;
+       point.x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+point.y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
         handle.setAttribute("cx", point.x);
         handle.setAttribute("cy", point.y);
@@ -1402,8 +1409,11 @@ startHandle.addEventListener("mousedown", function (event) {
     function moveStartHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
-        const newX = event.clientX - canvasRect.left;
-        const newY = event.clientY - canvasRect.top;
+       const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
 const snap = findNearestSnapPort(newX, newY);
         if (snap && snap.distance <= 30) {
     savedConnection.x1 = snap.port.x;
@@ -1465,8 +1475,11 @@ endHandle.addEventListener("mousedown", function (event) {
     function moveEndHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
-        const newX = event.clientX - canvasRect.left;
-        const newY = event.clientY - canvasRect.top;
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
 const snap = findNearestSnapPort(newX, newY);
       if (snap && snap.distance <= 30) {
     savedConnection.x2 = snap.port.x;
@@ -1512,8 +1525,11 @@ line.addEventListener("dblclick", function (event) {
 
     const canvasRect = canvas.getBoundingClientRect();
 
-    const x = event.clientX - canvasRect.left;
-    const y = event.clientY - canvasRect.top;
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
     savedConnection.controlPoints.push({
         x: x,
@@ -1871,8 +1887,14 @@ function makeDraggable(shape) {
     shape.classList.add("dragging-hover");
 }
 const canvasRect = canvas.getBoundingClientRect();
-   offsetX = event.clientX - canvasRect.left - shape.offsetLeft;
-offsetY = event.clientY - canvasRect.top - shape.offsetTop;
+
+offsetX =
+    (event.clientX - canvasRect.left) / canvasZoom -
+    shape.offsetLeft;
+
+offsetY =
+    (event.clientY - canvasRect.top) / canvasZoom -
+    shape.offsetTop;
 
 });
 
@@ -1883,10 +1905,12 @@ offsetY = event.clientY - canvasRect.top - shape.offsetTop;
         const canvasRect = canvas.getBoundingClientRect();
 
 const newLeft =
-    event.clientX - canvasRect.left - offsetX;
+    (event.clientX - canvasRect.left) / canvasZoom -
+    offsetX;
 
 const newTop =
-    event.clientY - canvasRect.top - offsetY;
+    (event.clientY - canvasRect.top) / canvasZoom -
+    offsetY;
 
 shape.style.left = newLeft + "px";
 shape.style.top = newTop + "px";
@@ -1980,15 +2004,20 @@ function makeResizable(shape, handle) {
         const startWidth = shape.offsetWidth;
         const startHeight = shape.offsetHeight;
 
-        function resize(event) {
+       function resize(event) {
 
-            shape.style.width =
-                startWidth + (event.clientX - startX) + "px";
+    shape.style.width =
+        startWidth +
+        ((event.clientX - startX) / canvasZoom) +
+        "px";
 
-            shape.style.height =
-                startHeight + (event.clientY - startY) + "px";
-                updateConnections();
-        }
+    shape.style.height =
+        startHeight +
+        ((event.clientY - startY) / canvasZoom) +
+        "px";
+
+    updateConnections();
+}
 
         function stopResize() {
 
@@ -2118,8 +2147,11 @@ startHandle.addEventListener("mousedown", function (event) {
     function moveStartHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
-        const newX = event.clientX - canvasRect.left;
-        const newY = event.clientY - canvasRect.top;
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
         const snap = findNearestSnapPort(newX, newY);
 
@@ -2162,8 +2194,11 @@ endHandle.addEventListener("mousedown", function (event) {
     function moveEndHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
-        const newX = event.clientX - canvasRect.left;
-        const newY = event.clientY - canvasRect.top;
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
         const snap = findNearestSnapPort(newX, newY);
 
@@ -2214,8 +2249,11 @@ line.addEventListener("dblclick", function (event) {
 
     const canvasRect = canvas.getBoundingClientRect();
 
-    const x = event.clientX - canvasRect.left;
-    const y = event.clientY - canvasRect.top;
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
     savedFreeLine.controlPoints.push({
         x: x,
@@ -2368,8 +2406,11 @@ line.addEventListener("dblclick", function (event) {
 
     const canvasRect = canvas.getBoundingClientRect();
 
-    const x = event.clientX - canvasRect.left;
-    const y = event.clientY - canvasRect.top;
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
     const connection = connections.find(function (item) {
         return item.line === line;
@@ -3852,8 +3893,11 @@ extraHandle.addEventListener("click", function (event) {
 
         const canvasRect = canvas.getBoundingClientRect();
 
-        const x = event.clientX - canvasRect.left;
-        const y = event.clientY - canvasRect.top;
+        const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
         connection.controlPoints[index].x = x;
         connection.controlPoints[index].y = y;
@@ -4034,11 +4078,11 @@ point.offsetY = y - baseY;
                 const canvasRect =
                     canvas.getBoundingClientRect();
 
-                const x =
-                    event.clientX - canvasRect.left;
+            const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
 
-                const y =
-                    event.clientY - canvasRect.top;
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
                 const middleX =
     (connection.point1.x + connection.point2.x) / 2;
@@ -4136,11 +4180,11 @@ savedConnection.controlPoints =
                 const canvasRect =
                     canvas.getBoundingClientRect();
 
-                const x =
-                    event.clientX - canvasRect.left;
+              const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
 
-                const y =
-                    event.clientY - canvasRect.top;
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
                 const nearest =
                     findNearestSnapPort(x, y);
@@ -4262,10 +4306,10 @@ if (savedConnection) {
                     canvas.getBoundingClientRect();
 
                 const x =
-                    event.clientX - canvasRect.left;
+    (event.clientX - canvasRect.left) / canvasZoom;
 
-                const y =
-                    event.clientY - canvasRect.top;
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
 
                 const nearest =
                     findNearestSnapPort(x, y);
@@ -4558,8 +4602,18 @@ canvas.addEventListener("pointerdown", function (event) {
 
     const startWidth = canvas.offsetWidth;
     const startHeight = canvas.offsetHeight;
+    const canvasViewport =
+    document.getElementById("canvasViewport");
+
+const startScrollLeft =
+    canvasViewport ? canvasViewport.scrollLeft : 0;
+    let lastPointerX = startX;
+let lastPointerY = startY;
+let autoGrowFrame = null;
 
     function resizeCanvas(moveEvent) {
+        lastPointerX = moveEvent.clientX;
+lastPointerY = moveEvent.clientY;
 
         canvasSizeSelect.value = "custom";
 
@@ -4568,10 +4622,19 @@ canvas.addEventListener("pointerdown", function (event) {
             "custom"
         );
 
-        const newWidth = Math.max(
-            300,
-            startWidth + (moveEvent.clientX - startX)
-        );
+      
+
+const scrollDifference =
+    canvasViewport
+        ? canvasViewport.scrollLeft - startScrollLeft
+        : 0;
+
+const newWidth = Math.max(
+    300,
+    startWidth +
+    (moveEvent.clientX - startX) +
+    scrollDifference
+);
 
         const newHeight = Math.max(
             300,
@@ -4591,8 +4654,46 @@ canvas.addEventListener("pointerdown", function (event) {
             canvasSizeLabel.style.display = "block";
         }
     }
+function autoGrowCanvas() {
 
+    if (
+        canvasViewport &&
+        lastPointerX >= window.innerWidth - 50
+    ) {
+        const currentWidth =
+            parseFloat(
+                window.getComputedStyle(canvas).width
+            );
+
+        const growBy = 5;
+
+        canvas.style.width =
+            (currentWidth + growBy) + "px";
+
+        canvasViewport.scrollLeft += growBy;
+
+        if (canvasSizeLabel) {
+            canvasSizeLabel.textContent =
+                Math.round(canvas.offsetWidth) +
+                " × " +
+                Math.round(canvas.offsetHeight) +
+                " px";
+        }
+
+        updateConnections();
+    }
+
+    autoGrowFrame =
+        requestAnimationFrame(autoGrowCanvas);
+}
+
+autoGrowFrame =
+    requestAnimationFrame(autoGrowCanvas);
     function stopResize() {
+        if (autoGrowFrame) {
+    cancelAnimationFrame(autoGrowFrame);
+    autoGrowFrame = null;
+}
 
         if (canvasSizeLabel) {
             canvasSizeLabel.style.display = "none";
@@ -5798,3 +5899,99 @@ function setSidebarMode(mode) {
     canvasGroup.style.display = "flex";
 }
 setSidebarMode("default");
+let canvasZoom = 1;
+
+function applyCanvasZoom() {
+
+    canvasZoom = Math.max(
+        0.4,
+        Math.min(2, canvasZoom)
+    );
+
+    canvas.style.zoom = canvasZoom;
+
+    zoomLevel.textContent =
+        Math.round(canvasZoom * 100) + "%";
+}
+
+zoomOutBtn.addEventListener("click", function () {
+    canvasZoom -= 0.1;
+    applyCanvasZoom();
+});
+
+zoomInBtn.addEventListener("click", function () {
+    canvasZoom += 0.1;
+    applyCanvasZoom();
+});
+
+zoomFitBtn.addEventListener("click", function () {
+
+    const canvasViewport =
+        document.getElementById("canvasViewport");
+
+    if (!canvasViewport) {
+        return;
+    }
+
+    const availableWidth =
+        canvasViewport.clientWidth - 20;
+
+    canvasZoom =
+        availableWidth / canvas.offsetWidth;
+
+    canvasZoom = Math.max(
+        0.4,
+        Math.min(1, canvasZoom)
+    );
+
+    applyCanvasZoom();
+
+    canvasViewport.scrollLeft = 0;
+});
+const canvasViewport =
+    document.getElementById("canvasViewport");
+
+let canvasPanning = false;
+let panStartX = 0;
+let panStartScrollLeft = 0;
+
+canvas.addEventListener("pointerdown", function (event) {
+
+    if (event.target !== canvas) {
+        return;
+    }
+
+    if (!canvasViewport) {
+        return;
+    }
+
+    canvasPanning = true;
+
+    panStartX = event.clientX;
+    panStartScrollLeft = canvasViewport.scrollLeft;
+
+    canvas.style.cursor = "grabbing";
+});
+
+window.addEventListener("pointermove", function (event) {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    const distanceMoved =
+        event.clientX - panStartX;
+
+    canvasViewport.scrollLeft =
+        panStartScrollLeft - distanceMoved;
+});
+
+window.addEventListener("pointerup", function () {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    canvasPanning = false;
+    canvas.style.cursor = "";
+});

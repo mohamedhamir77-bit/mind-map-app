@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>My Learning Library</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
@@ -116,6 +116,12 @@
             <option value="a4-portrait">A4 Portrait</option>
             <option value="a4-landscape">A4 Landscape</option>
         </select>
+        <div id="zoomControls">
+    <button type="button" id="zoomOutBtn">−</button>
+    <span id="zoomLevel">100%</span>
+    <button type="button" id="zoomInBtn">+</button>
+    <button type="button" id="zoomFitBtn">Fit</button>
+</div>
         <button type="button" id="saveMindMapBtn">Save Mind Map</button>
         <button type="button" id="openMindMapBtn">Open Mind Map</button>
         <button type="button" id="printMindMapBtn">Print</button>
@@ -136,17 +142,22 @@
     <div id="attachmentList"></div>
 </div>
 <div id="hoverPopup" class="hover-popup"></div>
-<div id="canvas">
-    <svg id="connectionLayer"></svg>
 
-    <div id="canvasResizeHandle"></div>
+<div id="canvasViewport">
+
+    <div id="canvas">
+        <svg id="connectionLayer"></svg>
+
+        <div id="canvasResizeHandle"></div>
+    </div>
+
 </div>
 
 </div> <!-- canvasWorkspace -->
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=5"></script>
+    <script src="script.js?v=6"></script>
 
 </body>
 </html>

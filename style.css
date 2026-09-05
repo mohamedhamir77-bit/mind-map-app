@@ -805,7 +805,7 @@ h1 {
     left: 30px;
 
     width: 260px;
-    max-height: calc(100vh - 24px);
+    max-height: calc(100vh - 50px);
     overflow-y: auto;
 }
 #canvasWorkspace {
@@ -814,4 +814,24 @@ h1 {
 
 #canvas {
     grid-column: 2;
+}
+#canvasWorkspace {
+    width: calc(100vw - 60px);
+    max-width: calc(100vw - 60px);
+    min-width: 0;
+}
+
+#canvasViewport {
+    grid-column: 2;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 12px;
+}
+
+#canvas {
+    grid-column: auto;
+    flex-shrink: 0;
 }
