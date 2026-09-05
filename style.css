@@ -3,7 +3,6 @@ body {
     font-family: Arial, sans-serif;
     background: #f4f6f8;
     color: #222;
-    overflow: auto;
 }
 
 body > h1,
@@ -791,4 +790,24 @@ h1 {
     font-size: 22px;
     text-align: left;
     border-radius: 16px;
+}
+/* Keep mind-map menu permanently visible while scrolling */
+
+#canvasToolbar {
+    position: fixed;
+    top: 12px;
+    left: 30px;
+
+    width: 260px;
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+
+    z-index: 500;
+}
+#canvasWorkspace {
+    grid-template-columns: 260px minmax(0, 1fr);
+}
+
+#canvas {
+    grid-column: 2;
 }
