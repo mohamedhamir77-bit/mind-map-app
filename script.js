@@ -10,6 +10,26 @@ const supabaseClient = window.supabase.createClient(
 );
 const createTopicBtn = document.getElementById("createTopicBtn");
 const createFolderBtn = document.getElementById("createFolderBtn");
+const createCategoryBtn = document.getElementById("createCategoryBtn");
+const categoryCreator =
+    document.getElementById("categoryCreator");
+
+const categoryNameInput =
+    document.getElementById("categoryNameInput");
+
+const saveCategoryBtn =
+    document.getElementById("saveCategoryBtn");
+
+const cancelCategoryBtn =
+    document.getElementById("cancelCategoryBtn");
+
+const categoryCustomColour =
+    document.getElementById("categoryCustomColour");
+
+const categoryColourSwatches =
+    document.querySelectorAll(".category-colour-swatch");
+
+let selectedCategoryColour = "#dbeafe";
 const libraryToolbar = document.getElementById("libraryToolbar");
 const topicList = document.getElementById("topicList");
 
@@ -893,6 +913,16 @@ let folders =
 let topicFolders =
     JSON.parse(localStorage.getItem("topicFolders")) || {};
 
+let libraryCategories =
+    JSON.parse(
+        localStorage.getItem("libraryCategories")
+    ) || [];
+
+let folderCategories =
+    JSON.parse(
+        localStorage.getItem("folderCategories")
+    ) || {};
+
 let currentFolder = null;
 addLinkBtn.addEventListener("click", function () {
 
@@ -1355,6 +1385,136 @@ topicPage.style.display = "block";
 function displayTopics() {
 
     topicList.innerHTML = "";
+    /* SHOW LIBRARY CATEGORIES ON MAIN PAGE */
+if (!currentFolder) {
+
+    libraryCategories.forEach(function (category) {
+
+        const categoryItem =
+            document.createElement("li");
+            categoryItem.dataset.categoryId =
+    category.id;
+
+        categoryItem.classList.add(
+            "library-category-item"
+        );
+
+        categoryItem.style.backgroundColor =
+            category.colour;
+
+        const categoryButton =
+            document.createElement("button");
+
+        categoryButton.type = "button";
+
+        categoryButton.classList.add(
+            "library-category-btn"
+        );
+
+        const categoryFolderCount =
+    folders.filter(
+        function (folder) {
+            return (
+                folderCategories[folder] ===
+                category.id
+            );
+        }
+    ).length;
+
+categoryButton.textContent =
+    (category.collapsed ? "▶ " : "▼ ") +
+    category.name +
+    " (" +
+    categoryFolderCount +
+    (categoryFolderCount === 1
+        ? " folder)"
+        : " folders)");
+
+        categoryButton.addEventListener(
+            "click",
+            function () {
+
+                category.collapsed =
+                    !category.collapsed;
+
+                localStorage.setItem(
+                    "libraryCategories",
+                    JSON.stringify(
+                        libraryCategories
+                    )
+                );
+
+                displayTopics();
+            }
+        );
+
+        categoryItem.appendChild(
+    categoryButton
+);
+
+if (categoryFolderCount === 0) {
+
+    const deleteCategoryBtn =
+        document.createElement("button");
+
+    deleteCategoryBtn.type = "button";
+
+    deleteCategoryBtn.classList.add(
+        "category-delete-btn"
+    );
+
+    deleteCategoryBtn.textContent =
+        "Delete";
+
+    deleteCategoryBtn.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            const confirmed =
+                confirm(
+                    'Delete category "' +
+                    category.name +
+                    '"?'
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            libraryCategories =
+                libraryCategories.filter(
+                    function (item) {
+                        return (
+                            item.id !==
+                            category.id
+                        );
+                    }
+                );
+
+            localStorage.setItem(
+                "libraryCategories",
+                JSON.stringify(
+                    libraryCategories
+                )
+            );
+
+            displayTopics();
+            scheduleCloudSave();
+        }
+    );
+
+    categoryItem.appendChild(
+        deleteCategoryBtn
+    );
+}
+
+topicList.appendChild(
+    categoryItem
+);
+    });
+}
 
     // INSIDE A FOLDER
     if (currentFolder) {
@@ -1415,6 +1575,22 @@ if (topicsInFolder.length === 0) {
     if (!currentFolder) {
 
         folders.forEach(function (folder) {
+            const assignedCategoryId =
+    folderCategories[folder] || "";
+
+const assignedCategory =
+    libraryCategories.find(
+        function (category) {
+            return category.id === assignedCategoryId;
+        }
+    );
+
+if (
+    assignedCategory &&
+    assignedCategory.collapsed
+) {
+    return;
+}
 
             const folderItem =
                 document.createElement("li");
@@ -1451,6 +1627,65 @@ folderButton.textContent =
                     displayTopics();
                 }
             );
+            const folderCategorySelect =
+    document.createElement("select");
+
+folderCategorySelect.classList.add(
+    "folder-category-select"
+);
+
+const noCategoryOption =
+    document.createElement("option");
+
+noCategoryOption.value = "";
+noCategoryOption.textContent =
+    "No category";
+
+folderCategorySelect.appendChild(
+    noCategoryOption
+);
+
+libraryCategories.forEach(
+    function (category) {
+
+        const option =
+            document.createElement("option");
+
+        option.value = category.id;
+        option.textContent = category.name;
+
+        folderCategorySelect.appendChild(
+            option
+        );
+    }
+);
+
+folderCategorySelect.value =
+    folderCategories[folder] || "";
+
+folderCategorySelect.addEventListener(
+    "change",
+    function () {
+
+        if (folderCategorySelect.value) {
+
+            folderCategories[folder] =
+                folderCategorySelect.value;
+
+        } else {
+
+            delete folderCategories[folder];
+        }
+
+        localStorage.setItem(
+            "folderCategories",
+            JSON.stringify(folderCategories)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
             const renameFolderBtn =
     document.createElement("button");
 
@@ -1597,15 +1832,42 @@ folderItem.appendChild(
 );
 
 folderItem.appendChild(
+    folderCategorySelect
+);
+
+folderItem.appendChild(
     renameFolderBtn
 );
 
 folderItem.appendChild(
     deleteFolderBtn
 );
-topicList.appendChild(
-    folderItem
-);
+if (assignedCategory) {
+
+    const categoryRows =
+        topicList.querySelectorAll(
+            ".library-category-item"
+        );
+
+    categoryRows.forEach(
+        function (categoryRow) {
+
+            if (
+                categoryRow.dataset.categoryId ===
+                assignedCategory.id
+            ) {
+                categoryRow.after(folderItem);
+            }
+        }
+    );
+
+} else {
+
+    topicList.appendChild(
+        folderItem
+    );
+}
+
         });
     }
 
@@ -2579,6 +2841,129 @@ createFolderBtn.addEventListener("click", function () {
     scheduleCloudSave();
 });
 
+createCategoryBtn.addEventListener("click", function () {
+
+    categoryNameInput.value = "";
+
+    selectedCategoryColour = "#dbeafe";
+
+    categoryColourSwatches.forEach(
+        function (swatch) {
+            swatch.classList.remove("selected");
+        }
+    );
+
+    if (categoryColourSwatches.length > 0) {
+        categoryColourSwatches[0].classList.add(
+            "selected"
+        );
+    }
+
+    categoryCreator.style.display = "flex";
+
+    setTimeout(function () {
+        categoryNameInput.focus();
+    }, 50);
+});
+
+
+categoryColourSwatches.forEach(
+    function (swatch) {
+
+        swatch.addEventListener(
+            "click",
+            function () {
+
+                categoryColourSwatches.forEach(
+                    function (otherSwatch) {
+                        otherSwatch.classList.remove(
+                            "selected"
+                        );
+                    }
+                );
+
+                swatch.classList.add("selected");
+
+                selectedCategoryColour =
+                    swatch.dataset.colour;
+            }
+        );
+    }
+);
+
+
+categoryCustomColour.addEventListener(
+    "input",
+    function () {
+
+        categoryColourSwatches.forEach(
+            function (swatch) {
+                swatch.classList.remove(
+                    "selected"
+                );
+            }
+        );
+
+        selectedCategoryColour =
+            categoryCustomColour.value;
+    }
+);
+
+
+cancelCategoryBtn.addEventListener(
+    "click",
+    function () {
+        categoryCreator.style.display = "none";
+    }
+);
+
+
+saveCategoryBtn.addEventListener(
+    "click",
+    function () {
+
+        const cleanName =
+            categoryNameInput.value.trim();
+
+        if (!cleanName) {
+            alert("Please enter a category name.");
+            return;
+        }
+
+        const alreadyExists =
+            libraryCategories.some(
+                function (category) {
+                    return (
+                        category.name.toLowerCase() ===
+                        cleanName.toLowerCase()
+                    );
+                }
+            );
+
+        if (alreadyExists) {
+            alert(
+                "A category with that name already exists."
+            );
+            return;
+        }
+
+        libraryCategories.push({
+            id: "category-" + Date.now(),
+            name: cleanName,
+            colour: selectedCategoryColour,
+            collapsed: false
+        });
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(libraryCategories)
+        );
+displayTopics();
+        categoryCreator.style.display = "none";
+
+        alert("Category created.");
+    }
+);
 addShapeBtn.addEventListener("click", function () {
 
     const shape = document.createElement("div");
@@ -6694,6 +7079,8 @@ async function saveUserDataToCloud() {
         topics: topics,
         folders: folders,
 topicFolders: topicFolders,
+libraryCategories: libraryCategories,
+folderCategories: folderCategories,
         shapes: shapes,
         connections: savedConnections,
         currentTopic: currentTopic,
@@ -6731,6 +7118,8 @@ const cloudSaveKeys = [
     "topics",
     "folders",
     "topicFolders",
+    "libraryCategories",
+"folderCategories",
     "shapes",
     "connections",
     "currentTopic",
@@ -6804,6 +7193,11 @@ if (cloudData) {
     topics = cloudData.topics || [];
 folders = cloudData.folders || [];
 topicFolders = cloudData.topicFolders || {};
+libraryCategories =
+    cloudData.libraryCategories || [];
+
+folderCategories =
+    cloudData.folderCategories || {};
 shapes = cloudData.shapes || {};
 savedConnections = cloudData.connections || {};
 currentTopic = cloudData.currentTopic || null;
@@ -6820,6 +7214,15 @@ currentTopic = cloudData.currentTopic || null;
 localStorage.setItem(
     "topicFolders",
     JSON.stringify(topicFolders)
+);
+localStorage.setItem(
+    "libraryCategories",
+    JSON.stringify(libraryCategories)
+);
+
+localStorage.setItem(
+    "folderCategories",
+    JSON.stringify(folderCategories)
 );
 
     localStorage.setItem(
@@ -6851,6 +7254,8 @@ else {
     topics = [];
 folders = [];
 topicFolders = {};
+libraryCategories = [];
+folderCategories = {};
 shapes = {};
 savedConnections = {};
 currentTopic = null;
@@ -6858,6 +7263,8 @@ currentTopic = null;
   localStorage.removeItem("topics");
 localStorage.removeItem("folders");
 localStorage.removeItem("topicFolders");
+localStorage.removeItem("libraryCategories");
+localStorage.removeItem("folderCategories");
 localStorage.removeItem("shapes");
 localStorage.removeItem("connections");
 localStorage.removeItem("currentTopic");
