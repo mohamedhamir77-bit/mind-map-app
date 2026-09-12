@@ -468,9 +468,14 @@ point.y =
     (event.clientY - canvasRect.top) / canvasZoom;
 
         handle.setAttribute("cx", point.x);
-        handle.setAttribute("cy", point.y);
+handle.setAttribute("cy", point.y);
 
-        updateConnections();
+extendWorkspaceForPoint(
+    point.x,
+    point.y
+);
+
+updateConnections();
     }
 
     function stopHandle(event) {
@@ -481,6 +486,7 @@ point.y =
         );
 
         handle.releasePointerCapture(event.pointerId);
+        recalculateOverflowWorkspace();
 
         handle.removeEventListener(
             "pointermove",
@@ -507,6 +513,369 @@ point.y =
         connectionLayer.appendChild(handle);
         freeLineControlHandles.push(handle);
     });
+}
+function makeFreeLineDraggable(line, savedLine) {
+
+    let lineWasDragged = false;
+
+    line.style.touchAction = "none";
+    let lastFreeLineTap = 0;
+let lastFreeLineTapX = 0;
+let lastFreeLineTapY = 0;
+
+line.addEventListener(
+    "pointerup",
+    function (event) {
+
+        /* Ignore a real line drag */
+        if (lineWasDragged) {
+            lastFreeLineTap = 0;
+            return;
+        }
+
+        const now = Date.now();
+
+        const distance =
+            Math.hypot(
+                event.clientX - lastFreeLineTapX,
+                event.clientY - lastFreeLineTapY
+            );
+
+        if (
+            now - lastFreeLineTap < 450 &&
+            distance < 25
+        ) {
+
+            const canvasRect =
+    canvas.getBoundingClientRect();
+
+const tapX =
+    (event.clientX - canvasRect.left) /
+    canvasZoom;
+
+const tapY =
+    (event.clientY - canvasRect.top) /
+    canvasZoom;
+
+if (!Array.isArray(savedLine.controlPoints)) {
+    savedLine.controlPoints = [];
+}
+
+const totalLength =
+    line.getTotalLength();
+
+function findClosestPointOnLine(x, y) {
+
+    let bestLength = 0;
+    let bestDistance = Infinity;
+    let bestPoint =
+        line.getPointAtLength(0);
+
+    for (let i = 0; i <= 200; i++) {
+
+        const length =
+            totalLength * (i / 200);
+
+        const point =
+            line.getPointAtLength(length);
+
+        const distance =
+            Math.hypot(
+                point.x - x,
+                point.y - y
+            );
+
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestLength = length;
+            bestPoint = point;
+        }
+    }
+
+    return {
+        length: bestLength,
+        point: bestPoint
+    };
+}
+
+const newLocation =
+    findClosestPointOnLine(
+        tapX,
+        tapY
+    );
+
+let insertIndex =
+    savedLine.controlPoints.length;
+
+savedLine.controlPoints.forEach(
+    function (point, index) {
+
+        const existingLocation =
+            findClosestPointOnLine(
+                point.x,
+                point.y
+            );
+
+        if (
+            newLocation.length <
+            existingLocation.length &&
+            insertIndex ===
+                savedLine.controlPoints.length
+        ) {
+            insertIndex = index;
+        }
+    }
+);
+
+savedLine.controlPoints.splice(
+    insertIndex,
+    0,
+    {
+        x: newLocation.point.x,
+        y: newLocation.point.y
+    }
+);
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+
+            updateConnections();
+
+            showFreeLineControlHandles(
+                line,
+                savedLine
+            );
+
+            lastFreeLineTap = 0;
+            return;
+        }
+
+        lastFreeLineTap = now;
+        lastFreeLineTapX = event.clientX;
+        lastFreeLineTapY = event.clientY;
+    }
+);
+
+/* Prevent the old browser dblclick handler
+   from adding the point a second time */
+line.addEventListener(
+    "dblclick",
+    function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    },
+    true
+);
+
+    /* Stop the click after a drag from deselecting the line */
+    /* Keep an already-selected line selected */
+line.addEventListener(
+    "click",
+    function (event) {
+
+        if (lineWasDragged) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
+        if (selectedConnection === line) {
+            event.stopImmediatePropagation();
+        }
+    },
+    true
+);
+
+    line.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            /* Drag only after the line has been selected */
+            if (selectedConnection !== line) {
+                return;
+            }
+
+            if (
+                event.pointerType === "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            event.stopPropagation();
+
+const startX = event.clientX;
+const startY = event.clientY;
+
+            const startX1 = savedLine.x1;
+            const startY1 = savedLine.y1;
+            const startX2 = savedLine.x2;
+            const startY2 = savedLine.y2;
+
+            const startControlPoints =
+                (savedLine.controlPoints || []).map(
+                    function (point) {
+                        return {
+                            x: point.x,
+                            y: point.y
+                        };
+                    }
+                );
+
+            let dragging = false;
+
+            function moveWholeLine(event) {
+
+                const dx =
+                    (event.clientX - startX) /
+                    canvasZoom;
+
+                const dy =
+                    (event.clientY - startY) /
+                    canvasZoom;
+
+                if (
+                    !dragging &&
+                    Math.hypot(dx, dy) < 8
+                ) {
+                    return;
+                }
+
+                if (!dragging) {
+
+                    dragging = true;
+                    lineWasDragged = true;
+
+                    /* Whole-line movement detaches
+                       snapped endpoints */
+                    savedLine.shape1Id = null;
+                    savedLine.point1Index = null;
+
+                    savedLine.shape2Id = null;
+                    savedLine.point2Index = null;
+                }
+
+                event.preventDefault();
+
+                savedLine.x1 =
+                    startX1 + dx;
+
+                savedLine.y1 =
+                    startY1 + dy;
+
+                savedLine.x2 =
+                    startX2 + dx;
+
+                savedLine.y2 =
+                    startY2 + dy;
+
+                startControlPoints.forEach(
+    function (point, index) {
+
+        savedLine.controlPoints[index].x =
+            point.x + dx;
+
+        savedLine.controlPoints[index].y =
+            point.y + dy;
+    }
+);
+
+/* Keep the whole dragged line reachable */
+extendWorkspaceForPoint(
+    savedLine.x1,
+    savedLine.y1
+);
+
+extendWorkspaceForPoint(
+    savedLine.x2,
+    savedLine.y2
+);
+
+savedLine.controlPoints.forEach(
+    function (point) {
+        extendWorkspaceForPoint(
+            point.x,
+            point.y
+        );
+    }
+);
+
+updateConnections();
+
+                /* Move visible blue bend handles too */
+                freeLineControlHandles.forEach(
+                    function (handle, index) {
+
+                        const point =
+                            savedLine.controlPoints[index];
+
+                        if (!point) {
+                            return;
+                        }
+
+                        handle.setAttribute(
+                            "cx",
+                            point.x
+                        );
+
+                        handle.setAttribute(
+                            "cy",
+                            point.y
+                        );
+                    }
+                );
+            }
+
+            function finishWholeLineDrag() {
+
+                window.removeEventListener(
+                    "pointermove",
+                    moveWholeLine
+                );
+
+                window.removeEventListener(
+                    "pointerup",
+                    finishWholeLineDrag
+                );
+
+                window.removeEventListener(
+                    "pointercancel",
+                    finishWholeLineDrag
+                );
+
+                if (dragging) {
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    /* Remove unnecessary blank workspace */
+    recalculateOverflowWorkspace();
+}
+
+                setTimeout(function () {
+                    lineWasDragged = false;
+                }, 0);
+            }
+
+            window.addEventListener(
+                "pointermove",
+                moveWholeLine
+            );
+
+            window.addEventListener(
+                "pointerup",
+                finishWholeLineDrag
+            );
+
+            window.addEventListener(
+                "pointercancel",
+                finishWholeLineDrag
+            );
+        }
+    );
 }
 let selectedEndpoint = null;
 let firstConnectionShape = null;
@@ -1465,6 +1834,16 @@ topicList.style.display = "none";
 displayShapes();
 }
 function displayShapes() {
+
+    const oldOverflowSpacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (oldOverflowSpacer) {
+        oldOverflowSpacer.remove();
+    }
+
     canvas.innerHTML = "";
     connections = [];
 firstConnectionShape = null;
@@ -1534,15 +1913,7 @@ if (savedShape.type === "hover") {
     textEditor.contentEditable = "false";
     textEditor.textContent = "ⓘ";
     shape.classList.add("hover-symbol");
-    shape.addEventListener("mouseenter", function () {
-
-    keepHoverPopupOpen();
-
-    showHoverContent(
-        shape,
-        savedShape
-    );
-});
+    
 
 shape.addEventListener("mouseleave", function () {
     scheduleHoverPopupHide();
@@ -1690,9 +2061,12 @@ shape.appendChild(resizeHandle);
     shape.appendChild(point);
 });
 makeResizable(shape, resizeHandle);
-        canvas.appendChild(shape);
+canvas.appendChild(shape);
 
-        makeDraggable(shape);
+/* Rebuild workspace for saved off-canvas shapes */
+extendWorkspaceForShape(shape);
+
+makeDraggable(shape);
        shape.addEventListener("click", function () {
         
     
@@ -1840,6 +2214,33 @@ if (savedConnection.arrowEnd) {
 line.style.pointerEvents = "stroke";
 line.style.cursor = "pointer";
 
+/* Rebuild workspace for saved free lines */
+extendWorkspaceForPoint(
+    savedConnection.x1,
+    savedConnection.y1
+);
+
+extendWorkspaceForPoint(
+    savedConnection.x2,
+    savedConnection.y2
+);
+
+if (Array.isArray(savedConnection.controlPoints)) {
+    savedConnection.controlPoints.forEach(
+        function (point) {
+            extendWorkspaceForPoint(
+                point.x,
+                point.y
+            );
+        }
+    );
+}
+
+makeFreeLineDraggable(
+    line,
+    savedConnection
+);
+
 line.addEventListener("click", function (event) {
     event.stopPropagation();
 
@@ -1885,6 +2286,7 @@ endHandle.setAttribute("r", "7");
 endHandle.setAttribute("fill", "#111827");
 startHandle.style.pointerEvents = "all";
 startHandle.style.cursor = "grab";
+startHandle.style.touchAction = "none";
 startHandle.addEventListener("click", function (event) {
 
     event.stopPropagation();
@@ -1906,7 +2308,7 @@ startHandle.addEventListener("click", function (event) {
     startHandle.setAttribute("stroke", "#2563eb");
     startHandle.setAttribute("stroke-width", "4");
 });
-startHandle.addEventListener("mousedown", function (event) {
+startHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
     function moveStartHandle(event) {
@@ -1933,24 +2335,32 @@ const snap = findNearestSnapPort(newX, newY);
        startHandle.setAttribute("cx", savedConnection.x1);
 startHandle.setAttribute("cy", savedConnection.y1);
 
-        updateConnections();
+extendWorkspaceForPoint(
+    savedConnection.x1,
+    savedConnection.y1
+);
+
+updateConnections();
     }
 
-    function stopMovingStartHandle() {
-        document.removeEventListener("mousemove", moveStartHandle);
-        document.removeEventListener("mouseup", stopMovingStartHandle);
+   function stopMovingStartHandle() {
+    document.removeEventListener("pointermove", moveStartHandle);
+    document.removeEventListener("pointerup", stopMovingStartHandle);
 
-        localStorage.setItem(
-            "connections",
-            JSON.stringify(savedConnections)
-        );
-    }
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
 
-    document.addEventListener("mousemove", moveStartHandle);
-    document.addEventListener("mouseup", stopMovingStartHandle);
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveStartHandle);
+document.addEventListener("pointerup", stopMovingStartHandle);
 });
 endHandle.style.pointerEvents = "all";
 endHandle.style.cursor = "grab";
+endHandle.style.touchAction = "none";
 endHandle.addEventListener("click", function (event) {
 
     event.stopPropagation();
@@ -1972,7 +2382,7 @@ endHandle.addEventListener("click", function (event) {
     endHandle.setAttribute("stroke", "#2563eb");
     endHandle.setAttribute("stroke-width", "4");
 });
-endHandle.addEventListener("mousedown", function (event) {
+endHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
     function moveEndHandle(event) {
@@ -1999,21 +2409,27 @@ const snap = findNearestSnapPort(newX, newY);
         endHandle.setAttribute("cx", savedConnection.x2);
 endHandle.setAttribute("cy", savedConnection.y2);
 
-        updateConnections();
-    }
+extendWorkspaceForPoint(
+    savedConnection.x2,
+    savedConnection.y2
+);
 
-    function stopMovingEndHandle() {
-        document.removeEventListener("mousemove", moveEndHandle);
-        document.removeEventListener("mouseup", stopMovingEndHandle);
+updateConnections();
+}
+   function stopMovingEndHandle() {
+    document.removeEventListener("pointermove", moveEndHandle);
+    document.removeEventListener("pointerup", stopMovingEndHandle);
 
-        localStorage.setItem(
-            "connections",
-            JSON.stringify(savedConnections)
-        );
-    }
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
 
-    document.addEventListener("mousemove", moveEndHandle);
-    document.addEventListener("mouseup", stopMovingEndHandle);
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveEndHandle);
+document.addEventListener("pointerup", stopMovingEndHandle);
 });
 connectionLayer.appendChild(startHandle);
 connectionLayer.appendChild(endHandle);
@@ -2243,12 +2659,38 @@ canvas.appendChild(shape);
 if (!shapes[currentTopic]) {
     shapes[currentTopic] = [];
 }
+const canvasRect =
+    canvas.getBoundingClientRect();
 
+const viewport =
+    document.getElementById("canvasViewport");
+
+const viewportRect =
+    viewport.getBoundingClientRect();
+
+const spawnLeft =
+    Math.max(
+        20,
+        (
+            viewportRect.left +
+            viewport.clientWidth / 2 -
+            canvasRect.left
+        ) / canvasZoom - 70
+    );
+
+const spawnTop =
+    Math.max(
+        20,
+        (
+            window.innerHeight / 2 -
+            canvasRect.top
+        ) / canvasZoom - 35
+    );
 const newShapeData = {
     id: Date.now().toString(),
     text: shapeType.value === "hover" ? "ⓘ" : "New Shape",
-    left: 50,
-    top: 50,
+    left: spawnLeft,
+top: spawnTop,
     colour: "#facc15",
     type: shapeType.value,
 hoverText: ""
@@ -2257,6 +2699,11 @@ hoverText: ""
 shapes[currentTopic].push(newShapeData);
 
 shape.savedData = newShapeData;
+shape.style.left =
+    spawnLeft + "px";
+
+shape.style.top =
+    spawnTop + "px";
 shape.classList.add(newShapeData.type);
 if (newShapeData.type === "hover") {
     textEditor.contentEditable = "false";
@@ -2267,15 +2714,7 @@ if (newShapeData.type === "hover") {
 if (newShapeData.type === "hover") {
     shape.classList.add("hover-symbol");
 
-    shape.addEventListener("mouseenter", function () {
-
-    keepHoverPopupOpen();
-
-    showHoverContent(
-        shape,
-        newShapeData
-    );
-});
+    
 
     shape.addEventListener("mouseleave", function () {
     scheduleHoverPopupHide();
@@ -2395,95 +2834,415 @@ if (!connectionMode) {
     
 
 });
+function extendWorkspaceForShape(shape) {
 
+    const viewport =
+        document.getElementById("canvasViewport");
 
+    if (!viewport) {
+        return;
+    }
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents = "none";
+        spacer.style.height = "0px";
+
+        viewport.appendChild(spacer);
+    }
+
+    const neededWidth =
+        shape.offsetLeft +
+        shape.offsetWidth +
+        200;
+
+    const neededExtraHeight =
+        Math.max(
+            0,
+            shape.offsetTop +
+            shape.offsetHeight +
+            200 -
+            canvas.offsetHeight
+        );
+
+    const currentWidth =
+        parseFloat(
+            spacer.style.width
+        ) || canvas.offsetWidth;
+
+    const currentHeight =
+        parseFloat(
+            spacer.style.height
+        ) || 0;
+
+    spacer.style.width =
+        Math.max(
+            currentWidth,
+            canvas.offsetWidth,
+            neededWidth
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            currentHeight,
+            neededExtraHeight
+        ) + "px";
+}
+function extendWorkspaceForPoint(x, y) {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    if (!viewport) {
+        return;
+    }
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents =
+            "none";
+
+        spacer.style.height =
+            "0px";
+
+        viewport.appendChild(spacer);
+    }
+
+    const neededWidth =
+        x + 200;
+
+    const neededExtraHeight =
+        Math.max(
+            0,
+            y + 200 -
+            canvas.offsetHeight
+        );
+
+    const currentWidth =
+        parseFloat(
+            spacer.style.width
+        ) || canvas.offsetWidth;
+
+    const currentHeight =
+        parseFloat(
+            spacer.style.height
+        ) || 0;
+
+    spacer.style.width =
+        Math.max(
+            currentWidth,
+            canvas.offsetWidth,
+            neededWidth
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            currentHeight,
+            neededExtraHeight
+        ) + "px";
+}
+function recalculateOverflowWorkspace() {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    if (!viewport) {
+        return;
+    }
+
+    let maxRight =
+        canvas.offsetWidth;
+
+    let maxBottom =
+        canvas.offsetHeight;
+
+    /* Include all shapes */
+    canvas
+        .querySelectorAll(".shape")
+        .forEach(function (shape) {
+
+            maxRight = Math.max(
+                maxRight,
+                shape.offsetLeft +
+                shape.offsetWidth +
+                200
+            );
+
+            maxBottom = Math.max(
+                maxBottom,
+                shape.offsetTop +
+                shape.offsetHeight +
+                200
+            );
+        });
+
+    /* Include free-line endpoints and bends */
+    const topicConnections =
+        savedConnections[currentTopic] || [];
+
+    topicConnections.forEach(
+        function (connection) {
+
+            if (
+                connection.type !== "freeLine"
+            ) {
+                return;
+            }
+
+            maxRight = Math.max(
+                maxRight,
+                connection.x1 + 200,
+                connection.x2 + 200
+            );
+
+            maxBottom = Math.max(
+                maxBottom,
+                connection.y1 + 200,
+                connection.y2 + 200
+            );
+
+            if (
+                Array.isArray(
+                    connection.controlPoints
+                )
+            ) {
+                connection.controlPoints.forEach(
+                    function (point) {
+
+                        maxRight = Math.max(
+                            maxRight,
+                            point.x + 200
+                        );
+
+                        maxBottom = Math.max(
+                            maxBottom,
+                            point.y + 200
+                        );
+                    }
+                );
+            }
+        }
+    );
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents =
+            "none";
+
+        viewport.appendChild(spacer);
+    }
+
+    spacer.style.width =
+        Math.max(
+            canvas.offsetWidth,
+            maxRight
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            0,
+            maxBottom -
+            canvas.offsetHeight
+        ) + "px";
+}
 function makeDraggable(shape) {
 
     let offsetX = 0;
     let offsetY = 0;
     let dragging = false;
+let activePointerId = null;
+let captureTarget = null;
 
-    shape.addEventListener("mousedown", function (event) {
+let dragStartClientX = 0;
+let dragStartClientY = 0;
+let actuallyMoved = false;
 
-   if (
-    event.target.closest(".shape-text") &&
-    shape.savedData.type !== "hover"
-) {
-    dragging = false;
-    return;
-}
+    shape.addEventListener("pointerdown", function (event) {
 
-    if (shape.savedData.type !== "hover") {
+        const dragHandle = event.target.closest(".drag-handle");
 
-    const resizeCorner = 20;
+        /* On touch/pen, normal shapes move only from the drag grip */
+        if (
+            event.pointerType !== "mouse" &&
+            shape.savedData.type !== "hover" &&
+            !dragHandle
+        ) {
+            return;
+        }
 
-    const nearRight =
-        event.offsetX > shape.offsetWidth - resizeCorner;
+        /* Keep text editable */
+        if (
+            event.target.closest(".shape-text") &&
+            shape.savedData.type !== "hover"
+        ) {
+            return;
+        }
 
-    const nearBottom =
-        event.offsetY > shape.offsetHeight - resizeCorner;
+        /* Don't start dragging from the resize handle */
+        if (event.target.closest(".resize-handle")) {
+            return;
+        }
 
-    if (nearRight && nearBottom) {
-        dragging = false;
-        return;
-    }
-}
+        event.preventDefault();
+        event.stopPropagation();
 
-    dragging = true;
-    if (shape.savedData.type === "hover") {
-    shape.classList.add("dragging-hover");
-}
-const canvasRect = canvas.getBoundingClientRect();
+        dragging = true;
+        activePointerId = event.pointerId;
+        dragStartClientX = event.clientX;
+dragStartClientY = event.clientY;
+actuallyMoved = false;
 
-offsetX =
-    (event.clientX - canvasRect.left) / canvasZoom -
-    shape.offsetLeft;
+        captureTarget = dragHandle || shape;
 
-offsetY =
-    (event.clientY - canvasRect.top) / canvasZoom -
-    shape.offsetTop;
+        if (captureTarget.setPointerCapture) {
+            captureTarget.setPointerCapture(event.pointerId);
+        }
 
-});
-
-    document.addEventListener("mousemove", function (event) {
-
-        if (dragging) {
+        if (shape.savedData.type === "hover") {
+            shape.classList.add("dragging-hover");
+        }
 
         const canvasRect = canvas.getBoundingClientRect();
 
-const newLeft =
-    (event.clientX - canvasRect.left) / canvasZoom -
-    offsetX;
+        offsetX =
+            (event.clientX - canvasRect.left) / canvasZoom -
+            shape.offsetLeft;
 
-const newTop =
-    (event.clientY - canvasRect.top) / canvasZoom -
-    offsetY;
-
-shape.style.left = newLeft + "px";
-shape.style.top = newTop + "px";
-updateConnections();
-        }
-
+        offsetY =
+            (event.clientY - canvasRect.top) / canvasZoom -
+            shape.offsetTop;
     });
 
-    document.addEventListener("mouseup", function () {
+    document.addEventListener("pointermove", function (event) {
+
+        if (
+            !dragging ||
+            event.pointerId !== activePointerId
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        if (
+    Math.hypot(
+        event.clientX - dragStartClientX,
+        event.clientY - dragStartClientY
+    ) > 6
+) {
+    actuallyMoved = true;
+}
+
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const newLeft =
+            (event.clientX - canvasRect.left) / canvasZoom -
+            offsetX;
+
+        const newTop =
+            (event.clientY - canvasRect.top) / canvasZoom -
+            offsetY;
+
+       const safeLeft =
+    Math.max(0, newLeft);
+
+const safeTop =
+    Math.max(0, newTop);
+
+shape.style.left =
+    safeLeft + "px";
+
+shape.style.top =
+    safeTop + "px";
+    extendWorkspaceForShape(shape);
+if (
+    shape.savedData.type === "hover" &&
+    activeHoverShape === shape
+) {
+    positionHoverPopup(shape);
+}
+
+
+        updateConnections();
+    });
+
+    function stopDragging(event) {
+
+        if (
+            !dragging ||
+            event.pointerId !== activePointerId
+        ) {
+            return;
+        }
+
+        if (shape.savedData) {
+            shape.savedData.left = shape.offsetLeft;
+            shape.savedData.top = shape.offsetTop;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+        }
+if (
+    shape.savedData.type === "hover" &&
+    actuallyMoved
+) {
+    shape.hoverIgnoreClickUntil =
+        Date.now() + 500;
+}
         if (shape.savedData.type === "hover") {
-    shape.classList.remove("dragging-hover");
-}
+            shape.classList.remove("dragging-hover");
+        }
 
-    if (dragging && shape.savedData) {
+        if (
+            captureTarget &&
+            captureTarget.hasPointerCapture &&
+            captureTarget.hasPointerCapture(activePointerId)
+        ) {
+            captureTarget.releasePointerCapture(activePointerId);
+        }
 
-        shape.savedData.left = shape.offsetLeft;
-        shape.savedData.top = shape.offsetTop;
+        dragging = false;
+activePointerId = null;
+captureTarget = null;
 
-        localStorage.setItem("shapes", JSON.stringify(shapes));
+/* Remove any unnecessary blank workspace */
+recalculateOverflowWorkspace();
     }
-if (shape.savedData.type === "hover") {
-    shape.classList.remove("dragging-hover");
-}
-    dragging = false;
-});
 
+    document.addEventListener("pointerup", stopDragging);
+    document.addEventListener("pointercancel", stopDragging);
 }
 
 colourPicker.addEventListener("input", function () {
@@ -2539,52 +3298,181 @@ function diamondTextNeedsMoreRoom(shape, textEditor) {
 }
 function makeResizable(shape, handle) {
 
-    handle.addEventListener("mousedown", function (event) {
+    let resizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
 
-        event.stopPropagation();
-        
+    function startResize(clientX, clientY) {
+        resizing = true;
 
+        startX = clientX;
+        startY = clientY;
 
-        const startX = event.clientX;
-        const startY = event.clientY;
-
-        const startWidth = shape.offsetWidth;
-        const startHeight = shape.offsetHeight;
-
-       function resize(event) {
-
-    shape.style.width =
-        startWidth +
-        ((event.clientX - startX) / canvasZoom) +
-        "px";
-
-    shape.style.height =
-        startHeight +
-        ((event.clientY - startY) / canvasZoom) +
-        "px";
-
-    updateConnections();
-}
-
-        function stopResize() {
-
-    if (shape.savedData) {
-        shape.savedData.width = shape.offsetWidth;
-        shape.savedData.height = shape.offsetHeight;
-
-        localStorage.setItem("shapes", JSON.stringify(shapes));
+        startWidth = shape.offsetWidth;
+        startHeight = shape.offsetHeight;
     }
 
-    document.removeEventListener("mousemove", resize);
-    document.removeEventListener("mouseup", stopResize);
-}
+    function resizeTo(clientX, clientY) {
 
-        document.addEventListener("mousemove", resize);
-        document.addEventListener("mouseup", stopResize);
+        if (!resizing) {
+            return;
+        }
 
+        const newWidth =
+            startWidth +
+            ((clientX - startX) / canvasZoom);
+
+        const newHeight =
+            startHeight +
+            ((clientY - startY) / canvasZoom);
+
+        shape.style.width =
+            Math.max(60, newWidth) + "px";
+
+        shape.style.height =
+            Math.max(40, newHeight) + "px";
+
+        updateConnections();
+    }
+
+    function finishResize() {
+
+        if (!resizing) {
+            return;
+        }
+
+        resizing = false;
+
+        if (shape.savedData) {
+
+            shape.savedData.width = shape.offsetWidth;
+            shape.savedData.height = shape.offsetHeight;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+        }
+    }
+
+    /* Desktop / Safari simulator */
+    handle.addEventListener("mousedown", function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        startResize(
+            event.clientX,
+            event.clientY
+        );
+
+        function mouseMove(event) {
+            event.preventDefault();
+
+            resizeTo(
+                event.clientX,
+                event.clientY
+            );
+        }
+
+        function mouseUp() {
+            finishResize();
+
+            window.removeEventListener(
+                "mousemove",
+                mouseMove
+            );
+
+            window.removeEventListener(
+                "mouseup",
+                mouseUp
+            );
+        }
+
+        window.addEventListener(
+            "mousemove",
+            mouseMove
+        );
+
+        window.addEventListener(
+            "mouseup",
+            mouseUp
+        );
     });
+
+    /* Real iPhone / iPad */
+    handle.addEventListener(
+        "touchstart",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const touch = event.touches[0];
+
+            startResize(
+                touch.clientX,
+                touch.clientY
+            );
+
+            function touchMove(event) {
+
+                event.preventDefault();
+
+                const touch = event.touches[0];
+
+                resizeTo(
+                    touch.clientX,
+                    touch.clientY
+                );
+            }
+
+            function touchEnd() {
+
+                finishResize();
+
+                window.removeEventListener(
+                    "touchmove",
+                    touchMove
+                );
+
+                window.removeEventListener(
+                    "touchend",
+                    touchEnd
+                );
+
+                window.removeEventListener(
+                    "touchcancel",
+                    touchEnd
+                );
+            }
+
+            window.addEventListener(
+                "touchmove",
+                touchMove,
+                { passive: false }
+            );
+
+            window.addEventListener(
+                "touchend",
+                touchEnd
+            );
+
+            window.addEventListener(
+                "touchcancel",
+                touchEnd
+            );
+        },
+        { passive: false }
+    );
 }
 
+    
+        
+
+        
 connectBtn.addEventListener("click", function () {
 
    const connectionLayer =
@@ -2619,6 +3507,11 @@ const savedFreeLine = {
     
     line.style.pointerEvents = "stroke";
 line.style.cursor = "pointer";
+
+makeFreeLineDraggable(
+    line,
+    savedFreeLine
+);
 
 line.addEventListener("click", function (event) {
     event.stopPropagation();
@@ -2666,6 +3559,7 @@ endHandle.setAttribute("r", "7");
 endHandle.setAttribute("fill", "#111827");
 startHandle.style.pointerEvents = "all";
 startHandle.style.cursor = "grab";
+startHandle.style.touchAction = "none";
 startHandle.addEventListener("click", function (event) {
 
     event.stopPropagation();
@@ -2688,7 +3582,7 @@ startHandle.addEventListener("click", function (event) {
     startHandle.setAttribute("stroke-width", "4");
 });
 
-startHandle.addEventListener("mousedown", function (event) {
+startHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
     function moveStartHandle(event) {
@@ -2716,24 +3610,32 @@ if (snap && snap.distance <= 30) {
       startHandle.setAttribute("cx", savedFreeLine.x1);
 startHandle.setAttribute("cy", savedFreeLine.y1);
 
-        
-    updateConnections();
+extendWorkspaceForPoint(
+    savedFreeLine.x1,
+    savedFreeLine.y1
+);
+
+updateConnections();
     }
 
-    document.addEventListener("mousemove", moveStartHandle);
+    function stopMovingStartHandle() {
+    document.removeEventListener("pointermove", moveStartHandle);
+    document.removeEventListener("pointerup", stopMovingStartHandle);
 
-    document.addEventListener("mouseup", function stopMovingStartHandle() {
-        document.removeEventListener("mousemove", moveStartHandle);
-        document.removeEventListener("mouseup", stopMovingStartHandle);
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
 
-        localStorage.setItem(
-            "connections",
-            JSON.stringify(savedConnections)
-        );
-    });
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveStartHandle);
+document.addEventListener("pointerup", stopMovingStartHandle);
 });
 endHandle.style.pointerEvents = "all";
 endHandle.style.cursor = "grab";
+endHandle.style.touchAction = "none";
 endHandle.addEventListener("click", function (event) {
 
     event.stopPropagation();
@@ -2755,7 +3657,7 @@ endHandle.addEventListener("click", function (event) {
     endHandle.setAttribute("stroke", "#2563eb");
     endHandle.setAttribute("stroke-width", "4");
 });
-endHandle.addEventListener("mousedown", function (event) {
+endHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
     function moveEndHandle(event) {
@@ -2782,23 +3684,30 @@ if (snap && snap.distance <= 30) {
 }
 
         endHandle.setAttribute("cx", savedFreeLine.x2);
-        endHandle.setAttribute("cy", savedFreeLine.y2);
+endHandle.setAttribute("cy", savedFreeLine.y2);
 
-        updateConnections();
+extendWorkspaceForPoint(
+    savedFreeLine.x2,
+    savedFreeLine.y2
+);
+
+updateConnections();
     }
 
     function stopMovingEndHandle() {
-        document.removeEventListener("mousemove", moveEndHandle);
-        document.removeEventListener("mouseup", stopMovingEndHandle);
+    document.removeEventListener("pointermove", moveEndHandle);
+    document.removeEventListener("pointerup", stopMovingEndHandle);
 
-        localStorage.setItem(
-            "connections",
-            JSON.stringify(savedConnections)
-        );
-    }
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
 
-    document.addEventListener("mousemove", moveEndHandle);
-    document.addEventListener("mouseup", stopMovingEndHandle);
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveEndHandle);
+document.addEventListener("pointerup", stopMovingEndHandle);
 });
 connectionLayer.appendChild(startHandle);
 connectionLayer.appendChild(endHandle);
@@ -2967,6 +3876,39 @@ if (
     showConnectionHandle(line);
 
 });
+
+
+line.addEventListener(
+    "touchend",
+    function (event) {
+
+        const now = Date.now();
+
+        if (now - lastLineTapTime < 400) {
+
+            const touch =
+                event.changedTouches[0];
+
+            line.dispatchEvent(
+                new MouseEvent(
+                    "dblclick",
+                    {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    }
+                )
+            );
+
+            lastLineTapTime = 0;
+            return;
+        }
+
+        lastLineTapTime = now;
+    },
+    { passive: true }
+);
 line.addEventListener("dblclick", function (event) {
 
     event.stopPropagation();
@@ -4375,6 +5317,7 @@ connectionHandles = [];
 
     connectionHandle.style.pointerEvents = "all";
     connectionHandle.style.cursor = "move";
+    connectionHandle.style.touchAction = "none";
     connectionHandle.addEventListener("click", function (event) {
 
     event.stopPropagation();
@@ -4629,108 +5572,273 @@ point.offsetY = y - baseY;
     line.setAttribute("d", pathData);
 }
 
-    // BLUE HANDLE DRAG
-    connectionHandle.addEventListener(
-        "pointerdown",
-        function (event) {
+    
+// BLUE HANDLE DRAG
 
-            event.stopPropagation();
+let blueBendSaveTimer = null;
 
-            connectionHandle.setPointerCapture(
-                event.pointerId
-            );
+function saveBlueBend() {
 
-            function moveControl(event) {
+    if (!connection.savedData) {
+        return;
+    }
 
-                const canvasRect =
-                    canvas.getBoundingClientRect();
-
-            const x =
-    (event.clientX - canvasRect.left) / canvasZoom;
-
-const y =
-    (event.clientY - canvasRect.top) / canvasZoom;
-
-                const middleX =
-    (connection.point1.x + connection.point2.x) / 2;
-
-const middleY =
-    (connection.point1.y + connection.point2.y) / 2;
-
-connection.controlPoint = {
-    x: x,
-    y: y,
-    offsetX: x - middleX,
-    offsetY: y - middleY
-};
-connection.controlPoints[0] = {
-    x: x,
-    y: y,
-    offsetX: x - middleX,
-    offsetY: y - middleY,
-    followsLine: true
-};
-
-                connectionHandle.setAttribute("cx", x);
-                connectionHandle.setAttribute("cy", y);
-
-                redrawPreview(
-                    connection.point1.x,
-                    connection.point1.y,
-                    connection.point2.x,
-                    connection.point2.y
-                );
-            }
-
-            function stopControl(event) {
-                const savedConnection =
-    connection.savedData;
-
-if (savedConnection && connection.controlPoint) {
-
-    savedConnection.controlPoint = {
-        x: connection.controlPoint.x,
-        y: connection.controlPoint.y,
-        offsetX: connection.controlPoint.offsetX,
-        offsetY: connection.controlPoint.offsetY
+    connection.savedData.controlPoint = {
+        ...connection.controlPoint
     };
-savedConnection.controlPoints =
-    connection.controlPoints.map(function (point) {
-        return { ...point };
-    });
+
+    connection.savedData.controlPoints =
+        connection.controlPoints.map(function (point) {
+            return { ...point };
+        });
+
     localStorage.setItem(
         "connections",
         JSON.stringify(savedConnections)
     );
 }
 
-                connectionHandle.releasePointerCapture(
-                    event.pointerId
-                );
+function moveBlueHandle(clientX, clientY) {
 
-                connectionHandle.removeEventListener(
-                    "pointermove",
-                    moveControl
-                );
+    const canvasRect =
+        canvas.getBoundingClientRect();
 
-                connectionHandle.removeEventListener(
-                    "pointerup",
-                    stopControl
-                );
-            }
+    const x =
+        (clientX - canvasRect.left) / canvasZoom;
 
-            connectionHandle.addEventListener(
-                "pointermove",
-                moveControl
-            );
+    const y =
+        (clientY - canvasRect.top) / canvasZoom;
 
-            connectionHandle.addEventListener(
-                "pointerup",
-                stopControl
-            );
-        }
+    const middleX =
+        (connection.point1.x + connection.point2.x) / 2;
+
+    const middleY =
+        (connection.point1.y + connection.point2.y) / 2;
+
+    connection.controlPoint = {
+        x: x,
+        y: y,
+        offsetX: x - middleX,
+        offsetY: y - middleY
+    };
+
+    connection.controlPoints[0] = {
+        x: x,
+        y: y,
+        offsetX: x - middleX,
+        offsetY: y - middleY,
+        followsLine: true
+    };
+
+    connectionHandle.setAttribute("cx", x);
+    connectionHandle.setAttribute("cy", y);
+
+    redrawPreview(
+        connection.point1.x,
+        connection.point1.y,
+        connection.point2.x,
+        connection.point2.y
     );
 
+    /*
+       Save shortly after movement stops.
+       This also protects us if Safari loses the release event.
+    */
+    clearTimeout(blueBendSaveTimer);
+
+    blueBendSaveTimer =
+        setTimeout(saveBlueBend, 100);
+}
+
+let blueMoveFrame = null;
+let blueMoveX = 0;
+let blueMoveY = 0;
+
+function queueBlueHandleMove(clientX, clientY) {
+
+    blueMoveX = clientX;
+    blueMoveY = clientY;
+
+    if (blueMoveFrame !== null) {
+        return;
+    }
+
+    blueMoveFrame =
+        requestAnimationFrame(function () {
+
+            blueMoveFrame = null;
+
+            moveBlueHandle(
+
+                blueMoveX,
+                blueMoveY
+            );
+        });
+}
+/* Desktop / Safari simulator */
+connectionHandle.addEventListener(
+    "mousedown",
+    function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+        canvasPanning = false;
+
+const bendViewport =
+    document.getElementById("canvasViewport");
+    
+    const lockedScrollLeft =
+    bendViewport.scrollLeft;
+
+const lockedScrollTop =
+    bendViewport.scrollTop;
+
+const oldOverflow =
+    bendViewport.style.overflow;
+
+const oldBodyOverflow =
+    document.body.style.overflow;
+
+bendViewport.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+        function mouseMove(event) {
+
+    event.preventDefault();
+
+    bendViewport.scrollLeft =
+        lockedScrollLeft;
+
+    bendViewport.scrollTop =
+        lockedScrollTop;
+
+    queueBlueHandleMove(
+        event.clientX,
+        event.clientY
+    );
+}
+
+        function mouseUp() {
+bendViewport.style.overflow =
+    oldOverflow;
+
+document.body.style.overflow =
+    oldBodyOverflow;
+            clearTimeout(blueBendSaveTimer);
+            saveBlueBend();
+
+            window.removeEventListener(
+                "mousemove",
+                mouseMove
+            );
+
+            window.removeEventListener(
+                "mouseup",
+                mouseUp
+            );
+        }
+
+        window.addEventListener(
+            "mousemove",
+            mouseMove
+        );
+
+        window.addEventListener(
+            "mouseup",
+            mouseUp
+        );
+    }
+);
+
+
+/* Real iPhone / iPad */
+connectionHandle.addEventListener(
+    "touchstart",
+    function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+        canvasPanning = false;
+
+const bendViewport =
+    document.getElementById("canvasViewport");
+    const lockedScrollLeft =
+    bendViewport.scrollLeft;
+
+const lockedScrollTop =
+    bendViewport.scrollTop;
+
+const oldOverflow =
+    bendViewport.style.overflow;
+
+const oldBodyOverflow =
+    document.body.style.overflow;
+
+bendViewport.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+        function touchMove(event) {
+
+    event.preventDefault();
+
+    bendViewport.scrollLeft =
+        lockedScrollLeft;
+
+    bendViewport.scrollTop =
+        lockedScrollTop;
+
+    const touch = event.touches[0];
+
+    queueBlueHandleMove(
+        touch.clientX,
+        touch.clientY
+    );
+}
+
+        function touchEnd() {
+            bendViewport.style.overflow =
+    oldOverflow;
+
+document.body.style.overflow =
+    oldBodyOverflow;
+
+            clearTimeout(blueBendSaveTimer);
+            saveBlueBend();
+
+            window.removeEventListener(
+                "touchmove",
+                touchMove
+            );
+
+            window.removeEventListener(
+                "touchend",
+                touchEnd
+            );
+
+            window.removeEventListener(
+                "touchcancel",
+                touchEnd
+            );
+        }
+
+        window.addEventListener(
+            "touchmove",
+            touchMove,
+            { passive: false }
+        );
+
+        window.addEventListener(
+            "touchend",
+            touchEnd
+        );
+
+        window.addEventListener(
+            "touchcancel",
+            touchEnd
+        );
+    },
+    { passive: false }
+);
     // END HANDLE DRAG
     endHandle.addEventListener(
         "pointerdown",
@@ -4989,6 +6097,15 @@ if (savedConnection) {
     );
 }
 document.addEventListener("keydown", function (event) {
+        const textEditor =
+        event.target.closest
+            ? event.target.closest(".shape-text")
+            : null;
+
+    if (textEditor) {
+        return;
+    }
+
 
         if (
         (event.key === "Delete" || event.key === "Backspace") &&
@@ -5160,6 +6277,11 @@ canvas.addEventListener("pointerdown", function (event) {
     }
 
     event.preventDefault();
+    if (resizeHandle.setPointerCapture) {
+    resizeHandle.setPointerCapture(
+        event.pointerId
+    );
+}
 
     const canvasSizeLabel =
         resizeHandle.querySelector("#canvasSizeLabel");
@@ -5174,128 +6296,334 @@ canvas.addEventListener("pointerdown", function (event) {
 
 const startScrollLeft =
     canvasViewport ? canvasViewport.scrollLeft : 0;
-    let lastPointerX = startX;
-let lastPointerY = startY;
-let autoGrowFrame = null;
+    const startScrollY =
+    window.scrollY;
+let lastResizeX = startX;
+let lastResizeY = startY;
 
-    function resizeCanvas(moveEvent) {
-        lastPointerX = moveEvent.clientX;
-lastPointerY = moveEvent.clientY;
+let horizontalResizeDirection = 0;
+let horizontalAutoOffset = 0;
 
-        canvasSizeSelect.value = "custom";
 
-        localStorage.setItem(
-            "canvasSizeMode",
-            "custom"
-        );
+let edgeScrollFrame = null;
+let resizeHasMoved = false;
+let resizeActive = true;
+function applyCanvasResize() {
 
-      
+    
 
-const scrollDifference =
-    canvasViewport
-        ? canvasViewport.scrollLeft - startScrollLeft
-        : 0;
+    const verticalScrollDifference =
+        window.scrollY -
+        startScrollY;
 
-const newWidth = Math.max(
+   const newWidth = Math.max(
     300,
     startWidth +
-    (moveEvent.clientX - startX) +
-    scrollDifference
+    (lastResizeX - startX) +
+    horizontalAutoOffset
 );
 
-        const newHeight = Math.max(
-            300,
-            startHeight + (moveEvent.clientY - startY)
+    const newHeight = Math.max(
+        300,
+        startHeight +
+        (lastResizeY - startY) +
+        verticalScrollDifference
+    );
+
+    canvas.style.width =
+        newWidth + "px";
+
+    canvas.style.height =
+        newHeight + "px";
+
+    if (canvasSizeLabel) {
+
+        canvasSizeLabel.textContent =
+            Math.round(newWidth) +
+            " × " +
+            Math.round(newHeight) +
+            " px";
+
+        canvasSizeLabel.style.display =
+            "block";
+    }
+
+    updateConnections();
+}
+function resizeCanvas(moveEvent) {
+    resizeHasMoved = true;
+
+    if (!edgeScrollFrame) {
+        edgeScrollFrame =
+            requestAnimationFrame(
+                edgeScrollCanvas
+            );
+    }
+
+    const horizontalMovement =
+    moveEvent.clientX -
+    lastResizeX;
+
+if (Math.abs(horizontalMovement) > 0.5) {
+
+    horizontalResizeDirection =
+        horizontalMovement > 0
+            ? 1
+            : -1;
+}
+
+lastResizeX =
+    moveEvent.clientX;
+
+lastResizeY =
+    moveEvent.clientY;
+
+    canvasSizeSelect.value =
+        "custom";
+
+    localStorage.setItem(
+        "canvasSizeMode",
+        "custom"
+    );
+
+    applyCanvasResize();
+}
+
+
+function edgeScrollCanvas() {
+
+    if (!resizeActive || !resizeHasMoved) {
+        return;
+    }
+
+    const viewportRect =
+        canvasViewport.getBoundingClientRect();
+        const visibleRight =
+    Math.min(
+        viewportRect.right,
+        window.innerWidth
+    );
+
+const visibleLeft =
+    Math.max(
+        viewportRect.left,
+        0
+    );
+
+    /*
+     * Give the horizontal viewport some temporary
+     * space so Safari CAN scroll beyond the current canvas edge.
+     */
+    let resizeSpacer =
+        document.getElementById(
+            "canvasResizeSpacer"
         );
 
-        canvas.style.width = newWidth + "px";
-        canvas.style.height = newHeight + "px";
+    if (!resizeSpacer) {
 
-        if (canvasSizeLabel) {
-            canvasSizeLabel.textContent =
-                Math.round(newWidth) +
-                " × " +
-                Math.round(newHeight) +
-                " px";
+        resizeSpacer =
+            document.createElement("div");
 
-            canvasSizeLabel.style.display = "block";
-        }
+        resizeSpacer.id =
+            "canvasResizeSpacer";
+
+        resizeSpacer.style.height =
+            "0px";
+
+        resizeSpacer.style.pointerEvents =
+            "none";
+
+        canvasViewport.appendChild(
+            resizeSpacer
+        );
     }
-function autoGrowCanvas() {
 
+    resizeSpacer.style.width =
+    Math.max(
+        startWidth + 2000,
+        canvas.offsetWidth + 500
+    ) + "px";
+
+    /* RIGHT EDGE */
     if (
-        canvasViewport &&
-        lastPointerX >= window.innerWidth - 50
-    ) {
-        const currentWidth =
-            parseFloat(
-                window.getComputedStyle(canvas).width
+    horizontalResizeDirection > 0 &&
+    lastResizeX >
+    visibleRight - 70
+) {
+
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        lastResizeX -
+(visibleRight - 70)
+                    ) * 0.25
+                )
+            );
+horizontalAutoOffset +=
+    speed;
+
+applyCanvasResize();
+
+/*
+ * Keep the real resize handle visible
+ * as the canvas grows beyond the screen.
+ */
+const handleRect =
+    resizeHandle.getBoundingClientRect();
+
+const rightOverflow =
+    handleRect.right -
+    (visibleRight - 8);
+
+if (rightOverflow > 0) {
+    canvasViewport.scrollLeft +=
+        rightOverflow;
+}
+    }
+
+
+    /* LEFT EDGE */
+   if (
+    horizontalResizeDirection < 0 &&
+    lastResizeX <
+    visibleLeft + 70 &&
+    canvasViewport.scrollLeft > 0
+) {
+
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        visibleLeft +
+70 -
+lastResizeX
+                    ) * 0.25
+                )
             );
 
-        const growBy = 5;
+       horizontalAutoOffset -=
+    speed;
 
-        canvas.style.width =
-            (currentWidth + growBy) + "px";
+applyCanvasResize();
 
-        canvasViewport.scrollLeft += growBy;
+/*
+ * Keep the real resize handle visible
+ * as the canvas shrinks back to the left.
+ */
+const handleRect =
+    resizeHandle.getBoundingClientRect();
 
-        if (canvasSizeLabel) {
-            canvasSizeLabel.textContent =
-                Math.round(canvas.offsetWidth) +
-                " × " +
-                Math.round(canvas.offsetHeight) +
-                " px";
-        }
+const leftOverflow =
+    (visibleLeft + 8) -
+    handleRect.left;
 
-        updateConnections();
+if (leftOverflow > 0) {
+    canvasViewport.scrollLeft =
+        Math.max(
+            0,
+            canvasViewport.scrollLeft -
+            leftOverflow
+        );
+}
     }
 
-    autoGrowFrame =
-        requestAnimationFrame(autoGrowCanvas);
-}
 
-autoGrowFrame =
-    requestAnimationFrame(autoGrowCanvas);
-    function stopResize() {
-        if (autoGrowFrame) {
-    cancelAnimationFrame(autoGrowFrame);
-    autoGrowFrame = null;
-}
+    /* BOTTOM — leave the working vertical behaviour */
+    if (
+        lastResizeY >
+        window.innerHeight - 70
+    ) {
 
-        if (canvasSizeLabel) {
-            canvasSizeLabel.style.display = "none";
-        }
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        lastResizeY -
+                        (window.innerHeight - 70)
+                    ) * 0.25
+                )
+            );
 
-        localStorage.setItem(
-            "canvasWidth",
-            canvas.offsetWidth
+        window.scrollBy(
+            0,
+            speed
         );
 
-        localStorage.setItem(
-            "canvasHeight",
-            canvas.offsetHeight
-        );
-
-        window.removeEventListener(
-            "pointermove",
-            resizeCanvas
-        );
-
-        window.removeEventListener(
-            "pointerup",
-            stopResize
-        );
+        applyCanvasResize();
     }
 
-    window.addEventListener(
-        "pointermove",
-        resizeCanvas
+
+    edgeScrollFrame =
+        requestAnimationFrame(
+            edgeScrollCanvas
+        );
+}
+function stopResize() {
+    resizeActive = false;
+    const resizeSpacer =
+    document.getElementById(
+        "canvasResizeSpacer"
     );
 
-    window.addEventListener(
-        "pointerup",
-        stopResize
+if (resizeSpacer) {
+    resizeSpacer.remove();
+}
+    if (edgeScrollFrame) {
+        cancelAnimationFrame(edgeScrollFrame);
+        edgeScrollFrame = null;
+    }
+
+    if (canvasSizeLabel) {
+        canvasSizeLabel.style.display = "none";
+    }
+
+    localStorage.setItem(
+        "canvasWidth",
+        canvas.offsetWidth
     );
+
+    localStorage.setItem(
+        "canvasHeight",
+        canvas.offsetHeight
+    );
+
+    window.removeEventListener(
+    "pointermove",
+    resizeCanvas
+);
+
+window.removeEventListener(
+    "pointerup",
+    stopResize
+);
+
+window.removeEventListener(
+    "pointercancel",
+    stopResize
+);
+}
+
+window.addEventListener(
+    "pointermove",
+    resizeCanvas
+);
+
+window.addEventListener(
+    "pointerup",
+    stopResize
+);
+window.addEventListener(
+    "pointercancel",
+    stopResize
+);
+
 });
 const canvasToolbar = document.getElementById("canvasToolbar");
 const canvasWorkspace = document.getElementById("canvasWorkspace");
@@ -5906,8 +7234,105 @@ deleteHoverBtn.addEventListener("click", function () {
 });
 const hoverPopup =
     document.getElementById("hoverPopup");
-    let hoverHideTimer;
 
+/* Mobile/tablet: tap hover symbol to show its content */
+canvas.addEventListener("click", function (event) {
+
+    const hoverShape =
+        event.target.closest(".hover-symbol");
+
+   if (
+    !hoverShape ||
+    !hoverShape.savedData
+) {
+    return;
+}
+
+/* A drag is not a tap */
+if (
+    hoverShape.hoverIgnoreClickUntil &&
+    Date.now() <
+        hoverShape.hoverIgnoreClickUntil
+) {
+    return;
+}
+
+showHoverContent(
+    hoverShape,
+    hoverShape.savedData
+);
+});
+let activeHoverShape = null;
+
+let hoverHideTimer;
+function positionHoverPopup(shape) {
+
+    if (
+        !shape ||
+        hoverPopup.style.display !== "block"
+    ) {
+        return;
+    }
+
+    const rect =
+        shape.getBoundingClientRect();
+
+    const popupRect =
+        hoverPopup.getBoundingClientRect();
+
+    let left =
+    rect.right + 30;
+
+    let top =
+        rect.top;
+
+    if (
+        left + popupRect.width >
+        window.innerWidth - 10
+    ) {
+        left =
+    rect.left -
+    popupRect.width -
+    30;
+    }
+
+    if (
+        top + popupRect.height >
+        window.innerHeight - 10
+    ) {
+        top =
+            window.innerHeight -
+            popupRect.height -
+            10;
+    }
+
+    if (left < 10) {
+        left = 10;
+    }
+
+    if (top < 10) {
+        top = 10;
+    }
+
+    hoverPopup.style.left =
+        window.scrollX + left + "px";
+
+    hoverPopup.style.top =
+        window.scrollY + top + "px";
+}
+document
+    .getElementById("canvasViewport")
+    .addEventListener(
+        "scroll",
+        function () {
+
+            if (activeHoverShape) {
+                positionHoverPopup(
+                    activeHoverShape
+                );
+            }
+        }
+    );
 function scheduleHoverPopupHide() {
     clearTimeout(hoverHideTimer);
 
@@ -5946,6 +7371,18 @@ canvas.addEventListener("click", function (event) {
         shapeSelectionOutline.remove();
         shapeSelectionOutline = null;
     }
+    if (selectedConnection) {
+
+    selectedConnection.setAttribute(
+        "stroke-width",
+        "3"
+    );
+
+    selectedConnection = null;
+    selectedConnectionData = null;
+
+    removeLineHandles();
+}
 });
 function clearStuckHoverDrag() {
     document
@@ -6043,6 +7480,7 @@ const { error } = await supabaseClient.storage
     alert("Hover image uploaded successfully");
 });
 async function showHoverContent(shape, savedData) {
+    activeHoverShape = shape;
 
     if (!savedData.hoverText && !savedData.hoverImage) {
         return;
@@ -6120,52 +7558,9 @@ image.addEventListener("click", function () {
         }
     }
 
-    const rect = shape.getBoundingClientRect();
+    hoverPopup.style.display = "block";
 
-hoverPopup.style.display = "block";
-
-const popupRect =
-    hoverPopup.getBoundingClientRect();
-
-let left =
-    rect.right + 10;
-
-let top =
-    rect.top;
-
-if (
-    left + popupRect.width >
-    window.innerWidth - 10
-) {
-    left =
-        rect.left -
-        popupRect.width -
-        10;
-}
-
-if (
-    top + popupRect.height >
-    window.innerHeight - 10
-) {
-    top =
-        window.innerHeight -
-        popupRect.height -
-        10;
-}
-
-if (left < 10) {
-    left = 10;
-}
-
-if (top < 10) {
-    top = 10;
-}
-
-hoverPopup.style.left =
-    window.scrollX + left + "px";
-
-hoverPopup.style.top =
-    window.scrollY + top + "px";
+positionHoverPopup(shape);
 }
 const removeHoverImageBtn =
     document.getElementById("removeHoverImageBtn");
@@ -6543,13 +7938,21 @@ const canvasViewport =
 
 let canvasPanning = false;
 let panStartX = 0;
+let panStartY = 0;
 let panStartScrollLeft = 0;
+let panStartScrollTop = 0;
 
-canvas.addEventListener("pointerdown", function (event) {
-
-    if (event.target !== canvas) {
+canvasViewport.addEventListener("pointerdown", function (event) {
+    
+    if (event.pointerType === "touch") {
         return;
     }
+    if (
+    event.target !== canvas &&
+    event.target !== canvasViewport
+) {
+    return;
+}
 
     if (!canvasViewport) {
         return;
@@ -6558,7 +7961,10 @@ canvas.addEventListener("pointerdown", function (event) {
     canvasPanning = true;
 
     panStartX = event.clientX;
-    panStartScrollLeft = canvasViewport.scrollLeft;
+panStartY = event.clientY;
+
+panStartScrollLeft = canvasViewport.scrollLeft;
+panStartScrollTop = window.scrollY;
 
     canvas.style.cursor = "grabbing";
 });
@@ -6569,11 +7975,31 @@ window.addEventListener("pointermove", function (event) {
         return;
     }
 
-    const distanceMoved =
-        event.clientX - panStartX;
+    const distanceMovedX =
+    event.clientX - panStartX;
 
+const distanceMovedY =
+    event.clientY - panStartY;
+
+if (
+    Math.abs(distanceMovedX) >
+    Math.abs(distanceMovedY)
+) {
+
+    /* Horizontal drag = move mind map */
     canvasViewport.scrollLeft =
-        panStartScrollLeft - distanceMoved;
+        panStartScrollLeft -
+        distanceMovedX;
+
+} else {
+
+    /* Vertical drag = move whole page */
+    window.scrollTo(
+        window.scrollX,
+        panStartScrollTop -
+        distanceMovedY
+    );
+}
 });
 
 window.addEventListener("pointerup", function () {
@@ -6585,3 +8011,89 @@ window.addEventListener("pointerup", function () {
     canvasPanning = false;
     canvas.style.cursor = "";
 });
+window.addEventListener("pointercancel", function () {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    canvasPanning = false;
+    canvas.style.cursor = "";
+});
+let touchCanvasPanning = false;
+let touchCanvasStartX = 0;
+let touchCanvasStartY = 0;
+let touchCanvasStartScrollLeft = 0;
+
+canvasViewport.addEventListener(
+    "touchstart",
+    function (event) {
+
+        if (
+    event.target !== canvas &&
+    event.target !== canvasViewport
+) {
+    return;
+}
+
+        const touch = event.touches[0];
+
+        touchCanvasPanning = true;
+
+        touchCanvasStartX = touch.clientX;
+        touchCanvasStartY = touch.clientY;
+
+        touchCanvasStartScrollLeft =
+            canvasViewport.scrollLeft;
+    },
+    { passive: true }
+);
+
+canvasViewport.addEventListener(
+    "touchmove",
+    function (event) {
+
+        if (!touchCanvasPanning) {
+            return;
+        }
+
+        const touch = event.touches[0];
+
+        const distanceX =
+            touch.clientX - touchCanvasStartX;
+
+        const distanceY =
+            touch.clientY - touchCanvasStartY;
+
+        /* Horizontal gesture = move mind map */
+        if (
+            Math.abs(distanceX) >
+            Math.abs(distanceY)
+        ) {
+
+            event.preventDefault();
+
+            canvasViewport.scrollLeft =
+                touchCanvasStartScrollLeft -
+                distanceX;
+        }
+
+        /* Vertical gesture is left alone,
+           so Safari scrolls the page */
+    },
+    { passive: false }
+);
+
+canvasViewport.addEventListener(
+    "touchend",
+    function () {
+        touchCanvasPanning = false;
+    }
+);
+
+canvasViewport.addEventListener(
+    "touchcancel",
+    function () {
+        touchCanvasPanning = false;
+    }
+);
