@@ -1366,7 +1366,11 @@ top: -18px;
         -webkit-overflow-scrolling: touch;
     }
 
-    #topicPage #canvasWorkspace {
-        padding-top: 72px !important;
-    }
+    #topicPage {
+    padding-top: 105px !important;
+}
+
+#topicPage #canvasWorkspace {
+    padding-top: 0 !important;
+}
 }
