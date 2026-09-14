@@ -8719,6 +8719,7 @@ let touchCanvasPanning = false;
 let touchCanvasStartX = 0;
 let touchCanvasStartY = 0;
 let touchCanvasStartScrollLeft = 0;
+let touchCanvasStartScrollY = 0;
 let touchCanvasDirection = null;
 
 let pinchZooming = false;
@@ -8830,6 +8831,7 @@ canvasViewport.addEventListener(
                 0,
                 canvasViewport.scrollLeft
             );
+            touchCanvasStartScrollY = window.scrollY;
     },
     { passive: false }
 );
@@ -8986,7 +8988,15 @@ canvasViewport.addEventListener(
                     )
                 );
         }
+if (touchCanvasDirection === "vertical") {
 
+    event.preventDefault();
+
+    window.scrollTo(
+        window.scrollX,
+        touchCanvasStartScrollY - distanceY
+    );
+}
         /*
          * Vertical gestures are left alone,
          * allowing normal page scrolling.

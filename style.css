@@ -1322,7 +1322,7 @@ top: -18px;
 @media (max-width: 700px), (hover: none) and (pointer: coarse) {
 
     #topicPage #canvasViewport {
-    touch-action: pan-y !important;
+    touch-action: none !important;
     overscroll-behavior-x: none !important;
 
     overflow-x: auto !important;
