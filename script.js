@@ -2964,6 +2964,55 @@ displayTopics();
         alert("Category created.");
     }
 );
+function getCurrentCanvasViewCentre() {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    const visibleLeft =
+        Math.max(0, viewportRect.left);
+
+    const visibleRight =
+        Math.min(
+            window.innerWidth,
+            viewportRect.right
+        );
+
+    const visibleTop =
+        Math.max(0, canvasRect.top);
+
+    const visibleBottom =
+        Math.min(
+            window.innerHeight,
+            canvasRect.bottom
+        );
+
+    const screenX =
+        visibleRight > visibleLeft
+            ? (visibleLeft + visibleRight) / 2
+            : window.innerWidth / 2;
+
+    const screenY =
+        visibleBottom > visibleTop
+            ? (visibleTop + visibleBottom) / 2
+            : window.innerHeight / 2;
+
+    return {
+        x:
+            (screenX - canvasRect.left) /
+            canvasZoom,
+
+        y:
+            (screenY - canvasRect.top) /
+            canvasZoom
+    };
+}
 addShapeBtn.addEventListener("click", function () {
 
     const shape = document.createElement("div");
@@ -3044,32 +3093,37 @@ canvas.appendChild(shape);
 if (!shapes[currentTopic]) {
     shapes[currentTopic] = [];
 }
-const canvasRect =
-    canvas.getBoundingClientRect();
+const currentView =
+    getCurrentCanvasViewCentre();
 
-const viewport =
-    document.getElementById("canvasViewport");
+let halfWidth = 70;
+let halfHeight = 35;
 
-const viewportRect =
-    viewport.getBoundingClientRect();
+if (shapeType.value === "hover") {
+    halfWidth = 15;
+    halfHeight = 15;
+}
+
+if (shapeType.value === "circle") {
+    halfWidth = 50;
+    halfHeight = 50;
+}
+
+if (shapeType.value === "diamond") {
+    halfWidth = 60;
+    halfHeight = 45;
+}
 
 const spawnLeft =
     Math.max(
         20,
-        (
-            viewportRect.left +
-            viewport.clientWidth / 2 -
-            canvasRect.left
-        ) / canvasZoom - 70
+        currentView.x - halfWidth
     );
 
 const spawnTop =
     Math.max(
         20,
-        (
-            window.innerHeight / 2 -
-            canvasRect.top
-        ) / canvasZoom - 35
+        currentView.y - halfHeight
     );
 const newShapeData = {
     id: Date.now().toString(),
@@ -3868,11 +3922,14 @@ const line = document.createElementNS(
     "path"
 );
 
+const currentView =
+    getCurrentCanvasViewCentre();
+
 const freeLineData = {
-    x1: 150,
-    y1: 80,
-    x2: 350,
-    y2: 80
+    x1: Math.max(20, currentView.x - 100),
+    y1: currentView.y,
+    x2: currentView.x + 100,
+    y2: currentView.y
 };
 const savedFreeLine = {
     type: "freeLine",
