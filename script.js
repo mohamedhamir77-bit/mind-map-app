@@ -7806,6 +7806,202 @@ document.addEventListener("mousemove", function (event) {
         clearStuckHoverDrag();
     }
 });
+const addHoverFileBtn =
+    document.getElementById("addHoverFileBtn");
+
+const hoverFileInput =
+    document.getElementById("hoverFileInput");
+
+addHoverFileBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            return;
+        }
+
+        hoverFileInput.click();
+    }
+);
+hoverFileInput.addEventListener(
+    "change",
+    async function () {
+
+        const file =
+            hoverFileInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            hoverFileInput.value = "";
+            return;
+        }
+
+        const {
+            data: { user },
+            error: userError
+        } =
+            await supabaseClient.auth.getUser();
+
+        if (userError || !user) {
+            alert("Please sign in first.");
+            hoverFileInput.value = "";
+            return;
+        }
+
+        const filePath =
+            user.id +
+            "/hover-files/" +
+            Date.now() +
+            "-" +
+            file.name;
+
+        const fileData =
+            await file.arrayBuffer();
+
+        const { error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .upload(
+                    filePath,
+                    fileData,
+                    {
+                        contentType:
+                            file.type ||
+                            "application/octet-stream"
+                    }
+                );
+
+        if (error) {
+            alert(
+                "File upload failed: " +
+                error.message
+            );
+            return;
+        }
+
+        if (
+            !selectedShape.savedData.hoverFiles
+        ) {
+            selectedShape.savedData.hoverFiles =
+                [];
+        }
+
+        selectedShape.savedData.hoverFiles.push({
+            name: file.name,
+            path: filePath,
+            type: file.type,
+            size: file.size
+        });
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        hoverFileInput.value = "";
+
+        alert("File uploaded successfully");
+    }
+);
+const removeHoverFileBtn =
+    document.getElementById("removeHoverFileBtn");
+
+removeHoverFileBtn.addEventListener(
+    "click",
+    async function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            return;
+        }
+
+        const files =
+            selectedShape.savedData.hoverFiles || [];
+
+        if (files.length === 0) {
+            alert("This hover symbol has no files.");
+            return;
+        }
+
+        let message =
+            "Which file do you want to remove?\n\n";
+
+        files.forEach(function (file, index) {
+            message +=
+                (index + 1) +
+                ". " +
+                file.name +
+                "\n";
+        });
+
+        const choice = prompt(message);
+
+        if (choice === null) {
+            return;
+        }
+
+        const index =
+            parseInt(choice, 10) - 1;
+
+        if (
+            isNaN(index) ||
+            index < 0 ||
+            index >= files.length
+        ) {
+            alert("Please enter a valid file number.");
+            return;
+        }
+
+        const file =
+            files[index];
+
+        const confirmed = confirm(
+            "Remove " + file.name + "?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const { error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .remove([file.path]);
+
+        if (error) {
+            alert(
+                "Could not remove file: " +
+                error.message
+            );
+            return;
+        }
+
+        files.splice(index, 1);
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        hoverPopup.style.display = "none";
+
+        alert("File removed");
+    }
+);
 const addHoverImageBtn =
     document.getElementById("addHoverImageBtn");
 
@@ -7889,9 +8085,20 @@ const { error } = await supabaseClient.storage
 async function showHoverContent(shape, savedData) {
     activeHoverShape = shape;
 
-    if (!savedData.hoverText && !savedData.hoverImage) {
-        return;
-    }
+    if (
+    !savedData.hoverText &&
+    !savedData.hoverImage &&
+    (
+        !savedData.hoverLinks ||
+        savedData.hoverLinks.length === 0
+    ) &&
+    (
+        !savedData.hoverFiles ||
+        savedData.hoverFiles.length === 0
+    )
+) {
+    return;
+}
 
     hoverPopup.innerHTML = "";
 
@@ -7912,7 +8119,12 @@ if (
         const link = document.createElement("a");
 
         link.textContent =
-            hoverLink.label || "Open link";
+    "📄 " +
+    (hoverLink.label || "Open document");
+
+link.classList.add(
+    "hover-resource-link"
+);
 
         link.href =
             hoverLink.url;
@@ -7925,6 +8137,44 @@ if (
 
         hoverPopup.appendChild(link);
     });
+}
+if (
+    savedData.hoverFiles &&
+    savedData.hoverFiles.length > 0
+) {
+
+    for (const hoverFile of savedData.hoverFiles) {
+
+        const { data, error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .createSignedUrl(
+                    hoverFile.path,
+                    60 * 60
+                );
+
+        if (error) {
+            continue;
+        }
+
+        const fileLink =
+            document.createElement("a");
+
+        fileLink.textContent =
+            "📄 " + hoverFile.name;
+
+        fileLink.href = data.signedUrl;
+        fileLink.target = "_blank";
+        fileLink.rel = "noopener noreferrer";
+
+        fileLink.classList.add(
+            "hover-resource-link"
+        );
+
+        hoverPopup.appendChild(
+            fileLink
+        );
+    }
 }
     if (savedData.hoverImage) {
 
@@ -8040,14 +8290,33 @@ addHoverLinkBtn.addEventListener("click", function () {
         return;
     }
 
-    const url = prompt(
-        "Link URL:",
-        selectedShape.savedData.hoverLink?.url || "https://"
-    );
+  let url = prompt(
+    "Website or app link:",
+    selectedShape.savedData.hoverLink?.url || "https://"
+);
 
-    if (url === null) {
-        return;
-    }
+if (url === null) {
+    return;
+}
+
+url = url.trim();
+
+if (!url) {
+    return;
+}
+
+if (
+    /^(javascript|data|vbscript):/i.test(url)
+) {
+    alert("That link type is not allowed.");
+    return;
+}
+
+if (
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)
+) {
+    url = "https://" + url;
+}
 
     if (!selectedShape.savedData.hoverLinks) {
     selectedShape.savedData.hoverLinks = [];
@@ -8193,17 +8462,36 @@ editHoverLinkBtn.addEventListener("click", function () {
         return;
     }
 
-    const newUrl = prompt(
-        "Link URL:",
-        link.url || "https://"
-    );
+    let newUrl = prompt(
+    "Website or app link:",
+    link.url || "https://"
+);
 
-    if (newUrl === null) {
-        return;
-    }
+if (newUrl === null) {
+    return;
+}
 
-    link.label = newLabel;
-    link.url = newUrl;
+newUrl = newUrl.trim();
+
+if (!newUrl) {
+    return;
+}
+
+if (
+    /^(javascript|data|vbscript):/i.test(newUrl)
+) {
+    alert("That link type is not allowed.");
+    return;
+}
+
+if (
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(newUrl)
+) {
+    newUrl = "https://" + newUrl;
+}
+
+link.label = newLabel;
+link.url = newUrl;
 
     localStorage.setItem(
         "shapes",
@@ -8431,76 +8719,314 @@ let touchCanvasPanning = false;
 let touchCanvasStartX = 0;
 let touchCanvasStartY = 0;
 let touchCanvasStartScrollLeft = 0;
+let touchCanvasDirection = null;
+
+let pinchZooming = false;
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let pinchContentX = 0;
+
+const TOUCH_PAN_THRESHOLD = 8;
+
+
+/* Distance between two fingers */
+function getPinchDistance(touch1, touch2) {
+
+    const x = touch2.clientX - touch1.clientX;
+    const y = touch2.clientY - touch1.clientY;
+
+    return Math.sqrt(
+        (x * x) + (y * y)
+    );
+}
+
+
+/* Horizontal centre point between two fingers */
+function getPinchMidpointX(touch1, touch2) {
+
+    return (
+        touch1.clientX +
+        touch2.clientX
+    ) / 2;
+}
+
 
 canvasViewport.addEventListener(
     "touchstart",
     function (event) {
 
-        if (
-    event.target !== canvas &&
-    event.target !== canvasViewport
-) {
-    return;
-}
+        /*
+         * TWO FINGERS = PINCH ZOOM
+         */
+        if (event.touches.length === 2) {
+
+            event.preventDefault();
+
+            pinchZooming = true;
+            touchCanvasPanning = false;
+            touchCanvasDirection = null;
+
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            pinchStartDistance =
+                getPinchDistance(
+                    touch1,
+                    touch2
+                );
+
+            pinchStartZoom = canvasZoom;
+
+            /*
+             * Remember which part of the
+             * mind map is underneath the
+             * centre of the fingers.
+             */
+            const viewportRect =
+                canvasViewport.getBoundingClientRect();
+
+            const midpointX =
+                getPinchMidpointX(
+                    touch1,
+                    touch2
+                ) - viewportRect.left;
+
+            pinchContentX =
+                (
+                    canvasViewport.scrollLeft +
+                    midpointX
+                ) / canvasZoom;
+
+            return;
+        }
+
+
+        /*
+         * ONE FINGER = PAN / PAGE SCROLL
+         */
+        if (event.touches.length !== 1) {
+            return;
+        }
+
+        const isCanvasPanArea =
+            event.target === canvas ||
+            event.target === canvasViewport ||
+            event.target.id === "canvasOverflowSpacer";
+
+        if (!isCanvasPanArea) {
+            return;
+        }
 
         const touch = event.touches[0];
 
         touchCanvasPanning = true;
+        touchCanvasDirection = null;
 
         touchCanvasStartX = touch.clientX;
         touchCanvasStartY = touch.clientY;
 
         touchCanvasStartScrollLeft =
-            canvasViewport.scrollLeft;
+            Math.max(
+                0,
+                canvasViewport.scrollLeft
+            );
     },
-    { passive: true }
+    { passive: false }
 );
+
 
 canvasViewport.addEventListener(
     "touchmove",
     function (event) {
 
-        if (!touchCanvasPanning) {
+        /*
+         * PINCH ZOOM
+         */
+        if (
+            pinchZooming &&
+            event.touches.length === 2
+        ) {
+
+            event.preventDefault();
+
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            const currentDistance =
+                getPinchDistance(
+                    touch1,
+                    touch2
+                );
+
+            if (pinchStartDistance === 0) {
+                return;
+            }
+
+            const zoomRatio =
+                currentDistance /
+                pinchStartDistance;
+
+            canvasZoom =
+                pinchStartZoom *
+                zoomRatio;
+
+            applyCanvasZoom();
+
+
+            /*
+             * Keep roughly the same part of
+             * the map between your fingers.
+             */
+            const viewportRect =
+                canvasViewport.getBoundingClientRect();
+
+            const midpointX =
+                getPinchMidpointX(
+                    touch1,
+                    touch2
+                ) - viewportRect.left;
+
+            const wantedScrollLeft =
+                (
+                    pinchContentX *
+                    canvasZoom
+                ) - midpointX;
+
+            const maxScrollLeft =
+                Math.max(
+                    0,
+                    canvasViewport.scrollWidth -
+                    canvasViewport.clientWidth
+                );
+
+            canvasViewport.scrollLeft =
+                Math.max(
+                    0,
+                    Math.min(
+                        maxScrollLeft,
+                        wantedScrollLeft
+                    )
+                );
+
+            return;
+        }
+
+
+        /*
+         * ONE-FINGER PAN
+         */
+        if (
+            !touchCanvasPanning ||
+            event.touches.length !== 1
+        ) {
             return;
         }
 
         const touch = event.touches[0];
 
         const distanceX =
-            touch.clientX - touchCanvasStartX;
+            touch.clientX -
+            touchCanvasStartX;
 
         const distanceY =
-            touch.clientY - touchCanvasStartY;
+            touch.clientY -
+            touchCanvasStartY;
 
-        /* Horizontal gesture = move mind map */
+        const absX = Math.abs(distanceX);
+        const absY = Math.abs(distanceY);
+
+
+        /*
+         * Decide once whether this gesture
+         * is horizontal or vertical.
+         */
+        if (touchCanvasDirection === null) {
+
+            if (
+                absX < TOUCH_PAN_THRESHOLD &&
+                absY < TOUCH_PAN_THRESHOLD
+            ) {
+                return;
+            }
+
+            touchCanvasDirection =
+                absX > absY
+                    ? "horizontal"
+                    : "vertical";
+        }
+
+
+        /*
+         * Horizontal = move mind map
+         */
         if (
-            Math.abs(distanceX) >
-            Math.abs(distanceY)
+            touchCanvasDirection ===
+            "horizontal"
         ) {
 
             event.preventDefault();
 
-            canvasViewport.scrollLeft =
+            const maxScrollLeft =
+                Math.max(
+                    0,
+                    canvasViewport.scrollWidth -
+                    canvasViewport.clientWidth
+                );
+
+            const newScrollLeft =
                 touchCanvasStartScrollLeft -
                 distanceX;
+
+            canvasViewport.scrollLeft =
+                Math.max(
+                    0,
+                    Math.min(
+                        maxScrollLeft,
+                        newScrollLeft
+                    )
+                );
         }
 
-        /* Vertical gesture is left alone,
-           so Safari scrolls the page */
+        /*
+         * Vertical gestures are left alone,
+         * allowing normal page scrolling.
+         */
     },
     { passive: false }
 );
 
+
 canvasViewport.addEventListener(
     "touchend",
-    function () {
-        touchCanvasPanning = false;
+    function (event) {
+
+        /*
+         * Once fewer than two fingers remain,
+         * finish the pinch.
+         */
+        if (event.touches.length < 2) {
+            pinchZooming = false;
+        }
+
+        /*
+         * Require a fresh touch after a pinch
+         * before starting another pan.
+         */
+        if (event.touches.length === 0) {
+
+            touchCanvasPanning = false;
+            touchCanvasDirection = null;
+        }
     }
 );
+
 
 canvasViewport.addEventListener(
     "touchcancel",
     function () {
+
+        pinchZooming = false;
         touchCanvasPanning = false;
+        touchCanvasDirection = null;
     }
 );

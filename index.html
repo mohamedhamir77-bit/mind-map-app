@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>My Learning Library</title>
-    <link rel="stylesheet" href="style.css?v=46">
+    <link rel="stylesheet" href="style.css?v=50">
 </head>
 
 <body>
@@ -165,7 +165,11 @@
     accept="image/*"
     style="display:none;"
 >
-
+<input
+    type="file"
+    id="hoverFileInput"
+    style="display:none;"
+>
 <input
     type="file"
     id="attachmentFileInput"
@@ -188,6 +192,8 @@
     <button type="button" id="addHoverLinkBtn" class="hover-tool">Add Link</button>
     <button type="button" id="editHoverLinkBtn" class="hover-tool">Edit Link</button>
     <button type="button" id="removeHoverLinkBtn" class="hover-tool">Remove Link</button>
+    <button type="button" id="addHoverFileBtn" class="hover-tool">Add File</button>
+    <button type="button" id="removeHoverFileBtn" class="hover-tool">Remove File</button>
     <button type="button" id="addHoverImageBtn" class="hover-tool">Add Image</button>
     <button type="button" id="removeHoverImageBtn" class="hover-tool">Remove Image</button>
     <button type="button" id="deleteHoverBtn" class="hover-tool">Delete Info</button>
@@ -265,7 +271,7 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=98"></script>
+    <script src="script.js?v=103"></script>
 
 </body>
 </html>
