@@ -9040,3 +9040,53 @@ canvasViewport.addEventListener(
         touchCanvasDirection = null;
     }
 );
+/* Safari / iPhone pinch zoom fallback */
+
+let safariGestureStartZoom = canvasZoom;
+
+canvasViewport.addEventListener(
+    "gesturestart",
+    function (event) {
+
+        event.preventDefault();
+
+        /*
+         * Safari is taking over the pinch,
+         * so stop the normal touch-pan handler.
+         */
+        pinchZooming = false;
+        touchCanvasPanning = false;
+        touchCanvasDirection = null;
+
+        safariGestureStartZoom = canvasZoom;
+    },
+    { passive: false }
+);
+
+canvasViewport.addEventListener(
+    "gesturechange",
+    function (event) {
+
+        event.preventDefault();
+
+        canvasZoom =
+            safariGestureStartZoom *
+            event.scale;
+
+        applyCanvasZoom();
+    },
+    { passive: false }
+);
+
+canvasViewport.addEventListener(
+    "gestureend",
+    function (event) {
+
+        event.preventDefault();
+
+        pinchZooming = false;
+        touchCanvasPanning = false;
+        touchCanvasDirection = null;
+    },
+    { passive: false }
+);
