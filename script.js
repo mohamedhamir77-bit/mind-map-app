@@ -8778,6 +8778,98 @@ let touchCanvasStartY = 0;
 let touchCanvasStartScrollLeft = 0;
 let touchCanvasStartScrollY = 0;
 let touchCanvasDirection = null;
+let horizontalPanVelocity = 0;
+let lastHorizontalTouchX = 0;
+let lastHorizontalTouchTime = 0;
+let horizontalMomentumFrame = null;
+
+function stopHorizontalMomentum() {
+
+    if (horizontalMomentumFrame !== null) {
+        cancelAnimationFrame(
+            horizontalMomentumFrame
+        );
+
+        horizontalMomentumFrame = null;
+    }
+
+    horizontalPanVelocity = 0;
+}
+
+function startHorizontalMomentum() {
+
+    if (Math.abs(horizontalPanVelocity) < 0.05) {
+        return;
+    }
+
+    let previousTime = performance.now();
+
+    function glide(now) {
+
+        const elapsed =
+            Math.min(
+                32,
+                now - previousTime
+            );
+
+        previousTime = now;
+
+        const maxScrollLeft =
+            Math.max(
+                0,
+                canvasViewport.scrollWidth -
+                canvasViewport.clientWidth
+            );
+
+        const nextScrollLeft =
+            canvasViewport.scrollLeft +
+            horizontalPanVelocity * elapsed;
+
+        const safeScrollLeft =
+            Math.max(
+                0,
+                Math.min(
+                    maxScrollLeft,
+                    nextScrollLeft
+                )
+            );
+
+        canvasViewport.scrollLeft =
+            safeScrollLeft;
+
+        /* Stop at either edge */
+        if (
+            safeScrollLeft === 0 ||
+            safeScrollLeft === maxScrollLeft
+        ) {
+            horizontalPanVelocity = 0;
+            horizontalMomentumFrame = null;
+            return;
+        }
+
+        /* Gradually slow the glide */
+        horizontalPanVelocity *=
+            Math.pow(
+                0.95,
+                elapsed / 16.67
+            );
+
+        if (
+            Math.abs(horizontalPanVelocity) <
+            0.02
+        ) {
+            horizontalPanVelocity = 0;
+            horizontalMomentumFrame = null;
+            return;
+        }
+
+        horizontalMomentumFrame =
+            requestAnimationFrame(glide);
+    }
+
+    horizontalMomentumFrame =
+        requestAnimationFrame(glide);
+}
 
 let pinchZooming = false;
 let pinchStartDistance = 0;
@@ -8818,9 +8910,11 @@ canvasViewport.addEventListener(
          */
         if (event.touches.length === 2) {
 
-            event.preventDefault();
+    stopHorizontalMomentum();
 
-            pinchZooming = true;
+    event.preventDefault();
+
+    pinchZooming = true;
             touchCanvasPanning = false;
             touchCanvasDirection = null;
 
@@ -8875,10 +8969,15 @@ canvasViewport.addEventListener(
             return;
         }
 
-        const touch = event.touches[0];
+       const touch = event.touches[0];
 
-        touchCanvasPanning = true;
-        touchCanvasDirection = null;
+stopHorizontalMomentum();
+
+lastHorizontalTouchX = touch.clientX;
+lastHorizontalTouchTime = performance.now();
+
+touchCanvasPanning = true;
+touchCanvasDirection = null;
 
         touchCanvasStartX = touch.clientX;
         touchCanvasStartY = touch.clientY;
@@ -9024,7 +9123,31 @@ canvasViewport.addEventListener(
         ) {
 
             event.preventDefault();
+ const now =
+        performance.now();
 
+    const elapsed =
+        Math.max(
+            1,
+            now - lastHorizontalTouchTime
+        );
+
+    const fingerMovement =
+        touch.clientX -
+        lastHorizontalTouchX;
+
+    const instantVelocity =
+        -fingerMovement / elapsed;
+
+    horizontalPanVelocity =
+        horizontalPanVelocity * 0.65 +
+        instantVelocity * 0.35;
+
+    lastHorizontalTouchX =
+        touch.clientX;
+
+    lastHorizontalTouchTime =
+        now;
             const maxScrollLeft =
                 Math.max(
                     0,
@@ -9081,9 +9204,19 @@ canvasViewport.addEventListener(
          */
         if (event.touches.length === 0) {
 
-            touchCanvasPanning = false;
-            touchCanvasDirection = null;
-        }
+    const finishedDirection =
+        touchCanvasDirection;
+
+    touchCanvasPanning = false;
+    touchCanvasDirection = null;
+
+    if (
+        finishedDirection ===
+        "horizontal"
+    ) {
+        startHorizontalMomentum();
+    }
+}
     }
 );
 
@@ -9104,6 +9237,8 @@ let safariGestureStartZoom = canvasZoom;
 canvasViewport.addEventListener(
     "gesturestart",
     function (event) {
+
+        stopHorizontalMomentum();
 
         event.preventDefault();
 
