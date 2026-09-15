@@ -2180,9 +2180,21 @@ if (savedShape.type === "hover") {
 shape.addEventListener("mouseleave", function () {
     scheduleHoverPopupHide();
 });
+} else if (
+    savedShape.type === "checkbox" ||
+    savedShape.type === "beacon"
+) {
+
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "";
+
 } else {
+
     textEditor.contentEditable = "true";
-    textEditor.innerHTML = savedShape.html || savedShape.text || "";
+    textEditor.innerHTML =
+        savedShape.html ||
+        savedShape.text ||
+        "";
 }
 
 shape.appendChild(textEditor);
@@ -2280,6 +2292,15 @@ textEditor.addEventListener("input", function () {
 });
 
         shape.style.background = savedShape.colour;
+        if (savedShape.type === "beacon") {
+    shape.style.setProperty(
+        "--beacon-colour",
+        savedShape.colour || "#2563eb"
+    );
+}
+        if (savedShape.type === "checkbox") {
+    updateCheckboxAppearance(shape);
+}
         shape.style.setProperty("--diamond-colour", savedShape.colour);
         if (savedShape.borderColour) {
 
@@ -2330,9 +2351,15 @@ extendWorkspaceForShape(shape);
 
 makeDraggable(shape);
        shape.addEventListener("click", function () {
-        
-    
-        console.log("Clicked shape:", shape.className);
+
+    if (
+        shape.savedData.type === "checkbox" &&
+        !connectionMode
+    ) {
+        toggleCheckbox(shape);
+    }
+
+    console.log("Clicked shape:", shape.className);
 if (selectedShape === shape && !connectionMode) {
     return;
 }
@@ -3013,6 +3040,85 @@ function getCurrentCanvasViewCentre() {
             canvasZoom
     };
 }
+function getCheckboxTickColour(hexColour) {
+
+    const hex =
+        (hexColour || "#facc15")
+            .replace("#", "");
+
+    const r =
+        parseInt(hex.substring(0, 2), 16);
+
+    const g =
+        parseInt(hex.substring(2, 4), 16);
+
+    const b =
+        parseInt(hex.substring(4, 6), 16);
+
+    const brightness =
+        (r * 299 + g * 587 + b * 114) /
+        1000;
+
+    return brightness > 170
+        ? "#111827"
+        : "#ffffff";
+}
+
+
+function updateCheckboxAppearance(shape) {
+
+    if (
+        !shape ||
+        !shape.savedData ||
+        shape.savedData.type !== "checkbox"
+    ) {
+        return;
+    }
+
+    const textEditor =
+        shape.querySelector(".shape-text");
+
+    const colour =
+        shape.savedData.colour ||
+        "#facc15";
+
+    shape.style.background = colour;
+
+    if (!textEditor) {
+        return;
+    }
+
+    textEditor.contentEditable = "false";
+
+    textEditor.textContent =
+        shape.savedData.checked
+            ? "✓"
+            : "";
+
+    textEditor.style.color =
+        getCheckboxTickColour(colour);
+}
+
+
+function toggleCheckbox(shape) {
+
+    if (
+        !shape.savedData ||
+        shape.savedData.type !== "checkbox"
+    ) {
+        return;
+    }
+
+    shape.savedData.checked =
+        !shape.savedData.checked;
+
+    updateCheckboxAppearance(shape);
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+}
 addShapeBtn.addEventListener("click", function () {
 
     const shape = document.createElement("div");
@@ -3021,10 +3127,22 @@ addShapeBtn.addEventListener("click", function () {
 
 const textEditor = document.createElement("div");
 textEditor.classList.add("shape-text");
-textEditor.contentEditable = "true";
 if (shapeType.value === "hover") {
+
+    textEditor.contentEditable = "false";
     textEditor.textContent = "ⓘ";
+
+} else if (
+    shapeType.value === "checkbox" ||
+    shapeType.value === "beacon"
+) {
+
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "";
+
 } else {
+
+    textEditor.contentEditable = "true";
     textEditor.textContent = "New Shape";
 }
 
@@ -3114,6 +3232,14 @@ if (shapeType.value === "diamond") {
     halfHeight = 45;
 }
 
+if (shapeType.value === "checkbox") {
+    halfWidth = 21;
+    halfHeight = 21;
+}
+if (shapeType.value === "beacon") {
+    halfWidth = 23;
+    halfHeight = 23;
+}
 const spawnLeft =
     Math.max(
         20,
@@ -3127,11 +3253,31 @@ const spawnTop =
     );
 const newShapeData = {
     id: Date.now().toString(),
-    text: shapeType.value === "hover" ? "ⓘ" : "New Shape",
-    left: spawnLeft,
+   text:
+    shapeType.value === "hover"
+        ? "ⓘ"
+        : (
+            shapeType.value === "checkbox" ||
+            shapeType.value === "beacon"
+        )
+            ? ""
+            : "New Shape",
+
+left: spawnLeft,
 top: spawnTop,
-    colour: "#facc15",
-    type: shapeType.value,
+
+colour:
+    (
+        shapeType.value === "checkbox" ||
+        shapeType.value === "beacon"
+    )
+        ? colourPicker.value
+        : "#facc15",
+
+type: shapeType.value,
+
+checked: false,
+
 hoverText: ""
 };
 
@@ -3144,6 +3290,15 @@ shape.style.left =
 shape.style.top =
     spawnTop + "px";
 shape.classList.add(newShapeData.type);
+if (newShapeData.type === "beacon") {
+    shape.style.setProperty(
+        "--beacon-colour",
+        newShapeData.colour
+    );
+}
+if (newShapeData.type === "checkbox") {
+    updateCheckboxAppearance(shape);
+}
 if (newShapeData.type === "hover") {
     textEditor.contentEditable = "false";
     textEditor.textContent = "ⓘ";
@@ -3168,8 +3323,16 @@ makeResizable(shape, resizeHandle);
 localStorage.setItem("shapes", JSON.stringify(shapes));
     makeDraggable(shape);
     shape.addEventListener("click", function () {
+      
 
-   if (selectedShape === shape && !connectionMode) {
+    if (
+        shape.savedData.type === "checkbox" &&
+        !connectionMode
+    ) {
+        toggleCheckbox(shape);
+    }
+
+    if (selectedShape === shape && !connectionMode) {
     return;
 }
 
@@ -3690,9 +3853,42 @@ colourPicker.addEventListener("input", function () {
         selectedShape.style.background = colourPicker.value;
 
         if (selectedShape.savedData) {
-            selectedShape.savedData.colour = colourPicker.value;
-            localStorage.setItem("shapes", JSON.stringify(shapes));
-        }
+
+    selectedShape.savedData.colour =
+        colourPicker.value;
+        if (
+    selectedShape.savedData.type ===
+    "beacon"
+) {
+    selectedShape.style.setProperty(
+        "--beacon-colour",
+        colourPicker.value
+    );
+}
+        if (
+    selectedShape.savedData.type ===
+    "beacon"
+) {
+    selectedShape.style.setProperty(
+        "--beacon-colour",
+        colourPicker.value
+    );
+}
+
+    if (
+        selectedShape.savedData.type ===
+        "checkbox"
+    ) {
+        updateCheckboxAppearance(
+            selectedShape
+        );
+    }
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+}
     }
 
 });
