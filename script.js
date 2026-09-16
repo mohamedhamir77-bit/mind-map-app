@@ -2182,7 +2182,8 @@ shape.addEventListener("mouseleave", function () {
 });
 } else if (
     savedShape.type === "checkbox" ||
-    savedShape.type === "beacon"
+    savedShape.type === "beacon" ||
+    savedShape.type === "bookmark"
 ) {
 
     textEditor.contentEditable = "false";
@@ -2298,6 +2299,12 @@ textEditor.addEventListener("input", function () {
         savedShape.colour || "#2563eb"
     );
 }
+if (savedShape.type === "bookmark") {
+    shape.style.setProperty(
+        "--bookmark-colour",
+        savedShape.colour || "#ef4444"
+    );
+}
         if (savedShape.type === "checkbox") {
     updateCheckboxAppearance(shape);
 }
@@ -2350,7 +2357,8 @@ canvas.appendChild(shape);
 extendWorkspaceForShape(shape);
 
 makeDraggable(shape);
-       shape.addEventListener("click", function () {
+
+shape.addEventListener("click", function () {
 
     if (
         shape.savedData.type === "checkbox" &&
@@ -2359,10 +2367,32 @@ makeDraggable(shape);
         toggleCheckbox(shape);
     }
 
-    console.log("Clicked shape:", shape.className);
-if (selectedShape === shape && !connectionMode) {
+   if (
+    shape.savedData.type === "bookmark" &&
+    shape.bookmarkIgnoreClickUntil &&
+    Date.now() <
+        shape.bookmarkIgnoreClickUntil
+) {
     return;
 }
+
+if (
+    shape.savedData.type === "bookmark" &&
+    shape.savedData.bookmarkUrl &&
+    !connectionMode
+) {
+    window.open(
+        shape.savedData.bookmarkUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+    console.log("Clicked shape:", shape.className);
+
+    if (selectedShape === shape && !connectionMode) {
+        return;
+    }
     if (selectedShape && selectedShape !== shape) {
     selectedShape.classList.remove("shape-selected");
 }
@@ -3121,6 +3151,28 @@ function toggleCheckbox(shape) {
 }
 addShapeBtn.addEventListener("click", function () {
 
+    let bookmarkUrl = "";
+
+    if (shapeType.value === "bookmark") {
+
+        bookmarkUrl = prompt(
+            "Paste the web address for this bookmark:"
+        );
+
+        if (!bookmarkUrl) {
+            return;
+        }
+
+        bookmarkUrl = bookmarkUrl.trim();
+
+        if (
+            !/^https?:\/\//i.test(bookmarkUrl)
+        ) {
+            bookmarkUrl =
+                "https://" + bookmarkUrl;
+        }
+    }
+
     const shape = document.createElement("div");
 
     shape.classList.add("shape");
@@ -3134,7 +3186,8 @@ if (shapeType.value === "hover") {
 
 } else if (
     shapeType.value === "checkbox" ||
-    shapeType.value === "beacon"
+    shapeType.value === "beacon" ||
+    shapeType.value === "bookmark"
 ) {
 
     textEditor.contentEditable = "false";
@@ -3240,6 +3293,10 @@ if (shapeType.value === "beacon") {
     halfWidth = 23;
     halfHeight = 23;
 }
+if (shapeType.value === "bookmark") {
+    halfWidth = 22;
+    halfHeight = 26;
+}
 const spawnLeft =
     Math.max(
         20,
@@ -3258,7 +3315,8 @@ const newShapeData = {
         ? "ⓘ"
         : (
             shapeType.value === "checkbox" ||
-            shapeType.value === "beacon"
+shapeType.value === "beacon" ||
+shapeType.value === "bookmark"
         )
             ? ""
             : "New Shape",
@@ -3269,7 +3327,8 @@ top: spawnTop,
 colour:
     (
         shapeType.value === "checkbox" ||
-        shapeType.value === "beacon"
+shapeType.value === "beacon" ||
+shapeType.value === "bookmark"
     )
         ? colourPicker.value
         : "#facc15",
@@ -3277,6 +3336,7 @@ colour:
 type: shapeType.value,
 
 checked: false,
+bookmarkUrl: bookmarkUrl,
 
 hoverText: ""
 };
@@ -3293,6 +3353,12 @@ shape.classList.add(newShapeData.type);
 if (newShapeData.type === "beacon") {
     shape.style.setProperty(
         "--beacon-colour",
+        newShapeData.colour
+    );
+}
+if (newShapeData.type === "bookmark") {
+    shape.style.setProperty(
+        "--bookmark-colour",
         newShapeData.colour
     );
 }
@@ -3320,10 +3386,14 @@ shape.appendChild(resizeHandle);
 
 makeResizable(shape, resizeHandle);
 
-localStorage.setItem("shapes", JSON.stringify(shapes));
-    makeDraggable(shape);
-    shape.addEventListener("click", function () {
-      
+localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+
+makeDraggable(shape);
+
+shape.addEventListener("click", function () {
 
     if (
         shape.savedData.type === "checkbox" &&
@@ -3332,9 +3402,29 @@ localStorage.setItem("shapes", JSON.stringify(shapes));
         toggleCheckbox(shape);
     }
 
-    if (selectedShape === shape && !connectionMode) {
+    if (
+    shape.savedData.type === "bookmark" &&
+    shape.bookmarkIgnoreClickUntil &&
+    Date.now() <
+        shape.bookmarkIgnoreClickUntil
+) {
     return;
 }
+
+if (
+    shape.savedData.type === "bookmark" &&
+    shape.savedData.bookmarkUrl &&
+    !connectionMode
+) {
+    window.open(
+        shape.savedData.bookmarkUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+    if (selectedShape === shape && !connectionMode) {
+        return;
+    }
 
 if (selectedShape && selectedShape !== shape) {
     selectedShape.classList.remove("shape-selected");
@@ -3823,6 +3913,14 @@ if (
     shape.hoverIgnoreClickUntil =
         Date.now() + 500;
 }
+
+if (
+    shape.savedData.type === "bookmark" &&
+    actuallyMoved
+) {
+    shape.bookmarkIgnoreClickUntil =
+        Date.now() + 500;
+}
         if (shape.savedData.type === "hover") {
             shape.classList.remove("dragging-hover");
         }
@@ -3855,17 +3953,9 @@ colourPicker.addEventListener("input", function () {
         if (selectedShape.savedData) {
 
     selectedShape.savedData.colour =
-        colourPicker.value;
-        if (
-    selectedShape.savedData.type ===
-    "beacon"
-) {
-    selectedShape.style.setProperty(
-        "--beacon-colour",
-        colourPicker.value
-    );
-}
-        if (
+    colourPicker.value;
+
+if (
     selectedShape.savedData.type ===
     "beacon"
 ) {
@@ -3875,14 +3965,24 @@ colourPicker.addEventListener("input", function () {
     );
 }
 
-    if (
-        selectedShape.savedData.type ===
-        "checkbox"
-    ) {
-        updateCheckboxAppearance(
-            selectedShape
-        );
-    }
+if (
+    selectedShape.savedData.type ===
+    "bookmark"
+) {
+    selectedShape.style.setProperty(
+        "--bookmark-colour",
+        colourPicker.value
+    );
+}
+
+if (
+    selectedShape.savedData.type ===
+    "checkbox"
+) {
+    updateCheckboxAppearance(
+        selectedShape
+    );
+}
 
     localStorage.setItem(
         "shapes",
