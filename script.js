@@ -7454,16 +7454,122 @@ const loginStatus = document.getElementById("loginStatus");
 async function updateLoginStatus() {
 
     const {
-        data: { user }
+        data: { user },
+        error: userError
     } = await supabaseClient.auth.getUser();
 
-    if (user) {
-        loginStatus.textContent =
-            "Signed in as: " + user.email;
-    } else {
+    if (userError || !user) {
         loginStatus.textContent =
             "Not signed in";
+        return;
     }
+
+    loginStatus.textContent =
+        "Signed in as: " + user.email;
+
+    /*
+     * If the Home Screen app has been
+     * deleted/reinstalled, its local
+     * library may be missing.
+     */
+    const localLibraryMissing =
+        localStorage.getItem("topics") === null &&
+        localStorage.getItem("folders") === null &&
+        localStorage.getItem("shapes") === null;
+
+    if (!localLibraryMissing) {
+        return;
+    }
+
+    const cloudData =
+        await loadUserDataFromCloud();
+
+    if (!cloudData) {
+        return;
+    }
+
+    topics =
+        cloudData.topics || [];
+
+    folders =
+        cloudData.folders || [];
+
+    topicFolders =
+        cloudData.topicFolders || {};
+
+    libraryCategories =
+        cloudData.libraryCategories || [];
+
+    folderCategories =
+        cloudData.folderCategories || {};
+
+    shapes =
+        cloudData.shapes || {};
+
+    savedConnections =
+        cloudData.connections || {};
+
+    currentTopic =
+        cloudData.currentTopic || null;
+
+    localStorage.setItem(
+        "topics",
+        JSON.stringify(topics)
+    );
+
+    localStorage.setItem(
+        "folders",
+        JSON.stringify(folders)
+    );
+
+    localStorage.setItem(
+        "topicFolders",
+        JSON.stringify(topicFolders)
+    );
+
+    localStorage.setItem(
+        "libraryCategories",
+        JSON.stringify(libraryCategories)
+    );
+
+    localStorage.setItem(
+        "folderCategories",
+        JSON.stringify(folderCategories)
+    );
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    if (currentTopic) {
+
+        localStorage.setItem(
+            "currentTopic",
+            currentTopic
+        );
+
+    } else {
+
+        localStorage.removeItem(
+            "currentTopic"
+        );
+    }
+
+    displayTopics();
+
+    if (currentTopic) {
+        openTopic(currentTopic);
+    }
+
+    console.log(
+        "Local library restored from cloud"
+    );
 }
 
 updateLoginStatus();
@@ -7517,6 +7623,39 @@ function scheduleCloudSave() {
         saveUserDataToCloud();
     }, 800);
 }
+function flushCloudSave() {
+
+    clearTimeout(cloudSaveTimer);
+
+    saveUserDataToCloud();
+}
+
+/*
+ * Save immediately when the iPhone app
+ * goes into the background.
+ */
+document.addEventListener(
+    "visibilitychange",
+    function () {
+
+        if (
+            document.visibilityState ===
+            "hidden"
+        ) {
+            flushCloudSave();
+        }
+    }
+);
+
+/*
+ * Extra Safari / Home Screen fallback.
+ */
+window.addEventListener(
+    "pagehide",
+    function () {
+        flushCloudSave();
+    }
+);
 const cloudSaveKeys = [
     "topics",
     "folders",
@@ -7695,6 +7834,8 @@ logoutBtn.addEventListener("click", async function () {
     topics = [];
 folders = [];
 topicFolders = {};
+libraryCategories = [];
+folderCategories = {};
 shapes = {};
 savedConnections = {};
 currentTopic = null;
@@ -7702,6 +7843,8 @@ currentTopic = null;
 localStorage.removeItem("topics");
 localStorage.removeItem("folders");
 localStorage.removeItem("topicFolders");
+localStorage.removeItem("libraryCategories");
+localStorage.removeItem("folderCategories");
 localStorage.removeItem("shapes");
 localStorage.removeItem("connections");
 localStorage.removeItem("currentTopic");
