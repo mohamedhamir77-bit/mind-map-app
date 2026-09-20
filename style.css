@@ -1709,3 +1709,10 @@ top: -18px;
     -webkit-text-size-adjust: none !important;
     text-size-adjust: none !important;
 }
+/* Prevent Safari text spilling outside shapes at very low zoom */
+#canvas.very-zoomed-out
+.shape:not(.hover-symbol):not(.checkbox):not(.beacon):not(.bookmark)
+.shape-text {
+    max-height: 100% !important;
+    overflow: hidden !important;
+}

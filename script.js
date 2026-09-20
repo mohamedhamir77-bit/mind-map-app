@@ -8993,6 +8993,11 @@ function applyCanvasZoom() {
 
     canvas.style.zoom = canvasZoom;
 
+    canvas.classList.toggle(
+        "very-zoomed-out",
+        canvasZoom <= 0.5
+    );
+
     zoomLevel.textContent =
         Math.round(canvasZoom * 100) + "%";
 }
