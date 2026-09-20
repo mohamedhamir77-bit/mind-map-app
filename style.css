@@ -1702,3 +1702,10 @@ top: -18px;
 .hover-popup .hover-resource-link:hover {
     background: #eef2f7;
 }
+/* Keep shape text scaling correctly during Safari pinch zoom */
+#canvas,
+#canvas .shape,
+#canvas .shape-text {
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+}
