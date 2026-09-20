@@ -4074,13 +4074,39 @@ function makeResizable(shape, handle) {
 
     function finishResize() {
 
-        if (!resizing) {
-            return;
+    if (!resizing) {
+        return;
+    }
+
+    resizing = false;
+
+    const textEditor =
+        shape.querySelector(".shape-text");
+
+    if (
+        textEditor &&
+        shape.savedData &&
+        ![
+            "checkbox",
+            "beacon",
+            "bookmark",
+            "hover"
+        ].includes(shape.savedData.type)
+    ) {
+
+        const neededHeight =
+            textEditor.scrollHeight;
+
+        if (
+            neededHeight >
+            shape.offsetHeight
+        ) {
+            shape.style.height =
+                neededHeight + "px";
         }
+    }
 
-        resizing = false;
-
-        if (shape.savedData) {
+    if (shape.savedData) {
 
             shape.savedData.width = shape.offsetWidth;
             shape.savedData.height = shape.offsetHeight;
@@ -4154,15 +4180,32 @@ function makeResizable(shape, handle) {
 
             function touchMove(event) {
 
-                event.preventDefault();
+    event.preventDefault();
 
-                const touch = event.touches[0];
+    /* Two fingers means pinch zoom,
+       not shape resizing */
+    if (event.touches.length !== 1) {
 
-                resizeTo(
-                    touch.clientX,
-                    touch.clientY
-                );
-            }
+        shape.style.width =
+            startWidth + "px";
+
+        shape.style.height =
+            startHeight + "px";
+
+        resizing = false;
+
+        updateConnections();
+
+        return;
+    }
+
+    const touch = event.touches[0];
+
+    resizeTo(
+        touch.clientX,
+        touch.clientY
+    );
+}
 
             function touchEnd() {
 
@@ -7054,19 +7097,26 @@ function applyCanvasResize() {
         window.scrollY -
         startScrollY;
 
-   const newWidth = Math.max(
+   const zoom =
+    canvasZoom || 1;
+
+const newWidth = Math.max(
     300,
     startWidth +
-    (lastResizeX - startX) +
-    horizontalAutoOffset
+    (
+        (lastResizeX - startX) +
+        horizontalAutoOffset
+    ) / zoom
 );
 
-    const newHeight = Math.max(
-        300,
-        startHeight +
+const newHeight = Math.max(
+    300,
+    startHeight +
+    (
         (lastResizeY - startY) +
         verticalScrollDifference
-    );
+    ) / zoom
+);
 
     canvas.style.width =
         newWidth + "px";
