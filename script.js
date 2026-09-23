@@ -129,6 +129,68 @@ const zoomInBtn = document.getElementById("zoomInBtn");
 const zoomFitBtn = document.getElementById("zoomFitBtn");
 const zoomLevel = document.getElementById("zoomLevel");
 const saveMindMapBtn = document.getElementById("saveMindMapBtn");
+const saveCloudBtn =
+    document.createElement("button");
+
+saveCloudBtn.type = "button";
+saveCloudBtn.id = "saveCloudBtn";
+saveCloudBtn.textContent = "Save to Cloud";
+
+saveMindMapBtn.insertAdjacentElement(
+    "afterend",
+    saveCloudBtn
+);
+saveCloudBtn.addEventListener(
+    "click",
+    async function () {
+
+        const originalText =
+            "Save to Cloud";
+
+        saveCloudBtn.disabled = true;
+        saveCloudBtn.textContent =
+            "Saving...";
+
+        /*
+         * Cancel any waiting automatic save
+         * and force a fresh complete save now.
+         */
+        clearTimeout(cloudSaveTimer);
+
+        hasUnsavedLocalChanges = true;
+        localChangeVersion += 1;
+
+        const success =
+            await saveUserDataToCloud();
+
+        if (success) {
+
+            saveCloudBtn.textContent =
+                "Saved ✓";
+
+            setTimeout(function () {
+                saveCloudBtn.textContent =
+                    originalText;
+
+                saveCloudBtn.disabled =
+                    false;
+            }, 1500);
+
+        } else {
+
+            saveCloudBtn.textContent =
+                "Save failed";
+
+            saveCloudBtn.disabled = false;
+
+            alert(
+                "The cloud save did not complete. " +
+                "Please check that you are signed in " +
+                "and try again."
+            );
+        }
+    }
+);
 const openMindMapBtn = document.getElementById("openMindMapBtn");
 const printMindMapBtn = document.getElementById("printMindMapBtn");
 const mindMapFileInput = document.getElementById("mindMapFileInput");
@@ -7652,8 +7714,8 @@ async function saveUserDataToCloud() {
     } = await supabaseClient.auth.getUser();
 
     if (userError || !user) {
-        return;
-    }
+    return false;
+}
 const saveVersion =
     localChangeVersion;
     const appData = {
@@ -7680,7 +7742,7 @@ folderCategories: folderCategories,
 
     if (error) {
     console.error("Cloud save failed:", error);
-    return;
+    return false;
 }
 
 if (
@@ -7691,6 +7753,8 @@ if (
 }
 
 console.log("Cloud save successful");
+
+return true;
 }
 let cloudSaveTimer;
 let hasUnsavedLocalChanges = false;
