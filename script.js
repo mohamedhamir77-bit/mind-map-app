@@ -9403,6 +9403,7 @@ let pinchZooming = false;
 let pinchStartDistance = 0;
 let pinchStartZoom = 1;
 let pinchContentX = 0;
+let pinchContentY = 0;
 
 const TOUCH_PAN_THRESHOLD = 8;
 
@@ -9427,7 +9428,13 @@ function getPinchMidpointX(touch1, touch2) {
         touch2.clientX
     ) / 2;
 }
+function getPinchMidpointY(touch1, touch2) {
 
+    return (
+        touch1.clientY +
+        touch2.clientY
+    ) / 2;
+}
 
 canvasViewport.addEventListener(
     "touchstart",
@@ -9466,18 +9473,33 @@ canvasViewport.addEventListener(
                 canvasViewport.getBoundingClientRect();
 
             const midpointX =
-                getPinchMidpointX(
-                    touch1,
-                    touch2
-                ) - viewportRect.left;
+    getPinchMidpointX(
+        touch1,
+        touch2
+    ) - viewportRect.left;
 
-            pinchContentX =
-                (
-                    canvasViewport.scrollLeft +
-                    midpointX
-                ) / canvasZoom;
+const midpointY =
+    getPinchMidpointY(
+        touch1,
+        touch2
+    );
 
-            return;
+pinchContentX =
+    (
+        canvasViewport.scrollLeft +
+        midpointX
+    ) / canvasZoom;
+
+const canvasRect =
+    canvas.getBoundingClientRect();
+
+pinchContentY =
+    (
+        midpointY -
+        canvasRect.top
+    ) / canvasZoom;
+
+return;
         }
 
 
@@ -9586,15 +9608,48 @@ canvasViewport.addEventListener(
                 );
 
             canvasViewport.scrollLeft =
-                Math.max(
-                    0,
-                    Math.min(
-                        maxScrollLeft,
-                        wantedScrollLeft
-                    )
-                );
+    Math.max(
+        0,
+        Math.min(
+            maxScrollLeft,
+            wantedScrollLeft
+        )
+    );
 
-            return;
+/*
+ * Keep the same vertical point
+ * underneath the fingers too.
+ */
+const midpointY =
+    getPinchMidpointY(
+        touch1,
+        touch2
+    );
+
+const canvasRectAfterZoom =
+    canvas.getBoundingClientRect();
+
+const canvasDocumentTop =
+    window.scrollY +
+    canvasRectAfterZoom.top;
+
+const wantedScrollY =
+    canvasDocumentTop +
+    (
+        pinchContentY *
+        canvasZoom
+    ) -
+    midpointY;
+
+window.scrollTo(
+    window.scrollX,
+    Math.max(
+        0,
+        wantedScrollY
+    )
+);
+
+return;
         }
 
 
@@ -9761,6 +9816,8 @@ canvasViewport.addEventListener(
 /* Safari / iPhone pinch zoom fallback */
 
 let safariGestureStartZoom = canvasZoom;
+let safariPinchContentX = 0;
+let safariPinchContentY = 0;
 
 canvasViewport.addEventListener(
     "gesturestart",
@@ -9770,15 +9827,46 @@ canvasViewport.addEventListener(
 
         event.preventDefault();
 
-        /*
-         * Safari is taking over the pinch,
-         * so stop the normal touch-pan handler.
-         */
         pinchZooming = false;
         touchCanvasPanning = false;
         touchCanvasDirection = null;
 
-        safariGestureStartZoom = canvasZoom;
+        safariGestureStartZoom =
+            canvasZoom;
+
+        const viewportRect =
+            canvasViewport.getBoundingClientRect();
+
+        const canvasRect =
+            canvas.getBoundingClientRect();
+
+        const gestureX =
+            Number.isFinite(event.clientX)
+                ? event.clientX
+                : (
+                    viewportRect.left +
+                    viewportRect.width / 2
+                );
+
+        const gestureY =
+            Number.isFinite(event.clientY)
+                ? event.clientY
+                : window.innerHeight / 2;
+
+        safariPinchContentX =
+            (
+                canvasViewport.scrollLeft +
+                (
+                    gestureX -
+                    viewportRect.left
+                )
+            ) / canvasZoom;
+
+        safariPinchContentY =
+            (
+                gestureY -
+                canvasRect.top
+            ) / canvasZoom;
     },
     { passive: false }
 );
@@ -9789,11 +9877,84 @@ canvasViewport.addEventListener(
 
         event.preventDefault();
 
+        const viewportRect =
+            canvasViewport.getBoundingClientRect();
+
+        const gestureX =
+            Number.isFinite(event.clientX)
+                ? event.clientX
+                : (
+                    viewportRect.left +
+                    viewportRect.width / 2
+                );
+
+        const gestureY =
+            Number.isFinite(event.clientY)
+                ? event.clientY
+                : window.innerHeight / 2;
+
         canvasZoom =
             safariGestureStartZoom *
             event.scale;
 
         applyCanvasZoom();
+
+        /*
+         * Keep horizontal position
+         * underneath the pinch.
+         */
+        const wantedScrollLeft =
+            (
+                safariPinchContentX *
+                canvasZoom
+            ) -
+            (
+                gestureX -
+                viewportRect.left
+            );
+
+        const maxScrollLeft =
+            Math.max(
+                0,
+                canvasViewport.scrollWidth -
+                canvasViewport.clientWidth
+            );
+
+        canvasViewport.scrollLeft =
+            Math.max(
+                0,
+                Math.min(
+                    maxScrollLeft,
+                    wantedScrollLeft
+                )
+            );
+
+        /*
+         * Keep vertical position
+         * underneath the pinch.
+         */
+        const canvasRectAfterZoom =
+            canvas.getBoundingClientRect();
+
+        const canvasDocumentTop =
+            window.scrollY +
+            canvasRectAfterZoom.top;
+
+        const wantedScrollY =
+            canvasDocumentTop +
+            (
+                safariPinchContentY *
+                canvasZoom
+            ) -
+            gestureY;
+
+        window.scrollTo(
+            window.scrollX,
+            Math.max(
+                0,
+                wantedScrollY
+            )
+        );
     },
     { passive: false }
 );
