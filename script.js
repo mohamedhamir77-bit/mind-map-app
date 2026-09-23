@@ -7451,35 +7451,156 @@ const loginEmail = document.getElementById("loginEmail");
 const loginPassword = document.getElementById("loginPassword");
 const logoutBtn = document.getElementById("logoutBtn");
 const loginStatus = document.getElementById("loginStatus");
-async function updateLoginStatus() {
+let isApplyingCloudData = false;
 
-    const {
-        data: { user },
-        error: userError
-    } = await supabaseClient.auth.getUser();
+function applyCloudData(cloudData) {
 
-    if (userError || !user) {
-        loginStatus.textContent =
-            "Not signed in";
+    if (!cloudData) {
         return;
     }
 
-    loginStatus.textContent =
-        "Signed in as: " + user.email;
+    isApplyingCloudData = true;
 
-    /*
-     * If the Home Screen app has been
-     * deleted/reinstalled, its local
-     * library may be missing.
-     */
-    const localLibraryMissing =
-        localStorage.getItem("topics") === null &&
-        localStorage.getItem("folders") === null &&
-        localStorage.getItem("shapes") === null;
+    try {
 
-    if (!localLibraryMissing) {
-        return;
+        topics =
+            cloudData.topics || [];
+
+        folders =
+            cloudData.folders || [];
+
+        topicFolders =
+            cloudData.topicFolders || {};
+
+        libraryCategories =
+            cloudData.libraryCategories || [];
+
+        folderCategories =
+            cloudData.folderCategories || {};
+
+        shapes =
+            cloudData.shapes || {};
+
+        savedConnections =
+            cloudData.connections || {};
+
+        currentTopic =
+            cloudData.currentTopic || null;
+
+        localStorage.setItem(
+            "topics",
+            JSON.stringify(topics)
+        );
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(libraryCategories)
+        );
+
+        localStorage.setItem(
+            "folderCategories",
+            JSON.stringify(folderCategories)
+        );
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+
+        if (cloudData.canvasWidth) {
+
+            localStorage.setItem(
+                "canvasWidth",
+                cloudData.canvasWidth
+            );
+
+            canvas.style.width =
+                cloudData.canvasWidth + "px";
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasWidth"
+            );
+        }
+
+        if (cloudData.canvasHeight) {
+
+            localStorage.setItem(
+                "canvasHeight",
+                cloudData.canvasHeight
+            );
+
+            canvas.style.height =
+                cloudData.canvasHeight + "px";
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasHeight"
+            );
+        }
+
+        if (cloudData.canvasSizeMode) {
+
+            localStorage.setItem(
+                "canvasSizeMode",
+                cloudData.canvasSizeMode
+            );
+
+            canvasSizeSelect.value =
+                cloudData.canvasSizeMode;
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasSizeMode"
+            );
+        }
+
+        if (currentTopic) {
+
+            localStorage.setItem(
+                "currentTopic",
+                currentTopic
+            );
+
+        } else {
+
+            localStorage.removeItem(
+                "currentTopic"
+            );
+        }
+
+        displayTopics();
+
+        if (currentTopic) {
+            openTopic(currentTopic);
+        }
+
+    } finally {
+
+        isApplyingCloudData = false;
     }
+}
+
+
+async function syncLatestFromCloud() {
 
     const cloudData =
         await loadUserDataFromCloud();
@@ -7488,88 +7609,38 @@ async function updateLoginStatus() {
         return;
     }
 
-    topics =
-        cloudData.topics || [];
-
-    folders =
-        cloudData.folders || [];
-
-    topicFolders =
-        cloudData.topicFolders || {};
-
-    libraryCategories =
-        cloudData.libraryCategories || [];
-
-    folderCategories =
-        cloudData.folderCategories || {};
-
-    shapes =
-        cloudData.shapes || {};
-
-    savedConnections =
-        cloudData.connections || {};
-
-    currentTopic =
-        cloudData.currentTopic || null;
-
-    localStorage.setItem(
-        "topics",
-        JSON.stringify(topics)
-    );
-
-    localStorage.setItem(
-        "folders",
-        JSON.stringify(folders)
-    );
-
-    localStorage.setItem(
-        "topicFolders",
-        JSON.stringify(topicFolders)
-    );
-
-    localStorage.setItem(
-        "libraryCategories",
-        JSON.stringify(libraryCategories)
-    );
-
-    localStorage.setItem(
-        "folderCategories",
-        JSON.stringify(folderCategories)
-    );
-
-    localStorage.setItem(
-        "shapes",
-        JSON.stringify(shapes)
-    );
-
-    localStorage.setItem(
-        "connections",
-        JSON.stringify(savedConnections)
-    );
-
-    if (currentTopic) {
-
-        localStorage.setItem(
-            "currentTopic",
-            currentTopic
-        );
-
-    } else {
-
-        localStorage.removeItem(
-            "currentTopic"
-        );
-    }
-
-    displayTopics();
-
-    if (currentTopic) {
-        openTopic(currentTopic);
-    }
+    applyCloudData(cloudData);
 
     console.log(
-        "Local library restored from cloud"
+        "Latest library loaded from cloud"
     );
+}
+
+
+async function updateLoginStatus() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+
+        loginStatus.textContent =
+            "Not signed in";
+
+        return;
+    }
+
+    loginStatus.textContent =
+        "Signed in as: " + user.email;
+
+    /*
+     * Supabase is the master copy.
+     * Whenever the app starts signed in,
+     * load the latest cloud version.
+     */
+    await syncLatestFromCloud();
 }
 
 updateLoginStatus();
@@ -7583,7 +7654,8 @@ async function saveUserDataToCloud() {
     if (userError || !user) {
         return;
     }
-
+const saveVersion =
+    localChangeVersion;
     const appData = {
         topics: topics,
         folders: folders,
@@ -7607,15 +7679,28 @@ folderCategories: folderCategories,
         });
 
     if (error) {
-        console.error("Cloud save failed:", error);
-        return;
-    }
+    console.error("Cloud save failed:", error);
+    return;
+}
 
-    console.log("Cloud save successful");
+if (
+    localChangeVersion ===
+    saveVersion
+) {
+    hasUnsavedLocalChanges = false;
+}
+
+console.log("Cloud save successful");
 }
 let cloudSaveTimer;
+let hasUnsavedLocalChanges = false;
+let localChangeVersion = 0;
 
 function scheduleCloudSave() {
+
+    hasUnsavedLocalChanges = true;
+localChangeVersion += 1;
+
 
     clearTimeout(cloudSaveTimer);
 
@@ -7627,7 +7712,11 @@ function flushCloudSave() {
 
     clearTimeout(cloudSaveTimer);
 
-    saveUserDataToCloud();
+    if (!hasUnsavedLocalChanges) {
+        return;
+    }
+
+    return saveUserDataToCloud();
 }
 
 /*
@@ -7636,14 +7725,32 @@ function flushCloudSave() {
  */
 document.addEventListener(
     "visibilitychange",
-    function () {
+    async function () {
 
         if (
             document.visibilityState ===
             "hidden"
         ) {
             flushCloudSave();
+            return;
         }
+
+        if (
+    document.visibilityState ===
+    "visible"
+) {
+
+    if (hasUnsavedLocalChanges) {
+
+        await flushCloudSave();
+
+        if (hasUnsavedLocalChanges) {
+            return;
+        }
+    }
+
+    await syncLatestFromCloud();
+}
     }
 );
 
@@ -7679,7 +7786,8 @@ Storage.prototype.setItem = function (key, value) {
 
     if (
         this === localStorage &&
-        cloudSaveKeys.includes(key)
+        cloudSaveKeys.includes(key) &&
+        !isApplyingCloudData
     ) {
         scheduleCloudSave();
     }
@@ -7714,110 +7822,36 @@ async function loadUserDataFromCloud() {
 }
 loginBtn.addEventListener("click", async function () {
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: loginEmail.value,
-        password: loginPassword.value
-    });
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: loginEmail.value,
+            password: loginPassword.value
+        });
 
     if (error) {
-        alert("Sign in failed: " + error.message);
+        alert(
+            "Sign in failed: " +
+            error.message
+        );
         return;
     }
 
-alert("Signed in successfully");
+    loginStatus.textContent =
+        "Signed in as: " +
+        data.user.email;
 
-loginStatus.textContent =
-    "Signed in as: " + data.user.email;
-    const cloudData = await loadUserDataFromCloud();
+    /*
+     * Always load the latest cloud copy
+     * after signing in.
+     */
+    await syncLatestFromCloud();
 
-if (cloudData) {
+    alert("Signed in successfully");
 
-    topics = cloudData.topics || [];
-folders = cloudData.folders || [];
-topicFolders = cloudData.topicFolders || {};
-libraryCategories =
-    cloudData.libraryCategories || [];
-
-folderCategories =
-    cloudData.folderCategories || {};
-shapes = cloudData.shapes || {};
-savedConnections = cloudData.connections || {};
-currentTopic = cloudData.currentTopic || null;
-
-    localStorage.setItem(
-        "topics",
-        JSON.stringify(topics)
+    console.log(
+        "Signed in user:",
+        data.user
     );
-    localStorage.setItem(
-    "folders",
-    JSON.stringify(folders)
-);
-
-localStorage.setItem(
-    "topicFolders",
-    JSON.stringify(topicFolders)
-);
-localStorage.setItem(
-    "libraryCategories",
-    JSON.stringify(libraryCategories)
-);
-
-localStorage.setItem(
-    "folderCategories",
-    JSON.stringify(folderCategories)
-);
-
-    localStorage.setItem(
-        "shapes",
-        JSON.stringify(shapes)
-    );
-
-    localStorage.setItem(
-        "connections",
-        JSON.stringify(savedConnections)
-    );
-
-    if (currentTopic) {
-        localStorage.setItem(
-            "currentTopic",
-            currentTopic
-        );
-    } else {
-        localStorage.removeItem("currentTopic");
-    }
-
-    displayTopics();
-
-    if (currentTopic) {
-        openTopic(currentTopic);
-    }
-}
-else {
-    topics = [];
-folders = [];
-topicFolders = {};
-libraryCategories = [];
-folderCategories = {};
-shapes = {};
-savedConnections = {};
-currentTopic = null;
-
-  localStorage.removeItem("topics");
-localStorage.removeItem("folders");
-localStorage.removeItem("topicFolders");
-localStorage.removeItem("libraryCategories");
-localStorage.removeItem("folderCategories");
-localStorage.removeItem("shapes");
-localStorage.removeItem("connections");
-localStorage.removeItem("currentTopic");
-
-    topicPage.style.display = "none";
-    createTopicBtn.style.display = "inline-block";
-    topicList.style.display = "block";
-
-    displayTopics();
-}
-console.log("Signed in user:", data.user);
 });
 logoutBtn.addEventListener("click", async function () {
 
