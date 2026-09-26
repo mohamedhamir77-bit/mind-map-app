@@ -10361,6 +10361,60 @@ canvasViewport.addEventListener(
         }
     }
 );
+/*
+ * Prevent iPhone Safari from pinch-zooming
+ * the whole webpage while a mind map is open.
+ *
+ * The app's own canvas pinch handler still
+ * receives the gesture.
+ */
+function preventNativeMindMapPageZoom(event) {
+
+    if (
+        !topicPage ||
+        topicPage.style.display !== "block"
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+}
+
+document.addEventListener(
+    "gesturestart",
+    preventNativeMindMapPageZoom,
+    {
+        passive: false,
+        capture: true
+    }
+);
+
+document.addEventListener(
+    "gesturechange",
+    preventNativeMindMapPageZoom,
+    {
+        passive: false,
+        capture: true
+    }
+);
+
+document.addEventListener(
+    "touchmove",
+    function (event) {
+
+        if (
+            topicPage &&
+            topicPage.style.display === "block" &&
+            event.touches.length > 1
+        ) {
+            event.preventDefault();
+        }
+    },
+    {
+        passive: false,
+        capture: true
+    }
+);
 /* Safari / iPhone pinch zoom fallback */
 
 let safariGestureStartZoom = canvasZoom;
