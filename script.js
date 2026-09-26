@@ -9606,6 +9606,8 @@ canvasViewport.addEventListener(
 
     event.preventDefault();
 
+    event.stopPropagation();
+
     beginTwoFingerGesture();
 
     pinchZooming = true;
@@ -9697,8 +9699,11 @@ touchCanvasDirection = null;
                 canvasViewport.scrollLeft
             );
             touchCanvasStartScrollY = window.scrollY;
-    },
-    { passive: false }
+        },
+    {
+        passive: false,
+        capture: true
+    }
 );
 
 
