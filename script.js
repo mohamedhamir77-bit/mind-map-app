@@ -9936,12 +9936,16 @@ canvasViewport.addEventListener(
          * Once fewer than two fingers remain,
          * finish the pinch.
          */
-        if (event.touches.length < 2) {
+        if (
+    twoFingerGestureActive &&
+    event.touches.length < 2
+) {
 
     pinchZooming = false;
 
     endTwoFingerGesture();
 }
+
 
         /*
          * Require a fresh touch after a pinch
@@ -9974,7 +9978,9 @@ canvasViewport.addEventListener(
         touchCanvasPanning = false;
         touchCanvasDirection = null;
 
-        endTwoFingerGesture();
+        if (twoFingerGestureActive) {
+            endTwoFingerGesture();
+        }
     }
 );
 /* Safari / iPhone pinch zoom fallback */
