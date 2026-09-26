@@ -1146,6 +1146,7 @@ h1 {
 }
 
 #topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
 #topicList .folder-delete-btn,
 #topicList .folder-rename-btn {
     width: auto;
@@ -1212,6 +1213,7 @@ h1 {
 }
 
 #topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
 #topicList .folder-delete-btn,
 #topicList .folder-rename-btn {
     flex: 0 0 auto;
@@ -1269,6 +1271,7 @@ h1 {
 }
 
 #topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
 #topicList .folder-delete-btn,
 #topicList .folder-rename-btn {
     min-height: 34px !important;
@@ -1683,7 +1686,8 @@ top: -18px;
     margin-left: 18px;
     width: calc(100% - 18px);
 }
-#topicList .category-delete-btn {
+#topicList .category-delete-btn,
+#topicList .category-rename-btn {
     width: auto !important;
     min-height: 30px !important;
     padding: 5px 9px !important;

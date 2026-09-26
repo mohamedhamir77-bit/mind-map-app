@@ -1656,7 +1656,79 @@ categoryButton.textContent =
         categoryItem.appendChild(
     categoryButton
 );
+const renameCategoryBtn =
+    document.createElement("button");
 
+renameCategoryBtn.type = "button";
+
+renameCategoryBtn.classList.add(
+    "category-rename-btn"
+);
+
+renameCategoryBtn.textContent =
+    "Rename";
+
+renameCategoryBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename category:",
+            category.name
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === category.name) {
+            return;
+        }
+
+        const duplicate =
+            libraryCategories.some(
+                function (item) {
+                    return (
+                        item.id !==
+                            category.id &&
+                        item.name
+                            .toLowerCase() ===
+                        cleanName
+                            .toLowerCase()
+                    );
+                }
+            );
+
+        if (duplicate) {
+            alert(
+                "A category with that name already exists."
+            );
+            return;
+        }
+
+        category.name =
+            cleanName;
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(
+                libraryCategories
+            )
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+categoryItem.appendChild(
+    renameCategoryBtn
+);
 if (categoryFolderCount === 0) {
 
     const deleteCategoryBtn =
@@ -2191,7 +2263,150 @@ moveTopicSelect.addEventListener(
         scheduleCloudSave();
     }
 );
+const renameTopicBtn =
+    document.createElement("button");
 
+renameTopicBtn.type = "button";
+
+renameTopicBtn.classList.add(
+    "topic-rename-btn"
+);
+
+renameTopicBtn.textContent =
+    "Rename";
+
+renameTopicBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename mind map:",
+            topic
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === topic) {
+            return;
+        }
+
+        if (topics.includes(cleanName)) {
+            alert(
+                "A mind map with that name already exists."
+            );
+            return;
+        }
+
+        /*
+         * Rename in the main topic list.
+         */
+        topics = topics.map(
+            function (item) {
+                return item === topic
+                    ? cleanName
+                    : item;
+            }
+        );
+
+        /*
+         * Move the shapes to the new key.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                shapes,
+                topic
+            )
+        ) {
+            shapes[cleanName] =
+                shapes[topic];
+
+            delete shapes[topic];
+        }
+
+        /*
+         * Move saved connections
+         * to the new key.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                savedConnections,
+                topic
+            )
+        ) {
+            savedConnections[cleanName] =
+                savedConnections[topic];
+
+            delete savedConnections[topic];
+        }
+
+        /*
+         * Keep the mind map in
+         * the same folder.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                topicFolders,
+                topic
+            )
+        ) {
+            topicFolders[cleanName] =
+                topicFolders[topic];
+
+            delete topicFolders[topic];
+        }
+
+        /*
+         * Update current topic too,
+         * if required.
+         */
+        if (currentTopic === topic) {
+
+            currentTopic = cleanName;
+
+            localStorage.setItem(
+                "currentTopic",
+                cleanName
+            );
+
+            topicTitle.textContent =
+                cleanName;
+        }
+
+        localStorage.setItem(
+            "topics",
+            JSON.stringify(topics)
+        );
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(
+                savedConnections
+            )
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(
+                topicFolders
+            )
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
         const deleteTopicBtn =
             document.createElement("button");
 
@@ -2272,6 +2487,10 @@ moveTopicSelect.addEventListener(
 
 newTopic.appendChild(
     moveTopicSelect
+);
+
+newTopic.appendChild(
+    renameTopicBtn
 );
 
 newTopic.appendChild(
