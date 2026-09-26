@@ -9418,6 +9418,22 @@ function applyCanvasZoom() {
 
     canvas.style.zoom = canvasZoom;
 
+    const canvasResizeHandle =
+        document.getElementById(
+            "canvasResizeHandle"
+        );
+
+    if (canvasResizeHandle) {
+
+        const hitSize =
+            44 / canvasZoom;
+
+        canvasResizeHandle.style.setProperty(
+            "--canvas-resize-hit-size",
+            hitSize + "px"
+        );
+    }
+
     canvas.classList.toggle(
         "very-zoomed-out",
         canvasZoom <= 0.5
