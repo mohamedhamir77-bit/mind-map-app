@@ -3900,14 +3900,47 @@ actuallyMoved = false;
 
     document.addEventListener("pointermove", function (event) {
 
+    if (
+        !dragging ||
+        event.pointerId !== activePointerId
+    ) {
+        return;
+    }
+
+    /*
+     * Two-finger pinch always wins
+     * over shape dragging.
+     */
+    if (
+        twoFingerGestureActive &&
+        event.pointerType !== "mouse"
+    ) {
+
         if (
-            !dragging ||
-            event.pointerId !== activePointerId
+            captureTarget &&
+            captureTarget.hasPointerCapture &&
+            captureTarget.hasPointerCapture(
+                activePointerId
+            )
         ) {
-            return;
+            captureTarget.releasePointerCapture(
+                activePointerId
+            );
         }
 
-        event.preventDefault();
+        shape.classList.remove(
+            "dragging-hover"
+        );
+
+        dragging = false;
+        activePointerId = null;
+        captureTarget = null;
+        actuallyMoved = false;
+
+        return;
+    }
+
+    event.preventDefault();
         if (
     Math.hypot(
         event.clientX - dragStartClientX,
@@ -9469,6 +9502,66 @@ let pinchStartZoom = 1;
 let pinchContentX = 0;
 let pinchContentY = 0;
 
+let twoFingerGestureActive = false;
+let suppressShapeClickUntil = 0;
+
+function beginTwoFingerGesture() {
+
+    twoFingerGestureActive = true;
+
+    suppressShapeClickUntil =
+        Date.now() + 700;
+
+    /*
+     * If a shape text box has focus,
+     * remove the focus during pinch.
+     */
+    const activeElement =
+        document.activeElement;
+
+    if (
+        activeElement &&
+        activeElement.closest &&
+        activeElement.closest(".shape-text")
+    ) {
+        activeElement.blur();
+    }
+
+    const selection =
+        window.getSelection();
+
+    if (selection) {
+        selection.removeAllRanges();
+    }
+}
+
+function endTwoFingerGesture() {
+
+    twoFingerGestureActive = false;
+
+    /*
+     * Prevent the pinch ending
+     * from turning into a shape click.
+     */
+    suppressShapeClickUntil =
+        Date.now() + 500;
+}
+canvas.addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            Date.now() <
+                suppressShapeClickUntil &&
+            event.target.closest(".shape")
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    },
+    true
+);
+
 const TOUCH_PAN_THRESHOLD = 8;
 
 
@@ -9512,6 +9605,8 @@ canvasViewport.addEventListener(
     stopHorizontalMomentum();
 
     event.preventDefault();
+
+    beginTwoFingerGesture();
 
     pinchZooming = true;
             touchCanvasPanning = false;
@@ -9842,8 +9937,11 @@ canvasViewport.addEventListener(
          * finish the pinch.
          */
         if (event.touches.length < 2) {
-            pinchZooming = false;
-        }
+
+    pinchZooming = false;
+
+    endTwoFingerGesture();
+}
 
         /*
          * Require a fresh touch after a pinch
@@ -9875,6 +9973,8 @@ canvasViewport.addEventListener(
         pinchZooming = false;
         touchCanvasPanning = false;
         touchCanvasDirection = null;
+
+        endTwoFingerGesture();
     }
 );
 /* Safari / iPhone pinch zoom fallback */
@@ -9890,6 +9990,7 @@ canvasViewport.addEventListener(
         stopHorizontalMomentum();
 
         event.preventDefault();
+        beginTwoFingerGesture();
 
         pinchZooming = false;
         touchCanvasPanning = false;
@@ -10032,6 +10133,8 @@ canvasViewport.addEventListener(
         pinchZooming = false;
         touchCanvasPanning = false;
         touchCanvasDirection = null;
+
+        endTwoFingerGesture();
     },
     { passive: false }
 );
