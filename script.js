@@ -9993,17 +9993,30 @@ canvasViewport.addEventListener(
 let safariGestureStartZoom = canvasZoom;
 let safariPinchContentX = 0;
 let safariPinchContentY = 0;
+let safariGestureHandling = false;
 
 canvasViewport.addEventListener(
     "gesturestart",
     function (event) {
 
+        event.preventDefault();
+
+        /*
+         * Normal touch pinch is already
+         * controlling this gesture.
+         * Do not let Safari control it too.
+         */
+        if (pinchZooming) {
+            safariGestureHandling = false;
+            return;
+        }
+
+        safariGestureHandling = true;
+
         stopHorizontalMomentum();
 
-        event.preventDefault();
         beginTwoFingerGesture();
 
-        pinchZooming = false;
         touchCanvasPanning = false;
         touchCanvasDirection = null;
 
@@ -10052,6 +10065,14 @@ canvasViewport.addEventListener(
     function (event) {
 
         event.preventDefault();
+
+        /*
+         * Ignore Safari's duplicate gesture
+         * if the normal touch pinch owns it.
+         */
+        if (!safariGestureHandling) {
+            return;
+        }
 
         const viewportRect =
             canvasViewport.getBoundingClientRect();
@@ -10141,11 +10162,19 @@ canvasViewport.addEventListener(
 
         event.preventDefault();
 
+        if (!safariGestureHandling) {
+            return;
+        }
+
+        safariGestureHandling = false;
+
         pinchZooming = false;
         touchCanvasPanning = false;
         touchCanvasDirection = null;
 
-        endTwoFingerGesture();
+        if (twoFingerGestureActive) {
+            endTwoFingerGesture();
+        }
     },
     { passive: false }
 );
