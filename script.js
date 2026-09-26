@@ -9513,26 +9513,13 @@ function beginTwoFingerGesture() {
         Date.now() + 700;
 
     /*
-     * If a shape text box has focus,
-     * remove the focus during pinch.
+     * Do not blur editable shape text
+     * or clear the selection here.
+     *
+     * On iPhone Safari this can cause
+     * a visible jump when the first
+     * finger lands on a shape.
      */
-    const activeElement =
-        document.activeElement;
-
-    if (
-        activeElement &&
-        activeElement.closest &&
-        activeElement.closest(".shape-text")
-    ) {
-        activeElement.blur();
-    }
-
-    const selection =
-        window.getSelection();
-
-    if (selection) {
-        selection.removeAllRanges();
-    }
 }
 
 function endTwoFingerGesture() {
