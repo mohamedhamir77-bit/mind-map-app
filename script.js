@@ -354,9 +354,21 @@ deleteLineBtn.addEventListener("click", function () {
         });
     }
 
-    selectedConnection.remove();
+   if (
+    selectedConnection._wideHitObserver
+) {
+    selectedConnection._wideHitObserver.disconnect();
+}
 
-    removeLineHandles();
+if (
+    selectedConnection._wideHitArea
+) {
+    selectedConnection._wideHitArea.remove();
+}
+
+selectedConnection.remove();
+
+removeLineHandles();
 
     selectedConnection = null;
     selectedConnectionData = null;
@@ -484,7 +496,138 @@ function removeLineHandles() {
     selectedControlPointIndex = null;
     selectedControlPointHandle = null;
 }
+function addWideLineHitArea(line) {
 
+    if (
+        !line ||
+        !line.parentNode ||
+        line._wideHitArea
+    ) {
+        return;
+    }
+
+    const hitLine =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+    hitLine.setAttribute("fill", "none");
+
+    /*
+     * Almost fully transparent,
+     * but still counts as an SVG stroke
+     * for pointer/touch detection.
+     */
+    hitLine.setAttribute(
+        "stroke",
+        "rgba(0,0,0,0.001)"
+    );
+
+    /*
+     * Wider invisible touch target.
+     * Visible line remains 3px.
+     */
+    hitLine.setAttribute(
+        "stroke-width",
+        "22"
+    );
+
+    hitLine.setAttribute(
+        "stroke-linecap",
+        "round"
+    );
+
+    hitLine.setAttribute(
+        "stroke-linejoin",
+        "round"
+    );
+
+    hitLine.style.pointerEvents = "stroke";
+    hitLine.style.cursor = "pointer";
+
+    function syncHitLine() {
+
+        const pathData =
+            line.getAttribute("d");
+
+        if (pathData) {
+            hitLine.setAttribute(
+                "d",
+                pathData
+            );
+        }
+    }
+
+    syncHitLine();
+
+    /*
+     * Keep invisible hit area matching
+     * the real line whenever it moves.
+     */
+    const observer =
+        new MutationObserver(
+            function (mutations) {
+
+                mutations.forEach(
+                    function (mutation) {
+
+                        if (
+                            mutation.attributeName ===
+                            "d"
+                        ) {
+                            syncHitLine();
+                        }
+                    }
+                );
+            }
+        );
+
+    observer.observe(
+        line,
+        {
+            attributes: true,
+            attributeFilter: ["d"]
+        }
+    );
+
+    /*
+     * Tapping the invisible wider area
+     * activates the real line.
+     */
+    hitLine.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!line.isConnected) {
+                return;
+            }
+
+            line.dispatchEvent(
+                new MouseEvent(
+                    "click",
+                    {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: event.clientX,
+                        clientY: event.clientY
+                    }
+                )
+            );
+        }
+    );
+
+    line.parentNode.insertBefore(
+        hitLine,
+        line
+    );
+
+    line._wideHitArea = hitLine;
+    line._wideHitObserver = observer;
+}
 
 function showFreeLineControlHandles(line, savedLine) {
 
@@ -2849,7 +2992,10 @@ const y =
     );
 });
         connectionLayer.appendChild(line);
-        if (!Array.isArray(savedConnection.controlPoints)) {
+
+addWideLineHitArea(line);
+
+if (!Array.isArray(savedConnection.controlPoints)) {
     savedConnection.controlPoints = [];
 }
 
@@ -4625,6 +4771,9 @@ const y =
     );
 });
     connectionLayer.appendChild(line);
+
+addWideLineHitArea(line);
+
 connections.push({
     type: "freeLine",
     line: line,
@@ -4922,7 +5071,9 @@ const y2 = point2.y;
 line.setAttribute("d", pathData);
 connectionLayer.appendChild(line);
 
-   const runtimeConnection = {
+addWideLineHitArea(line);
+
+const runtimeConnection = {
     line: line,
     shape1: shape1,
     shape2: shape2,
