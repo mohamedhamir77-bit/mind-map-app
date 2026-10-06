@@ -7696,11 +7696,25 @@ canvas.style.height =
  * Shape WIDTH/HEIGHT stay unchanged.
  * Only their positions move.
  */
+/*
+ * Never compress the existing map when
+ * the canvas becomes smaller in one axis.
+ *
+ * Increasing the canvas can spread items,
+ * but reducing one dimension must not
+ * squash them together.
+ */
 const widthScale =
-    newWidth / startWidth;
+    Math.max(
+        1,
+        newWidth / startWidth
+    );
 
 const heightScale =
-    newHeight / startHeight;
+    Math.max(
+        1,
+        newHeight / startHeight
+    );
 
 
 resizeShapeStartData.forEach(
@@ -10039,7 +10053,7 @@ let canvasZoom = 1;
 function applyCanvasZoom() {
 
     canvasZoom = Math.max(
-        0.4,
+        0.1,
         Math.min(2, canvasZoom)
     );
 
@@ -10100,7 +10114,7 @@ zoomFitBtn.addEventListener("click", function () {
         availableWidth / canvas.offsetWidth;
 
     canvasZoom = Math.max(
-        0.4,
+        0.1,
         Math.min(1, canvasZoom)
     );
 
