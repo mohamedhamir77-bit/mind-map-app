@@ -1516,7 +1516,7 @@ top: -18px;
     
 
 }
-@media (max-width: 700px) {
+@media (max-width: 700px), (max-width: 1366px) and (any-pointer: coarse) {
 
     #topicPage #canvasToolbar,
     #topicPage #canvasToolbar.toolbar-fixed {
