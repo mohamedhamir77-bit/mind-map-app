@@ -2757,8 +2757,30 @@ if (savedShape.type === "bookmark") {
             `0 0 0 4px ${savedShape.borderColour}`;
     }
 }
-        shape.style.left = savedShape.left + "px";
-shape.style.top = savedShape.top + "px";
+        const safeSavedLeft =
+    Math.max(
+        20,
+        Number(savedShape.left) || 20
+    );
+
+const safeSavedTop =
+    Math.max(
+        20,
+        Number(savedShape.top) || 20
+    );
+
+savedShape.left = safeSavedLeft;
+savedShape.top = safeSavedTop;
+
+shape.style.left =
+    safeSavedLeft + "px";
+
+shape.style.top =
+    safeSavedTop + "px";
+    localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
 if (savedShape.width) {
     shape.style.width = savedShape.width + "px";
 }
