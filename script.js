@@ -7540,8 +7540,103 @@ canvas.addEventListener("pointerdown", function (event) {
     const startY = event.clientY;
 
     const startWidth = canvas.offsetWidth;
-    const startHeight = canvas.offsetHeight;
-    const canvasViewport =
+const startHeight = canvas.offsetHeight;
+
+
+/*
+ * Remember where every shape was when
+ * this canvas resize started.
+ */
+const resizeShapeStartData =
+    Array.from(
+        canvas.querySelectorAll(".shape")
+    ).map(function (shape) {
+
+        return {
+            shape: shape,
+            left: shape.offsetLeft,
+            top: shape.offsetTop
+        };
+    });
+
+
+/*
+ * Remember saved line positions too.
+ *
+ * Free lines use absolute x/y coordinates.
+ * Normal connection bends can also contain
+ * absolute positions and offsets.
+ */
+const resizeSavedConnectionStartData =
+    (
+        savedConnections[currentTopic] || []
+    ).map(function (savedConnection) {
+
+        return {
+            savedConnection: savedConnection,
+
+            x1: savedConnection.x1,
+            y1: savedConnection.y1,
+            x2: savedConnection.x2,
+            y2: savedConnection.y2,
+
+            controlPoints:
+                Array.isArray(
+                    savedConnection.controlPoints
+                )
+                    ? savedConnection.controlPoints.map(
+                        function (point) {
+                            return { ...point };
+                        }
+                    )
+                    : [],
+
+            controlPoint:
+                savedConnection.controlPoint
+                    ? {
+                        ...savedConnection.controlPoint
+                    }
+                    : null
+        };
+    });
+
+
+/*
+ * Normal shape-to-shape connections keep
+ * their own runtime copy of bend points.
+ */
+const resizeRuntimeConnectionStartData =
+    connections
+        .filter(function (connection) {
+            return connection.type !== "freeLine";
+        })
+        .map(function (connection) {
+
+            return {
+                connection: connection,
+
+                controlPoints:
+                    Array.isArray(
+                        connection.controlPoints
+                    )
+                        ? connection.controlPoints.map(
+                            function (point) {
+                                return { ...point };
+                            }
+                        )
+                        : [],
+
+                controlPoint:
+                    connection.controlPoint
+                        ? {
+                            ...connection.controlPoint
+                        }
+                        : null
+            };
+        });
+
+
+const canvasViewport =
     document.getElementById("canvasViewport");
 
 const startScrollLeft =
@@ -7588,12 +7683,298 @@ const newHeight = Math.max(
 );
 
     canvas.style.width =
-        newWidth + "px";
+    newWidth + "px";
 
-    canvas.style.height =
-        newHeight + "px";
+canvas.style.height =
+    newHeight + "px";
 
-    if (canvasSizeLabel) {
+
+/*
+ * Spread the existing layout across
+ * the newly resized canvas.
+ *
+ * Shape WIDTH/HEIGHT stay unchanged.
+ * Only their positions move.
+ */
+const widthScale =
+    newWidth / startWidth;
+
+const heightScale =
+    newHeight / startHeight;
+
+
+resizeShapeStartData.forEach(
+    function (item) {
+
+        const newLeft =
+            Math.max(
+                0,
+                item.left * widthScale
+            );
+
+        const newTop =
+            Math.max(
+                0,
+                item.top * heightScale
+            );
+
+        item.shape.style.left =
+            newLeft + "px";
+
+        item.shape.style.top =
+            newTop + "px";
+
+        if (item.shape.savedData) {
+
+            item.shape.savedData.left =
+                newLeft;
+
+            item.shape.savedData.top =
+                newTop;
+        }
+    }
+);
+
+
+/*
+ * Scale saved line coordinates.
+ */
+resizeSavedConnectionStartData.forEach(
+    function (item) {
+
+        const saved =
+            item.savedConnection;
+
+
+        if (saved.type === "freeLine") {
+
+            if (Number.isFinite(item.x1)) {
+                saved.x1 =
+                    item.x1 * widthScale;
+            }
+
+            if (Number.isFinite(item.y1)) {
+                saved.y1 =
+                    item.y1 * heightScale;
+            }
+
+            if (Number.isFinite(item.x2)) {
+                saved.x2 =
+                    item.x2 * widthScale;
+            }
+
+            if (Number.isFinite(item.y2)) {
+                saved.y2 =
+                    item.y2 * heightScale;
+            }
+        }
+
+
+        if (
+            Array.isArray(
+                saved.controlPoints
+            )
+        ) {
+
+            saved.controlPoints.forEach(
+                function (point, index) {
+
+                    const startPoint =
+                        item.controlPoints[index];
+
+                    if (!startPoint) {
+                        return;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.x
+                        )
+                    ) {
+                        point.x =
+                            startPoint.x *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.y
+                        )
+                    ) {
+                        point.y =
+                            startPoint.y *
+                            heightScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetX
+                        )
+                    ) {
+                        point.offsetX =
+                            startPoint.offsetX *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetY
+                        )
+                    ) {
+                        point.offsetY =
+                            startPoint.offsetY *
+                            heightScale;
+                    }
+                }
+            );
+        }
+
+
+        if (
+            saved.controlPoint &&
+            item.controlPoint
+        ) {
+
+            saved.controlPoint.x =
+                item.controlPoint.x *
+                widthScale;
+
+            saved.controlPoint.y =
+                item.controlPoint.y *
+                heightScale;
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetX
+                )
+            ) {
+                saved.controlPoint.offsetX =
+                    item.controlPoint.offsetX *
+                    widthScale;
+            }
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetY
+                )
+            ) {
+                saved.controlPoint.offsetY =
+                    item.controlPoint.offsetY *
+                    heightScale;
+            }
+        }
+    }
+);
+
+
+/*
+ * Scale the live copies used by
+ * normal connected lines.
+ */
+resizeRuntimeConnectionStartData.forEach(
+    function (item) {
+
+        const connection =
+            item.connection;
+
+        if (
+            Array.isArray(
+                connection.controlPoints
+            )
+        ) {
+
+            connection.controlPoints.forEach(
+                function (point, index) {
+
+                    const startPoint =
+                        item.controlPoints[index];
+
+                    if (!startPoint) {
+                        return;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.x
+                        )
+                    ) {
+                        point.x =
+                            startPoint.x *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.y
+                        )
+                    ) {
+                        point.y =
+                            startPoint.y *
+                            heightScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetX
+                        )
+                    ) {
+                        point.offsetX =
+                            startPoint.offsetX *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetY
+                        )
+                    ) {
+                        point.offsetY =
+                            startPoint.offsetY *
+                            heightScale;
+                    }
+                }
+            );
+        }
+
+
+        if (
+            connection.controlPoint &&
+            item.controlPoint
+        ) {
+
+            connection.controlPoint.x =
+                item.controlPoint.x *
+                widthScale;
+
+            connection.controlPoint.y =
+                item.controlPoint.y *
+                heightScale;
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetX
+                )
+            ) {
+                connection.controlPoint.offsetX =
+                    item.controlPoint.offsetX *
+                    widthScale;
+            }
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetY
+                )
+            ) {
+                connection.controlPoint.offsetY =
+                    item.controlPoint.offsetY *
+                    heightScale;
+            }
+        }
+    }
+);
+
+
+if (canvasSizeLabel) {
 
         canvasSizeLabel.textContent =
             Math.round(newWidth) +
@@ -7842,20 +8223,43 @@ if (resizeSpacer) {
     }
 
     localStorage.setItem(
-        "canvasWidth",
-        canvas.offsetWidth
-    );
+    "canvasWidth",
+    canvas.offsetWidth
+);
 
-    localStorage.setItem(
-        "canvasHeight",
-        canvas.offsetHeight
-    );
+localStorage.setItem(
+    "canvasHeight",
+    canvas.offsetHeight
+);
 
-    window.removeEventListener(
+
+/*
+ * Save the newly spread-out shape
+ * and line positions.
+ */
+localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+
+localStorage.setItem(
+    "connections",
+    JSON.stringify(
+        savedConnections
+    )
+);
+
+recalculateOverflowWorkspace();
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
+
+
+window.removeEventListener(
     "pointermove",
     resizeCanvas
 );
-
 window.removeEventListener(
     "pointerup",
     stopResize
