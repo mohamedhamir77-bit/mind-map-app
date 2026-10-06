@@ -1764,4 +1764,7 @@ top: -18px;
     #topicPage {
     padding-top: 220px !important;
 }
+#topicPage #backBtn {
+    margin-top: 12px !important;
+}
 }
