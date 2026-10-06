@@ -2518,6 +2518,10 @@ topicList.style.display = "none";
     topicTitle.textContent = topic;
     topicPage.style.display = "block";
 displayShapes();
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
 }
 function displayShapes() {
 
@@ -9658,8 +9662,12 @@ function applyCanvasZoom() {
         canvasZoom <= 0.5
     );
 
-    zoomLevel.textContent =
-        Math.round(canvasZoom * 100) + "%";
+ zoomLevel.textContent =
+    Math.round(canvasZoom * 100) + "%";
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
 }
 
 zoomOutBtn.addEventListener("click", function () {
@@ -9698,6 +9706,76 @@ zoomFitBtn.addEventListener("click", function () {
 });
 const canvasViewport =
     document.getElementById("canvasViewport");
+
+
+function keepCanvasResizeHandleVisible() {
+
+    const resizeHandle =
+        document.getElementById(
+            "canvasResizeHandle"
+        );
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (!resizeHandle || !viewport) {
+        return;
+    }
+
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    /*
+     * Right-most part of the canvas
+     * that is currently visible.
+     */
+    const visibleRight =
+        Math.min(
+            viewportRect.right,
+            window.innerWidth,
+            canvasRect.right
+        ) - 8;
+
+    const zoom =
+        parseFloat(canvas.style.zoom) || 1;
+
+    /*
+     * Move the real resize handle inward
+     * so it remains at the visible
+     * right-hand edge of the canvas.
+     */
+    const rightDistance =
+        Math.max(
+            4,
+            (
+                canvasRect.right -
+                visibleRight
+            ) / zoom
+        );
+
+    resizeHandle.style.right =
+        rightDistance + "px";
+}
+
+
+canvasViewport.addEventListener(
+    "scroll",
+    keepCanvasResizeHandleVisible,
+    {
+        passive: true
+    }
+);
+
+window.addEventListener(
+    "resize",
+    keepCanvasResizeHandleVisible
+);
+
 
 let canvasPanning = false;
 let panStartX = 0;
