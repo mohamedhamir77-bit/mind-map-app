@@ -7704,17 +7704,8 @@ canvas.style.height =
  * but reducing one dimension must not
  * squash them together.
  */
-const widthScale =
-    Math.max(
-        1,
-        newWidth / startWidth
-    );
-
-const heightScale =
-    Math.max(
-        1,
-        newHeight / startHeight
-    );
+const widthScale = 1;
+const heightScale = 1;
 
 
 resizeShapeStartData.forEach(
@@ -10108,15 +10099,38 @@ zoomFitBtn.addEventListener("click", function () {
     }
 
     const availableWidth =
-        canvasViewport.clientWidth - 20;
+    canvasViewport.clientWidth - 20;
 
-    canvasZoom =
-        availableWidth / canvas.offsetWidth;
+const viewportRect =
+    canvasViewport.getBoundingClientRect();
 
-    canvasZoom = Math.max(
-        0.1,
-        Math.min(1, canvasZoom)
+const availableHeight =
+    Math.max(
+        100,
+        window.innerHeight -
+        viewportRect.top -
+        20
     );
+
+const widthZoom =
+    availableWidth /
+    canvas.offsetWidth;
+
+const heightZoom =
+    availableHeight /
+    canvas.offsetHeight;
+
+canvasZoom =
+    Math.min(
+        widthZoom,
+        heightZoom,
+        1
+    );
+
+canvasZoom = Math.max(
+    0.1,
+    canvasZoom
+);
 
     applyCanvasZoom();
 
