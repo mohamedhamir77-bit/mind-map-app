@@ -10070,7 +10070,28 @@ function applyCanvasZoom() {
         Math.min(2, canvasZoom)
     );
 
+    const useTransformZoom =
+    window.matchMedia(
+        "(min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse)"
+    ).matches;
+
+if (useTransformZoom) {
+
+    /*
+     * iPad: scale the entire canvas as one object
+     * so text and shapes always stay proportional.
+     */
+    canvas.style.zoom = "1";
+    canvas.style.transformOrigin = "top left";
+    canvas.style.transform =
+        "scale(" + canvasZoom + ")";
+
+} else {
+
+    canvas.style.transform = "";
+    canvas.style.transformOrigin = "";
     canvas.style.zoom = canvasZoom;
+}
 
     const canvasResizeHandle =
         document.getElementById(
@@ -10196,7 +10217,7 @@ function keepCanvasResizeHandleVisible() {
         ) - 8;
 
     const zoom =
-        parseFloat(canvas.style.zoom) || 1;
+    canvasZoom || 1;
 
     /*
      * Move the real resize handle inward
