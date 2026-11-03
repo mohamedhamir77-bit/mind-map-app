@@ -10815,16 +10815,22 @@ return;
         }
 
 
-        /*
-         * Horizontal = move mind map
-         */
-        if (
-            touchCanvasDirection ===
-            "horizontal"
-        ) {
+  /*
+ * Blank canvas = freely pan the mind map
+ * left, right, up, down or diagonally.
+ */
+event.preventDefault();
 
-            event.preventDefault();
- const now =
+/*
+ * Keep horizontal momentum when the
+ * main movement is sideways.
+ */
+if (
+    touchCanvasDirection ===
+    "horizontal"
+) {
+
+    const now =
         performance.now();
 
     const elapsed =
@@ -10849,35 +10855,42 @@ return;
 
     lastHorizontalTouchTime =
         now;
-            const maxScrollLeft =
-                Math.max(
-                    0,
-                    canvasViewport.scrollWidth -
-                    canvasViewport.clientWidth
-                );
-
-            const newScrollLeft =
-                touchCanvasStartScrollLeft -
-                distanceX;
-
-            canvasViewport.scrollLeft =
-                Math.max(
-                    0,
-                    Math.min(
-                        maxScrollLeft,
-                        newScrollLeft
-                    )
-                );
-        }
-if (touchCanvasDirection === "vertical") {
-
-    event.preventDefault();
-
-    window.scrollTo(
-        window.scrollX,
-        touchCanvasStartScrollY - distanceY
-    );
 }
+
+/*
+ * Horizontal movement.
+ */
+const maxScrollLeft =
+    Math.max(
+        0,
+        canvasViewport.scrollWidth -
+        canvasViewport.clientWidth
+    );
+
+const newScrollLeft =
+    touchCanvasStartScrollLeft -
+    distanceX;
+
+canvasViewport.scrollLeft =
+    Math.max(
+        0,
+        Math.min(
+            maxScrollLeft,
+            newScrollLeft
+        )
+    );
+
+/*
+ * Vertical movement.
+ */
+window.scrollTo(
+    window.scrollX,
+    Math.max(
+        0,
+        touchCanvasStartScrollY -
+        distanceY
+    )
+);      
         /*
          * Vertical gestures are left alone,
          * allowing normal page scrolling.
