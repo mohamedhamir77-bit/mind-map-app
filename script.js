@@ -10086,11 +10086,39 @@ if (useTransformZoom) {
     canvas.style.transform =
         "scale(" + canvasZoom + ")";
 
+    /*
+     * CSS transform changes the visible size,
+     * but not the page layout height.
+     * Give the viewport the scaled height so
+     * the map can still be panned vertically.
+     */
+    const iPadViewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (iPadViewport) {
+        iPadViewport.style.height =
+            Math.ceil(
+                canvas.offsetHeight *
+                canvasZoom
+            ) + "px";
+    }
+
 } else {
 
     canvas.style.transform = "";
     canvas.style.transformOrigin = "";
     canvas.style.zoom = canvasZoom;
+
+    const normalViewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (normalViewport) {
+        normalViewport.style.height = "";
+    }
 }
 
     const canvasResizeHandle =
