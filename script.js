@@ -10304,33 +10304,70 @@ canvas.addEventListener("click", function (event) {
         return;
     }
 
+    /*
+     * Preserve the exact current view.
+     * The iPad toolbar changes layout when
+     * switching back to default mode.
+     */
+    const savedScrollY = window.scrollY;
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    const savedScrollLeft =
+        viewport
+            ? viewport.scrollLeft
+            : 0;
+
     if (selectedShape) {
 
-    clearStaleShapeSelections();
+        clearStaleShapeSelections();
 
-    selectedShape = null;
+        selectedShape = null;
 
-    showHoverTools(false);
-    showNormalShapeTools(true);
-    setSidebarMode("default");
-}
+        showHoverTools(false);
+        showNormalShapeTools(true);
+        setSidebarMode("default");
+    }
 
     if (shapeSelectionOutline) {
         shapeSelectionOutline.remove();
         shapeSelectionOutline = null;
     }
+
     if (selectedConnection) {
 
-    selectedConnection.setAttribute(
-        "stroke-width",
-        "3"
+        selectedConnection.setAttribute(
+            "stroke-width",
+            "3"
+        );
+
+        selectedConnection = null;
+        selectedConnectionData = null;
+
+        removeLineHandles();
+    }
+
+    /*
+     * Restore position after Safari
+     * has processed the toolbar reflow.
+     */
+    requestAnimationFrame(
+        function () {
+
+            window.scrollTo(
+                window.scrollX,
+                savedScrollY
+            );
+
+            if (viewport) {
+                viewport.scrollLeft =
+                    savedScrollLeft;
+            }
+        }
     );
-
-    selectedConnection = null;
-    selectedConnectionData = null;
-
-    removeLineHandles();
-}
 });
 function clearStuckHoverDrag() {
     document
