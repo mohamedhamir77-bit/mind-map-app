@@ -9077,36 +9077,323 @@ document.addEventListener("click", function (event) {
 const editHoverBtn =
     document.getElementById("editHoverBtn");
 
-editHoverBtn.addEventListener("click", function () {
+/*
+ * Rich hover-text editor
+ */
+const hoverEditorOverlay =
+    document.createElement("div");
 
-    if (!selectedShape) {
-        alert("Select a hover symbol first.");
-        return;
-    }
+hoverEditorOverlay.id =
+    "hoverEditorOverlay";
 
-    if (selectedShape.savedData.type !== "hover") {
-        alert("Select a hover symbol first.");
-        return;
-    }
+hoverEditorOverlay.style.display =
+    "none";
 
-    const newText = prompt(
-        "Enter the text to show on hover:",
-        selectedShape.savedData.hoverText || ""
+hoverEditorOverlay.innerHTML = `
+    <div id="hoverEditorPanel">
+
+        <div id="hoverEditorTitle">
+            Edit hover text
+        </div>
+
+        <div id="hoverEditorToolbar">
+
+            <button type="button"
+                id="hoverBoldBtn">
+                <strong>B</strong>
+            </button>
+
+            <button type="button"
+                id="hoverUnderlineBtn">
+                <u>U</u>
+            </button>
+
+            <button type="button"
+                id="hoverBulletBtn">
+                • List
+            </button>
+
+            <button type="button"
+                id="hoverFontDownBtn">
+                A−
+            </button>
+
+            <button type="button"
+                id="hoverFontUpBtn">
+                A+
+            </button>
+
+            <label>
+                Spacing
+                <select id="hoverEditorSpacing">
+                    <option value="1.2">1.2</option>
+                    <option value="1.4">1.4</option>
+                    <option value="1.6">1.6</option>
+                    <option value="1.8">1.8</option>
+                    <option value="2">2.0</option>
+                </select>
+            </label>
+
+        </div>
+
+        <div
+            id="hoverRichEditor"
+            contenteditable="true"
+            spellcheck="true"
+        ></div>
+
+        <div id="hoverEditorActions">
+
+            <button type="button"
+                id="saveHoverEditorBtn">
+                Save
+            </button>
+
+            <button type="button"
+                id="cancelHoverEditorBtn">
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+`;
+
+document.body.appendChild(
+    hoverEditorOverlay
+);
+
+const hoverRichEditor =
+    document.getElementById(
+        "hoverRichEditor"
     );
 
-    if (newText === null) {
-        return;
-    }
-
-    selectedShape.savedData.hoverText = newText;
-
-    localStorage.setItem(
-        "shapes",
-        JSON.stringify(shapes)
+const hoverEditorSpacing =
+    document.getElementById(
+        "hoverEditorSpacing"
     );
 
-    alert("Hover text saved");
-});
+let hoverEditorTargetShape = null;
+
+function closeHoverEditor() {
+
+    hoverEditorOverlay.style.display =
+        "none";
+
+    hoverEditorTargetShape = null;
+}
+
+/*
+ * Formatting buttons.
+ * pointerdown preserves the selected text
+ * on iPad when the toolbar is tapped.
+ */
+function addHoverFormatButton(
+    buttonId,
+    command
+) {
+
+    document
+        .getElementById(buttonId)
+        .addEventListener(
+            "pointerdown",
+            function (event) {
+
+                event.preventDefault();
+
+                document.execCommand(
+                    command,
+                    false,
+                    null
+                );
+            }
+        );
+}
+
+addHoverFormatButton(
+    "hoverBoldBtn",
+    "bold"
+);
+
+addHoverFormatButton(
+    "hoverUnderlineBtn",
+    "underline"
+);
+
+addHoverFormatButton(
+    "hoverBulletBtn",
+    "insertUnorderedList"
+);
+
+/*
+ * Overall hover text size.
+ */
+document
+    .getElementById("hoverFontDownBtn")
+    .addEventListener(
+        "click",
+        function () {
+
+            let size =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            size = Math.max(
+                10,
+                size - 1
+            );
+
+            hoverRichEditor.style.fontSize =
+                size + "px";
+        }
+    );
+
+document
+    .getElementById("hoverFontUpBtn")
+    .addEventListener(
+        "click",
+        function () {
+
+            let size =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            size = Math.min(
+                28,
+                size + 1
+            );
+
+            hoverRichEditor.style.fontSize =
+                size + "px";
+        }
+    );
+
+/*
+ * Overall line spacing.
+ */
+hoverEditorSpacing.addEventListener(
+    "change",
+    function () {
+
+        hoverRichEditor.style.lineHeight =
+            hoverEditorSpacing.value;
+    }
+);
+
+document
+    .getElementById(
+        "cancelHoverEditorBtn"
+    )
+    .addEventListener(
+        "click",
+        closeHoverEditor
+    );
+
+document
+    .getElementById(
+        "saveHoverEditorBtn"
+    )
+    .addEventListener(
+        "click",
+        function () {
+
+            if (!hoverEditorTargetShape) {
+                closeHoverEditor();
+                return;
+            }
+
+            const plainText =
+                hoverRichEditor.innerText
+                    .replace(/\u00a0/g, " ")
+                    .trim();
+
+            hoverEditorTargetShape.savedData
+                .hoverText =
+                plainText;
+
+            hoverEditorTargetShape.savedData
+                .hoverHtml =
+                plainText
+                    ? hoverRichEditor.innerHTML
+                    : "";
+
+            hoverEditorTargetShape.savedData
+                .hoverFontSize =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            hoverEditorTargetShape.savedData
+                .hoverLineHeight =
+                hoverEditorSpacing.value;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+
+            closeHoverEditor();
+        }
+    );
+
+editHoverBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !==
+                "hover"
+        ) {
+            alert(
+                "Select a hover symbol first."
+            );
+            return;
+        }
+
+        hoverEditorTargetShape =
+            selectedShape;
+
+        const savedData =
+            selectedShape.savedData;
+
+        if (savedData.hoverHtml) {
+
+            hoverRichEditor.innerHTML =
+                savedData.hoverHtml;
+
+        } else {
+
+            hoverRichEditor.textContent =
+                savedData.hoverText || "";
+        }
+
+        const fontSize =
+            savedData.hoverFontSize || 14;
+
+        const lineHeight =
+            savedData.hoverLineHeight ||
+            "1.4";
+
+        hoverRichEditor.style.fontSize =
+            fontSize + "px";
+
+        hoverRichEditor.style.lineHeight =
+            lineHeight;
+
+        hoverEditorSpacing.value =
+            lineHeight;
+
+        hoverEditorOverlay.style.display =
+            "flex";
+
+        setTimeout(function () {
+            hoverRichEditor.focus();
+        }, 0);
+    }
+);
 const deleteHoverBtn =
     document.getElementById("deleteHoverBtn");
 
@@ -9616,13 +9903,39 @@ async function showHoverContent(shape, savedData) {
 
     hoverPopup.innerHTML = "";
 
-    if (savedData.hoverText) {
+  if (
+    savedData.hoverHtml ||
+    savedData.hoverText
+) {
 
-        const text = document.createElement("div");
-        text.textContent = savedData.hoverText;
+    const text =
+        document.createElement("div");
 
-        hoverPopup.appendChild(text);
+    text.classList.add(
+        "hover-rich-text"
+    );
+
+    if (savedData.hoverHtml) {
+
+        text.innerHTML =
+            savedData.hoverHtml;
+
+    } else {
+
+        text.textContent =
+            savedData.hoverText;
     }
+
+    text.style.fontSize =
+        (savedData.hoverFontSize || 14) +
+        "px";
+
+    text.style.lineHeight =
+        savedData.hoverLineHeight ||
+        "1.4";
+
+    hoverPopup.appendChild(text);
+}
 if (
     savedData.hoverLinks &&
     savedData.hoverLinks.length > 0
