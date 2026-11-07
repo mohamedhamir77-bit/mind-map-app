@@ -1768,3 +1768,7 @@ top: -18px;
     margin-top: 12px !important;
 }
 }
+/* Clearly show the currently selected line */
+#connectionLayer path[stroke-width="5"] {
+    stroke: #2563eb !important;
+}

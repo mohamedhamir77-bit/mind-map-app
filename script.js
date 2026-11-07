@@ -544,8 +544,8 @@ function addWideLineHitArea(line) {
     );
 
     hitLine.style.pointerEvents = "stroke";
-    hitLine.style.cursor = "pointer";
-
+hitLine.style.cursor = "pointer";
+hitLine.style.touchAction = "none";
     function syncHitLine() {
 
         const pathData =
@@ -590,7 +590,39 @@ function addWideLineHitArea(line) {
             attributeFilter: ["d"]
         }
     );
+/*
+ * Once a line is selected, allow the
+ * wider invisible touch area to drag it.
+ */
+hitLine.addEventListener(
+    "pointerdown",
+    function (event) {
 
+        if (selectedConnection !== line) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        line.dispatchEvent(
+            new PointerEvent(
+                "pointerdown",
+                {
+                    bubbles: true,
+                    cancelable: true,
+                    pointerId: event.pointerId,
+                    pointerType: event.pointerType,
+                    isPrimary: event.isPrimary,
+                    button: event.button,
+                    buttons: event.buttons,
+                    clientX: event.clientX,
+                    clientY: event.clientY
+                }
+            )
+        );
+    }
+);
     /*
      * Tapping the invisible wider area
      * activates the real line.
