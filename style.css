@@ -797,6 +797,17 @@ body {
 .hover-popup {
     position: absolute;
     max-width: 320px;
+
+    /* Keep long hover content inside the screen */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* Smooth finger scrolling on iPad/iPhone */
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+
     padding: 10px 12px;
     background: white;
     border: 1px solid #d1d5db;
