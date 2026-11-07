@@ -4338,14 +4338,30 @@ let actuallyMoved = false;
             ".drag-handle"
         );
 
-        /* On touch/pen, normal shapes move only from the drag grip */
-        if (
-            event.pointerType !== "mouse" &&
-            shape.savedData.type !== "hover" &&
-            !dragHandle
-        ) {
-            return;
-        }
+      /*
+ * On touch/pen, normal shapes move only
+ * from the drag grip.
+ *
+ * First tap on shape text selects the shape
+ * without opening the iPad keyboard.
+ * A second tap can then edit the text.
+ */
+if (
+    event.pointerType !== "mouse" &&
+    shape.savedData.type !== "hover" &&
+    !dragHandle
+) {
+
+    if (
+        event.pointerType === "touch" &&
+        event.target.closest(".shape-text") &&
+        selectedShape !== shape
+    ) {
+        event.preventDefault();
+    }
+
+    return;
+}
 
         /* Keep text editable */
         if (
