@@ -8347,7 +8347,42 @@ window.addEventListener(
 });
 const canvasToolbar = document.getElementById("canvasToolbar");
 const canvasWorkspace = document.getElementById("canvasWorkspace");
+/*
+ * Floating show/hide menu button
+ */
+const menuToggleBtn =
+    document.createElement("button");
 
+menuToggleBtn.type = "button";
+menuToggleBtn.id = "menuToggleBtn";
+menuToggleBtn.textContent = "Hide menu";
+
+topicPage.appendChild(menuToggleBtn);
+
+menuToggleBtn.addEventListener(
+    "click",
+    function () {
+
+        const menuIsHidden =
+            topicPage.classList.toggle(
+                "menu-hidden"
+            );
+
+        menuToggleBtn.textContent =
+            menuIsHidden
+                ? "☰ Show menu"
+                : "Hide menu";
+
+        menuToggleBtn.setAttribute(
+            "aria-expanded",
+            menuIsHidden
+                ? "false"
+                : "true"
+        );
+
+        updateToolbarPosition();
+    }
+);
 function updateToolbarPosition() {
 
     if (!canvasToolbar || !canvasWorkspace) {

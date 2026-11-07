@@ -1909,3 +1909,62 @@ top: -18px;
     white-space: normal;
     word-break: break-word;
 }
+/* Show / hide mind-map menu */
+
+#menuToggleBtn {
+    position: fixed;
+
+    right: 18px;
+    bottom: 18px;
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+
+/* Completely hide the toolbar */
+#topicPage.menu-hidden #canvasToolbar {
+    display: none !important;
+}
+
+/*
+ * Desktop:
+ * remove the empty toolbar column so
+ * the mind map gets the extra space.
+ */
+#topicPage.menu-hidden #canvasWorkspace {
+    grid-template-columns:
+        minmax(0, 1fr) !important;
+}
+
+#topicPage.menu-hidden #canvasViewport {
+    grid-column: 1 !important;
+    width: 100% !important;
+}
+
+/*
+ * iPhone / iPad:
+ * remove the large space normally
+ * reserved for the fixed toolbar.
+ */
+@media (max-width: 700px),
+       (max-width: 1366px) and
+       (any-pointer: coarse) {
+
+    #topicPage.menu-hidden {
+        padding-top: 60px !important;
+    }
+}
