@@ -454,6 +454,23 @@ addBendBtn.addEventListener("click", function () {
 });
 let selectedShape = null;
 let shapeSelectionOutline = null;
+function clearStaleShapeSelections(
+    keepShape = null
+) {
+
+    canvas
+        .querySelectorAll(
+            ".shape.shape-selected"
+        )
+        .forEach(function (shape) {
+
+            if (shape !== keepShape) {
+                shape.classList.remove(
+                    "shape-selected"
+                );
+            }
+        });
+}
 let selectedConnection = null;
 let selectedConnectionData = null;
 let selectedControlPointIndex = null;
@@ -2875,9 +2892,7 @@ if (
     if (selectedShape === shape && !connectionMode) {
         return;
     }
-    if (selectedShape && selectedShape !== shape) {
-    selectedShape.classList.remove("shape-selected");
-}
+    clearStaleShapeSelections(shape);
 
 selectedShape = shape;
 setSidebarMode(
@@ -3911,9 +3926,7 @@ if (
         return;
     }
 
-if (selectedShape && selectedShape !== shape) {
-    selectedShape.classList.remove("shape-selected");
-}
+clearStaleShapeSelections(shape);
 
 selectedShape = shape;
 setSidebarMode(
@@ -4292,10 +4305,22 @@ let actuallyMoved = false;
         }
 
         event.preventDefault();
-        event.stopPropagation();
+event.stopPropagation();
 
-        dragging = true;
-        activePointerId = event.pointerId;
+/*
+ * Prevent old iPad selection grips
+ * remaining on previously selected shapes.
+ */
+clearStaleShapeSelections(shape);
+
+selectedShape = shape;
+
+shape.classList.add(
+    "shape-selected"
+);
+
+dragging = true;
+activePointerId = event.pointerId;
         dragStartClientX = event.clientX;
 dragStartClientY = event.clientY;
 actuallyMoved = false;
@@ -9602,7 +9627,9 @@ canvas.addEventListener("click", function (event) {
     }
 
     if (selectedShape) {
-    selectedShape.classList.remove("shape-selected");
+
+    clearStaleShapeSelections();
+
     selectedShape = null;
 
     showHoverTools(false);
