@@ -2859,6 +2859,18 @@ makeDraggable(shape);
 
 shape.addEventListener("click", function () {
 
+    /*
+     * Ignore the click Safari fires
+     * immediately after dragging.
+     */
+    if (
+        shape.dragIgnoreClickUntil &&
+        Date.now() <
+            shape.dragIgnoreClickUntil
+    ) {
+        return;
+    }
+
     if (
         shape.savedData.type === "checkbox" &&
         !connectionMode
@@ -3895,6 +3907,18 @@ makeDraggable(shape);
 
 shape.addEventListener("click", function () {
 
+    /*
+     * Ignore the click Safari fires
+     * immediately after dragging.
+     */
+    if (
+        shape.dragIgnoreClickUntil &&
+        Date.now() <
+            shape.dragIgnoreClickUntil
+    ) {
+        return;
+    }
+
     if (
         shape.savedData.type === "checkbox" &&
         !connectionMode
@@ -4463,6 +4487,44 @@ if (
 ) {
     shape.bookmarkIgnoreClickUntil =
         Date.now() + 500;
+}
+/*
+ * Prevent the post-drag click from
+ * selecting the shape again.
+ */
+if (actuallyMoved) {
+
+    shape.dragIgnoreClickUntil =
+        Date.now() + 500;
+}
+
+/*
+ * After moving a normal shape,
+ * hide its movement grip.
+ */
+if (
+    actuallyMoved &&
+    shape.savedData.type !== "hover"
+) {
+
+    shape.classList.remove(
+        "shape-selected"
+    );
+
+    clearStaleShapeSelections();
+
+    if (selectedShape === shape) {
+        selectedShape = null;
+    }
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    showHoverTools(false);
+    showNormalShapeTools(true);
+    setSidebarMode("default");
 }
         if (shape.savedData.type === "hover") {
             shape.classList.remove("dragging-hover");
