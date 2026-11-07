@@ -2037,3 +2037,205 @@ top: -18px;
 #canvas {
     cursor: grab !important;
 }
+/* Chapter / jump-marker navigation */
+
+#chapterRail {
+    position: fixed;
+
+    right: 14px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    z-index: 6500;
+
+    width: 185px;
+    max-height: 62vh;
+
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    padding: 10px;
+
+    box-sizing: border-box;
+
+    background:
+        rgba(255, 255, 255, 0.96);
+
+    border:
+        1px solid #d1d5db;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 16px
+        rgba(0, 0, 0, 0.16);
+}
+
+
+#chapterRailTitle {
+    margin-bottom: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+
+    color: #6b7280;
+}
+
+
+#chapterRailList {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+
+.chapter-jump-btn {
+    width: 100%;
+
+    min-height: 36px;
+
+    padding: 7px 9px;
+
+    text-align: left;
+
+    font-size: 13px;
+    line-height: 1.25;
+
+    color: #111827;
+    background: #f8fafc;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 8px;
+
+    white-space: normal;
+    word-break: break-word;
+}
+
+
+.chapter-jump-btn:hover {
+    opacity: 1;
+    background: #eaf2ff;
+}
+
+
+/*
+ * Small chapter number on the shape.
+ */
+.chapter-marker-badge {
+    position: absolute;
+
+    left: 4px;
+    top: 4px;
+
+    z-index: 160;
+
+    min-width: 20px;
+    height: 20px;
+
+    padding: 0 5px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+
+    pointer-events: none;
+
+    box-shadow:
+        0 1px 4px
+        rgba(0, 0, 0, 0.25);
+}
+
+
+.circle .chapter-marker-badge,
+.diamond .chapter-marker-badge {
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+}
+
+
+/*
+ * Flash the destination after jumping.
+ */
+.chapter-jump-highlight {
+    animation:
+        chapterJumpPulse
+        1.25s ease-out;
+}
+
+
+@keyframes chapterJumpPulse {
+
+    0% {
+        filter:
+            drop-shadow(
+                0 0 0
+                rgba(37, 99, 235, 0)
+            );
+    }
+
+    35% {
+        filter:
+            drop-shadow(
+                0 0 12px
+                rgba(37, 99, 235, 1)
+            );
+    }
+
+    100% {
+        filter:
+            drop-shadow(
+                0 0 0
+                rgba(37, 99, 235, 0)
+            );
+    }
+}
+
+
+/*
+ * Chapter editing belongs to Edit mode.
+ */
+#topicPage.navigation-mode
+#chapterBtn {
+    display: none !important;
+}
+
+
+/* Smaller chapter rail on phones */
+@media (max-width: 700px) {
+
+    #chapterRail {
+        right: 8px;
+
+        width: 145px;
+
+        max-height: 55vh;
+
+        padding: 8px;
+    }
+
+    .chapter-jump-btn {
+        font-size: 12px;
+
+        padding: 6px 8px;
+    }
+}

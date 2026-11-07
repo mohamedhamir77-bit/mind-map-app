@@ -326,6 +326,7 @@ if (shapeSelectionOutline) {
 selectedShape = null;
 
 updateConnections();
+renderChapterRail();
 });
 deleteLineBtn.addEventListener("click", function () {
 
@@ -3315,27 +3316,48 @@ updateConnections();
 });
 
 topicConnections.forEach(function (savedConnection) {
-    if (savedConnection.type === "freeLine") {
-    return;
-}
 
-    const shape1 = Array.from(canvas.querySelectorAll(".shape")).find(function (shape) {
-        return shape.savedData.id === savedConnection.shape1Id;
+    if (savedConnection.type === "freeLine") {
+        return;
+    }
+
+    const shape1 = Array.from(
+        canvas.querySelectorAll(".shape")
+    ).find(function (shape) {
+
+        return (
+            shape.savedData.id ===
+            savedConnection.shape1Id
+        );
     });
 
-    const shape2 = Array.from(canvas.querySelectorAll(".shape")).find(function (shape) {
-        return shape.savedData.id === savedConnection.shape2Id;
+    const shape2 = Array.from(
+        canvas.querySelectorAll(".shape")
+    ).find(function (shape) {
+
+        return (
+            shape.savedData.id ===
+            savedConnection.shape2Id
+        );
     });
 
     if (shape1 && shape2) {
-    drawConnection(
-        shape1,
-        shape2,
-        false,
-        savedConnection
-    );
-}
+
+        drawConnection(
+            shape1,
+            shape2,
+            false,
+            savedConnection
+        );
+    }
 });
+
+/*
+ * Refresh chapter navigator after
+ * rebuilding the map.
+ */
+renderChapterRail();
+
 }
 
 backBtn.addEventListener("click", function () {
@@ -6620,6 +6642,501 @@ if (selectedConnection === line) {
     );
 }
 }
+/*
+ * Chapter / jump-marker navigation
+ */
+
+const chapterBtn =
+    document.createElement("button");
+
+chapterBtn.type = "button";
+chapterBtn.id = "chapterBtn";
+chapterBtn.textContent = "📍 Chapter";
+
+chapterBtn.title =
+    "Add, rename or remove a chapter";
+
+const chapterShapeToolsGroup =
+    document.getElementById(
+        "shapeToolsGroup"
+    );
+
+if (chapterShapeToolsGroup) {
+    chapterShapeToolsGroup.appendChild(
+        chapterBtn
+    );
+}
+
+
+/*
+ * Right-side chapter navigator
+ */
+const chapterRail =
+    document.createElement("div");
+
+chapterRail.id = "chapterRail";
+chapterRail.style.display = "none";
+
+chapterRail.innerHTML = `
+    <div id="chapterRailTitle">
+        Chapters
+    </div>
+
+    <div id="chapterRailList"></div>
+`;
+
+topicPage.appendChild(chapterRail);
+
+const chapterRailList =
+    document.getElementById(
+        "chapterRailList"
+    );
+
+
+function getTopicChapters() {
+
+    if (!currentTopic) {
+        return [];
+    }
+
+    return (
+        shapes[currentTopic] || []
+    )
+        .filter(function (item) {
+
+            return (
+                item &&
+                item.id &&
+                item.chapterTitle
+            );
+        })
+        .slice()
+        .sort(function (a, b) {
+
+            const aOrder =
+                typeof a.chapterOrder ===
+                "number"
+                    ? a.chapterOrder
+                    : 999999;
+
+            const bOrder =
+                typeof b.chapterOrder ===
+                "number"
+                    ? b.chapterOrder
+                    : 999999;
+
+            return aOrder - bOrder;
+        });
+}
+
+
+/*
+ * Put the little numbered marker
+ * onto chapter shapes.
+ */
+function syncChapterMarkers(
+    chapters
+) {
+
+    canvas
+        .querySelectorAll(
+            ".chapter-marker-badge"
+        )
+        .forEach(function (badge) {
+            badge.remove();
+        });
+
+    canvas
+        .querySelectorAll(
+            ".chapter-shape"
+        )
+        .forEach(function (shape) {
+            shape.classList.remove(
+                "chapter-shape"
+            );
+        });
+
+    chapters.forEach(
+        function (savedShape, index) {
+
+            const shape =
+                Array.from(
+                    canvas.querySelectorAll(
+                        ".shape"
+                    )
+                ).find(
+                    function (item) {
+
+                        return (
+                            item.savedData &&
+                            item.savedData.id ===
+                                savedShape.id
+                        );
+                    }
+                );
+
+            if (!shape) {
+                return;
+            }
+
+            shape.classList.add(
+                "chapter-shape"
+            );
+
+            const badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.classList.add(
+                "chapter-marker-badge"
+            );
+
+            badge.textContent =
+                index + 1;
+
+            badge.title =
+                savedShape.chapterTitle;
+
+            shape.appendChild(badge);
+        }
+    );
+}
+
+
+/*
+ * Jump to a chapter shape.
+ */
+function jumpToChapter(shapeId) {
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (!viewport) {
+        return;
+    }
+
+    const targetShape =
+        Array.from(
+            canvas.querySelectorAll(
+                ".shape"
+            )
+        ).find(
+            function (shape) {
+
+                return (
+                    shape.savedData &&
+                    shape.savedData.id ===
+                        shapeId
+                );
+            }
+        );
+
+    if (!targetShape) {
+        return;
+    }
+
+    const zoom =
+        canvasZoom || 1;
+
+    /*
+     * Horizontal centre.
+     */
+    const shapeCentreX =
+        (
+            targetShape.offsetLeft +
+            targetShape.offsetWidth / 2
+        ) * zoom;
+
+    const wantedScrollLeft =
+        shapeCentreX -
+        viewport.clientWidth / 2;
+
+    const maxScrollLeft =
+        Math.max(
+            0,
+            viewport.scrollWidth -
+            viewport.clientWidth
+        );
+
+    viewport.scrollTo({
+        left: Math.max(
+            0,
+            Math.min(
+                maxScrollLeft,
+                wantedScrollLeft
+            )
+        ),
+        behavior: "smooth"
+    });
+
+
+    /*
+     * Vertical centre.
+     */
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const canvasDocumentTop =
+        window.scrollY +
+        canvasRect.top;
+
+    const shapeCentreY =
+        canvasDocumentTop +
+        (
+            targetShape.offsetTop +
+            targetShape.offsetHeight / 2
+        ) * zoom;
+
+    const wantedScrollTop =
+        Math.max(
+            0,
+            shapeCentreY -
+            window.innerHeight / 2
+        );
+
+    window.scrollTo({
+        top: wantedScrollTop,
+        behavior: "smooth"
+    });
+
+
+    /*
+     * Briefly highlight the destination.
+     */
+    targetShape.classList.remove(
+        "chapter-jump-highlight"
+    );
+
+    void targetShape.offsetWidth;
+
+    targetShape.classList.add(
+        "chapter-jump-highlight"
+    );
+
+    setTimeout(
+        function () {
+
+            targetShape.classList.remove(
+                "chapter-jump-highlight"
+            );
+        },
+        1300
+    );
+}
+
+
+/*
+ * Rebuild the right-hand chapter list.
+ */
+function renderChapterRail() {
+
+    if (
+        !chapterRail ||
+        !chapterRailList
+    ) {
+        return;
+    }
+
+    const chapters =
+        getTopicChapters();
+
+    chapterRailList.innerHTML = "";
+
+    syncChapterMarkers(
+        chapters
+    );
+
+    if (
+        !currentTopic ||
+        chapters.length === 0
+    ) {
+
+        chapterRail.style.display =
+            "none";
+
+        return;
+    }
+
+    chapterRail.style.display =
+        "block";
+
+    chapters.forEach(
+        function (savedShape, index) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+            button.type = "button";
+
+            button.classList.add(
+                "chapter-jump-btn"
+            );
+
+            button.textContent =
+                (index + 1) +
+                ". " +
+                savedShape.chapterTitle;
+
+            button.title =
+                savedShape.chapterTitle;
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    jumpToChapter(
+                        savedShape.id
+                    );
+                }
+            );
+
+            chapterRailList.appendChild(
+                button
+            );
+        }
+    );
+}
+
+
+/*
+ * Add / rename / remove chapter
+ * from the currently selected shape.
+ */
+chapterBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            !selectedShape.savedData
+        ) {
+
+            alert(
+                "Select a shape first."
+            );
+
+            return;
+        }
+
+        const savedShape =
+            selectedShape.savedData;
+
+        const textEditor =
+            selectedShape.querySelector(
+                ".shape-text"
+            );
+
+        const shapeText =
+            (
+                savedShape.text ||
+                (
+                    textEditor
+                        ? textEditor.innerText
+                        : ""
+                )
+            )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+
+        const existingTitle =
+            savedShape.chapterTitle || "";
+
+        const suggestedTitle =
+            existingTitle ||
+            shapeText ||
+            "Chapter";
+
+        const newTitle =
+            prompt(
+                existingTitle
+                    ? "Edit chapter name. Leave blank to remove:"
+                    : "Chapter name:",
+                suggestedTitle
+            );
+
+        if (newTitle === null) {
+            return;
+        }
+
+        const cleanTitle =
+            newTitle.trim();
+
+        /*
+         * Blank = remove existing chapter.
+         */
+        if (!cleanTitle) {
+
+            if (
+                existingTitle &&
+                !confirm(
+                    "Remove this chapter marker?"
+                )
+            ) {
+                return;
+            }
+
+            delete savedShape.chapterTitle;
+            delete savedShape.chapterOrder;
+
+        } else {
+
+            savedShape.chapterTitle =
+                cleanTitle;
+
+            /*
+             * New chapters go at the end.
+             */
+            if (
+                typeof savedShape.chapterOrder !==
+                "number"
+            ) {
+
+                const existingOrders =
+                    (
+                        shapes[currentTopic] ||
+                        []
+                    )
+                        .map(
+                            function (item) {
+
+                                return (
+                                    typeof item.chapterOrder ===
+                                    "number"
+                                )
+                                    ? item.chapterOrder
+                                    : 0;
+                            }
+                        );
+
+                savedShape.chapterOrder =
+                    (
+                        existingOrders.length
+                            ? Math.max(
+                                ...existingOrders
+                            )
+                            : 0
+                    ) + 1;
+            }
+        }
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        renderChapterRail();
+
+        scheduleCloudSave();
+    }
+);
 displayTopics();
 if (currentTopic) {
     openTopic(currentTopic);
@@ -9658,7 +10175,8 @@ deleteHoverBtn.addEventListener("click", function () {
     showNormalShapeTools(true);
     setSidebarMode("default");
 
-    updateConnections();
+ updateConnections();
+renderChapterRail();
 });
 const hoverPopup =
     document.getElementById("hoverPopup");
