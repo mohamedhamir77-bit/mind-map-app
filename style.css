@@ -1968,3 +1968,72 @@ top: -18px;
         padding-top: 60px !important;
     }
 }
+/* Mind-map Navigate / Edit mode */
+
+#navigationModeBtn {
+    position: fixed;
+
+    left: 18px;
+    bottom:
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+
+/* Blue = currently navigating */
+#topicPage.navigation-mode
+#navigationModeBtn {
+    background: #2563eb;
+}
+
+/*
+ * In Navigate mode shapes become
+ * visual objects rather than controls.
+ */
+#topicPage.navigation-mode .shape {
+    pointer-events: none !important;
+
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Don't expose editing handles */
+#topicPage.navigation-mode .drag-handle,
+#topicPage.navigation-mode .resize-handle,
+#topicPage.navigation-mode .connection-point,
+#topicPage.navigation-mode #canvasResizeHandle {
+    display: none !important;
+}
+
+/* Lines should not intercept navigation */
+#topicPage.navigation-mode
+#connectionLayer path,
+#topicPage.navigation-mode
+#connectionLayer circle {
+    pointer-events: none !important;
+}
+
+#topicPage.navigation-mode
+#canvasViewport,
+#topicPage.navigation-mode
+#canvas {
+    cursor: grab !important;
+}

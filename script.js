@@ -4304,7 +4304,17 @@ let actuallyMoved = false;
 
     shape.addEventListener("pointerdown", function (event) {
 
-        const dragHandle = event.target.closest(".drag-handle");
+    /*
+     * Navigate mode owns one-finger dragging.
+     */
+    if (navigationMode) {
+        return;
+    }
+
+    const dragHandle =
+        event.target.closest(
+            ".drag-handle"
+        );
 
         /* On touch/pen, normal shapes move only from the drag grip */
         if (
@@ -8470,6 +8480,94 @@ menuToggleBtn.addEventListener(
         updateToolbarPosition();
     }
 );
+/*
+ * Edit / Navigate mode
+ */
+let navigationMode = false;
+
+const navigationModeBtn =
+    document.createElement("button");
+
+navigationModeBtn.type = "button";
+navigationModeBtn.id =
+    "navigationModeBtn";
+
+navigationModeBtn.textContent =
+    "✋ Navigate";
+
+navigationModeBtn.setAttribute(
+    "aria-pressed",
+    "false"
+);
+
+topicPage.appendChild(
+    navigationModeBtn
+);
+
+function setNavigationMode(enabled) {
+
+    navigationMode = enabled;
+
+    topicPage.classList.toggle(
+        "navigation-mode",
+        navigationMode
+    );
+
+    navigationModeBtn.textContent =
+        navigationMode
+            ? "✎ Edit"
+            : "✋ Navigate";
+
+    navigationModeBtn.setAttribute(
+        "aria-pressed",
+        navigationMode
+            ? "true"
+            : "false"
+    );
+
+    /*
+     * Entering Navigate mode:
+     * clear editing selections.
+     */
+    if (navigationMode) {
+
+        clearStaleShapeSelections();
+
+        selectedShape = null;
+
+        if (shapeSelectionOutline) {
+            shapeSelectionOutline.remove();
+            shapeSelectionOutline = null;
+        }
+
+        if (selectedConnection) {
+
+            selectedConnection.setAttribute(
+                "stroke-width",
+                "3"
+            );
+
+            selectedConnection = null;
+            selectedConnectionData = null;
+
+            removeLineHandles();
+        }
+
+        showHoverTools(false);
+        showNormalShapeTools(true);
+        setSidebarMode("default");
+    }
+}
+
+navigationModeBtn.addEventListener(
+    "click",
+    function () {
+
+        setNavigationMode(
+            !navigationMode
+        );
+    }
+);
 function updateToolbarPosition() {
 
     if (!canvasToolbar || !canvasWorkspace) {
@@ -10761,6 +10859,7 @@ canvasViewport.addEventListener("pointerdown", function (event) {
         return;
     }
     if (
+    !navigationMode &&
     event.target !== canvas &&
     event.target !== canvasViewport
 ) {
@@ -10973,6 +11072,18 @@ canvas.addEventListener(
     "click",
     function (event) {
 
+        /*
+         * Navigate mode is for moving
+         * around, not editing/selecting.
+         */
+        if (navigationMode) {
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            return;
+        }
+
         if (
             Date.now() <
                 suppressShapeClickUntil &&
@@ -11095,13 +11206,15 @@ return;
         }
 
         const isCanvasPanArea =
-            event.target === canvas ||
-            event.target === canvasViewport ||
-            event.target.id === "canvasOverflowSpacer";
+    navigationMode ||
+    event.target === canvas ||
+    event.target === canvasViewport ||
+    event.target.id ===
+        "canvasOverflowSpacer";
 
-        if (!isCanvasPanArea) {
-            return;
-        }
+if (!isCanvasPanArea) {
+    return;
+}
 
        const touch = event.touches[0];
 
