@@ -1937,6 +1937,47 @@ h1 {
         0 3px 10px
         rgba(0, 0, 0, 0.22);
 }
+/* Movable floating controls */
+
+#chapterBtn {
+    position: fixed;
+
+    left: 140px;
+    bottom:
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+
+#navigationModeBtn,
+#chapterBtn,
+#menuToggleBtn {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.floating-control-dragging {
+    cursor: grabbing !important;
+}
 
 /* Completely hide the toolbar */
 #topicPage.menu-hidden #canvasToolbar {

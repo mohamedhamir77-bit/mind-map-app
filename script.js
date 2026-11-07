@@ -6672,16 +6672,9 @@ chapterBtn.textContent = "📍 Chapter";
 chapterBtn.title =
     "Add, rename or remove a chapter";
 
-const chapterShapeToolsGroup =
-    document.getElementById(
-        "shapeToolsGroup"
-    );
-
-if (chapterShapeToolsGroup) {
-    chapterShapeToolsGroup.appendChild(
-        chapterBtn
-    );
-}
+topicPage.appendChild(
+    chapterBtn
+);
 
 
 /*
@@ -9100,6 +9093,238 @@ navigationModeBtn.addEventListener(
             !navigationMode
         );
     }
+);
+/*
+ * Draggable floating control buttons
+ */
+
+function makeFloatingControlDraggable(
+    button,
+    storageKey
+) {
+
+    if (!button) {
+        return;
+    }
+
+    const savedPosition =
+        JSON.parse(
+            localStorage.getItem(
+                storageKey
+            ) || "null"
+        );
+
+    if (
+        savedPosition &&
+        Number.isFinite(savedPosition.left) &&
+        Number.isFinite(savedPosition.top)
+    ) {
+
+        button.style.left =
+            savedPosition.left + "px";
+
+        button.style.top =
+            savedPosition.top + "px";
+
+        button.style.right = "auto";
+        button.style.bottom = "auto";
+    }
+
+    let activePointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startLeft = 0;
+    let startTop = 0;
+
+    let dragged = false;
+
+    button.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            if (
+                event.pointerType === "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            const rect =
+                button.getBoundingClientRect();
+
+            activePointerId =
+                event.pointerId;
+
+            startX = event.clientX;
+            startY = event.clientY;
+
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            dragged = false;
+
+            if (button.setPointerCapture) {
+                button.setPointerCapture(
+                    event.pointerId
+                );
+            }
+        }
+    );
+
+    button.addEventListener(
+        "pointermove",
+        function (event) {
+
+            if (
+                event.pointerId !==
+                activePointerId
+            ) {
+                return;
+            }
+
+            const dx =
+                event.clientX - startX;
+
+            const dy =
+                event.clientY - startY;
+
+            if (
+                !dragged &&
+                Math.hypot(dx, dy) < 8
+            ) {
+                return;
+            }
+
+            dragged = true;
+
+            button.classList.add(
+                "floating-control-dragging"
+            );
+
+            event.preventDefault();
+
+            const maxLeft =
+                Math.max(
+                    6,
+                    window.innerWidth -
+                    button.offsetWidth -
+                    6
+                );
+
+            const maxTop =
+                Math.max(
+                    6,
+                    window.innerHeight -
+                    button.offsetHeight -
+                    6
+                );
+
+            const newLeft =
+                Math.max(
+                    6,
+                    Math.min(
+                        maxLeft,
+                        startLeft + dx
+                    )
+                );
+
+            const newTop =
+                Math.max(
+                    6,
+                    Math.min(
+                        maxTop,
+                        startTop + dy
+                    )
+                );
+
+            button.style.left =
+                newLeft + "px";
+
+            button.style.top =
+                newTop + "px";
+
+            button.style.right = "auto";
+            button.style.bottom = "auto";
+        }
+    );
+
+    function finishFloatingDrag(event) {
+
+        if (
+            event.pointerId !==
+                activePointerId
+        ) {
+            return;
+        }
+
+        if (dragged) {
+
+            const rect =
+                button.getBoundingClientRect();
+
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    left: rect.left,
+                    top: rect.top
+                })
+            );
+
+            button._ignoreFloatingClickUntil =
+                Date.now() + 300;
+        }
+
+        button.classList.remove(
+            "floating-control-dragging"
+        );
+
+        activePointerId = null;
+    }
+
+    button.addEventListener(
+        "pointerup",
+        finishFloatingDrag
+    );
+
+    button.addEventListener(
+        "pointercancel",
+        finishFloatingDrag
+    );
+
+    button.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                button._ignoreFloatingClickUntil &&
+                Date.now() <
+                    button._ignoreFloatingClickUntil
+            ) {
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        },
+        true
+    );
+}
+
+
+makeFloatingControlDraggable(
+    navigationModeBtn,
+    "navigationButtonPosition"
+);
+
+makeFloatingControlDraggable(
+    chapterBtn,
+    "chapterButtonPosition"
+);
+
+makeFloatingControlDraggable(
+    menuToggleBtn,
+    "menuButtonPosition"
 );
 function updateToolbarPosition() {
 
