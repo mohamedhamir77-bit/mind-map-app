@@ -11614,7 +11614,7 @@ canvas.addEventListener(
     true
 );
 
-const TOUCH_PAN_THRESHOLD = 8;
+const TOUCH_PAN_THRESHOLD = 18;
 
 
 /* Distance between two fingers */
@@ -11723,14 +11723,14 @@ return;
             return;
         }
 
-        /*
- * One-finger panning is only active
- * in Navigate mode.
- *
- * In Edit mode a tap on blank canvas
- * should simply deselect the shape.
- */
-if (!navigationMode) {
+        const isCanvasPanArea =
+    navigationMode ||
+    event.target === canvas ||
+    event.target === canvasViewport ||
+    event.target.id ===
+        "canvasOverflowSpacer";
+
+if (!isCanvasPanArea) {
     return;
 }
 
