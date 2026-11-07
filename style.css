@@ -1963,12 +1963,22 @@ h1 {
  * remove the large space normally
  * reserved for the fixed toolbar.
  */
-@media (max-width: 700px),
-       (max-width: 1366px) and
-       (any-pointer: coarse) {
+/* Keep the map in the same vertical position
+   when the menu is hidden */
+
+@media (max-width: 700px) {
 
     #topicPage.menu-hidden {
-        padding-top: 60px !important;
+        padding-top: 105px !important;
+    }
+}
+
+@media (min-width: 701px)
+       and (max-width: 1366px)
+       and (any-pointer: coarse) {
+
+    #topicPage.menu-hidden {
+        padding-top: 220px !important;
     }
 }
 /* Mind-map Navigate / Edit mode */
