@@ -2106,8 +2106,7 @@ h1 {
     width: 185px;
     max-height: 62vh;
 
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden;
 
     padding: 10px;
 
@@ -2145,6 +2144,17 @@ h1 {
     flex-direction: column;
 
     gap: 6px;
+
+    max-height:
+        calc(62vh - 42px);
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
+    padding-right: 2px;
 }
 
 
@@ -2172,7 +2182,49 @@ h1 {
     word-break: break-word;
 }
 
+.chapter-row {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+}
 
+.chapter-row
+.chapter-jump-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.chapter-edit-btn,
+.chapter-delete-btn {
+    flex: 0 0 30px;
+
+    width: 30px;
+    min-width: 30px;
+
+    padding: 4px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.chapter-edit-btn {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.chapter-delete-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#topicPage.navigation-mode
+.chapter-edit-btn,
+#topicPage.navigation-mode
+.chapter-delete-btn {
+    display: none !important;
+}
 .chapter-jump-btn:hover {
     opacity: 1;
     background: #eaf2ff;
@@ -2285,6 +2337,11 @@ h1 {
         max-height: 55vh;
 
         padding: 8px;
+    }
+
+    #chapterRailList {
+        max-height:
+            calc(55vh - 38px);
     }
 
     .chapter-jump-btn {

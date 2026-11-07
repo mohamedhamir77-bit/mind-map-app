@@ -6973,42 +6973,178 @@ function renderChapterRail() {
         "block";
 
     chapters.forEach(
-        function (savedShape, index) {
+    function (savedShape, index) {
 
-            const button =
-                document.createElement(
-                    "button"
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.classList.add(
+            "chapter-row"
+        );
+
+
+        /*
+         * Main chapter jump button
+         */
+        const jumpButton =
+            document.createElement(
+                "button"
+            );
+
+        jumpButton.type = "button";
+
+        jumpButton.classList.add(
+            "chapter-jump-btn"
+        );
+
+        jumpButton.textContent =
+            (index + 1) +
+            ". " +
+            savedShape.chapterTitle;
+
+        jumpButton.title =
+            savedShape.chapterTitle;
+
+        jumpButton.addEventListener(
+            "click",
+            function () {
+
+                jumpToChapter(
+                    savedShape.id
+                );
+            }
+        );
+
+
+        /*
+         * Rename chapter
+         */
+        const editButton =
+            document.createElement(
+                "button"
+            );
+
+        editButton.type = "button";
+
+        editButton.classList.add(
+            "chapter-edit-btn"
+        );
+
+        editButton.textContent = "✎";
+        editButton.title =
+            "Rename chapter";
+
+        editButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                const newTitle =
+                    prompt(
+                        "Rename chapter:",
+                        savedShape.chapterTitle
+                    );
+
+                if (newTitle === null) {
+                    return;
+                }
+
+                const cleanTitle =
+                    newTitle.trim();
+
+                if (!cleanTitle) {
+
+                    alert(
+                        "Chapter name cannot be blank."
+                    );
+
+                    return;
+                }
+
+                savedShape.chapterTitle =
+                    cleanTitle;
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
                 );
 
-            button.type = "button";
+                renderChapterRail();
+                scheduleCloudSave();
+            }
+        );
 
-            button.classList.add(
-                "chapter-jump-btn"
+
+        /*
+         * Delete chapter marker
+         */
+        const deleteButton =
+            document.createElement(
+                "button"
             );
 
-            button.textContent =
-                (index + 1) +
-                ". " +
-                savedShape.chapterTitle;
+        deleteButton.type = "button";
 
-            button.title =
-                savedShape.chapterTitle;
+        deleteButton.classList.add(
+            "chapter-delete-btn"
+        );
 
-            button.addEventListener(
-                "click",
-                function () {
+        deleteButton.textContent = "×";
+        deleteButton.title =
+            "Delete chapter";
 
-                    jumpToChapter(
-                        savedShape.id
+        deleteButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                const confirmed =
+                    confirm(
+                        'Delete chapter "' +
+                        savedShape.chapterTitle +
+                        '"?\n\n' +
+                        "The shape itself will not be deleted."
                     );
-                }
-            );
 
-            chapterRailList.appendChild(
-                button
-            );
-        }
-    );
+                if (!confirmed) {
+                    return;
+                }
+
+                delete savedShape.chapterTitle;
+                delete savedShape.chapterOrder;
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
+                );
+
+                renderChapterRail();
+                scheduleCloudSave();
+            }
+        );
+
+
+        row.appendChild(
+            jumpButton
+        );
+
+        row.appendChild(
+            editButton
+        );
+
+        row.appendChild(
+            deleteButton
+        );
+
+        chapterRailList.appendChild(
+            row
+        );
+    }
+);
 }
 
 
