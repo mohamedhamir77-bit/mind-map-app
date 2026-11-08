@@ -975,19 +975,19 @@ function positionEndpointLockHandle(x, y) {
     ? savedData.shape1Id
     : savedData.shape2Id;
 
-  const shape = getCanvasShapeById(shapeId);
+  const attachedShape = getCanvasShapeById(shapeId);
 
-  if (!shape) {
+  if (!attachedShape) {
     endpointLockHandle.setAttribute("x", x);
-    endpointLockHandle.setAttribute("y", y - 24);
+    endpointLockHandle.setAttribute("y", y - 40);
     return;
   }
 
   const centreX =
-    shape.offsetLeft + shape.offsetWidth / 2;
+    attachedShape.offsetLeft + attachedShape.offsetWidth / 2;
 
   const centreY =
-    shape.offsetTop + shape.offsetHeight / 2;
+    attachedShape.offsetTop + attachedShape.offsetHeight / 2;
 
   let dx = x - centreX;
   let dy = y - centreY;
@@ -997,19 +997,55 @@ function positionEndpointLockHandle(x, y) {
   dx /= length;
   dy /= length;
 
-  const distance = 28;
+  const shapesOnCanvas =
+    Array.from(canvas.querySelectorAll(".shape"));
 
-  endpointLockHandle.setAttribute(
-    "x",
-    x + dx * distance,
-  );
+  const safetyGap = 30;
 
-  endpointLockHandle.setAttribute(
-    "y",
-    y + dy * distance,
-  );
+  function positionIsClear(testX, testY) {
+    return !shapesOnCanvas.some(function (shape) {
+      const left =
+        shape.offsetLeft - safetyGap;
+
+      const right =
+        shape.offsetLeft +
+        shape.offsetWidth +
+        safetyGap;
+
+      const top =
+        shape.offsetTop - safetyGap;
+
+      const bottom =
+        shape.offsetTop +
+        shape.offsetHeight +
+        safetyGap;
+
+      return (
+        testX >= left &&
+        testX <= right &&
+        testY >= top &&
+        testY <= bottom
+      );
+    });
+  }
+
+  let distance = 35;
+  let lockX = x + dx * distance;
+  let lockY = y + dy * distance;
+
+  while (
+    !positionIsClear(lockX, lockY) &&
+    distance < 220
+  ) {
+    distance += 12;
+
+    lockX = x + dx * distance;
+    lockY = y + dy * distance;
+  }
+
+  endpointLockHandle.setAttribute("x", lockX);
+  endpointLockHandle.setAttribute("y", lockY);
 }
-
 function showSelectedEndpointLock() {
   removeEndpointLockHandle();
 
