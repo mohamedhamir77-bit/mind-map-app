@@ -2324,3 +2324,37 @@ h1 {
     padding: 6px 8px;
   }
 }
+/* Keep diamond movement handle clearly visible */
+.diamond .drag-handle {
+    width: 26px;
+    height: 26px;
+
+    right: 18%;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #111827;
+    color: white;
+
+    border: 2px solid white;
+    border-radius: 6px;
+
+    font-size: 16px;
+    line-height: 1;
+
+    z-index: 100;
+}
+
+/* Keep it inside the diamond on touch devices too */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+    .diamond.shape-selected .drag-handle {
+        right: 18% !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+}
