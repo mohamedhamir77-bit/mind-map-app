@@ -250,34 +250,33 @@ button:hover {
     display: none;
 }
 /* Tiny snap nodes while dragging a line endpoint */
-/* Tiny connection nodes while dragging an endpoint */
+/* Show only the nearest exact snap port while dragging */
 
-#canvas.endpoint-dragging
-.shape.rounded > .connection-point,
-
-#canvas.endpoint-dragging
-.shape.rectangle > .connection-point,
-
-#canvas.endpoint-dragging
-.shape.circle > .connection-point,
-
-#canvas.endpoint-dragging
-.shape.diamond > .connection-point {
-    display: block !important;
+.snap-port-indicator {
+    position: absolute;
 
     width: 8px;
     height: 8px;
 
+    transform: translate(-50%, -50%);
+
     background: #2563eb;
     border: 1px solid white;
+    border-radius: 50%;
 
     box-shadow:
         0 0 0 1px
         rgba(17, 24, 39, 0.35);
 
+    z-index: 60;
     pointer-events: none;
 
+    display: none;
+}
 
+#canvas.endpoint-dragging
+.snap-port-indicator.visible {
+    display: block;
 }
 #canvasResizeHandle {
     position: absolute;

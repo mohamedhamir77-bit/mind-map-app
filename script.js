@@ -1170,7 +1170,87 @@ function setEndpointLinkColour(
             : "#2563eb"
     );
 }
+let snapPortIndicator = null;
 
+function getSnapThreshold() {
+
+    return 44 / Math.max(
+        canvasZoom,
+        0.1
+    );
+}
+
+function updateSnapPortIndicator(nearest) {
+
+    const previewDistance =
+        110 / Math.max(
+            canvasZoom,
+            0.1
+        );
+
+    if (
+        !nearest ||
+        nearest.distance > previewDistance
+    ) {
+
+        if (snapPortIndicator) {
+            snapPortIndicator.classList.remove(
+                "visible"
+            );
+        }
+
+        return;
+    }
+
+    if (!snapPortIndicator) {
+
+        snapPortIndicator =
+            document.createElement(
+                "div"
+            );
+
+        snapPortIndicator.classList.add(
+            "snap-port-indicator"
+        );
+
+        canvas.appendChild(
+            snapPortIndicator
+        );
+    }
+
+    snapPortIndicator.style.left =
+        nearest.port.x + "px";
+
+    snapPortIndicator.style.top =
+        nearest.port.y + "px";
+
+    snapPortIndicator.classList.add(
+        "visible"
+    );
+}
+
+function hideSnapPortIndicator() {
+
+    if (!snapPortIndicator) {
+        return;
+    }
+
+    snapPortIndicator.classList.remove(
+        "visible"
+    );
+}
+
+document.addEventListener(
+    "pointerup",
+    hideSnapPortIndicator,
+    true
+);
+
+document.addEventListener(
+    "pointercancel",
+    hideSnapPortIndicator,
+    true
+);
 let firstConnectionShape = null;
 let secondConnectionShape = null;
 let connectionMode = false;
@@ -3177,7 +3257,7 @@ startHandle.addEventListener("pointerdown", function (event) {
 const newY =
     (event.clientY - canvasRect.top) / canvasZoom;
 const snap = findNearestSnapPort(newX, newY);
-        if (snap && snap.distance <= 30) {
+        if (snap && snap.distance <= getSnapThreshold()) {
     savedConnection.x1 = snap.port.x;
     savedConnection.y1 = snap.port.y;
     savedConnection.shape1Id = snap.shape.savedData.id;
@@ -3261,7 +3341,7 @@ endHandle.addEventListener("pointerdown", function (event) {
 const newY =
     (event.clientY - canvasRect.top) / canvasZoom;
 const snap = findNearestSnapPort(newX, newY);
-      if (snap && snap.distance <= 30) {
+      if (snap && snap.distance <= getSnapThreshold()) {
     savedConnection.x2 = snap.port.x;
     savedConnection.y2 = snap.port.y;
     savedConnection.shape2Id = snap.shape.savedData.id;
@@ -5084,7 +5164,7 @@ const newY =
 
         const snap = findNearestSnapPort(newX, newY);
 
-if (snap && snap.distance <= 30) {
+if (snap && snap.distance <= getSnapThreshold()) {
     savedFreeLine.x1 = snap.port.x;
     savedFreeLine.y1 = snap.port.y;
     savedFreeLine.shape1Id = snap.shape.savedData.id;
@@ -5170,7 +5250,7 @@ const newY =
 
         const snap = findNearestSnapPort(newX, newY);
 
-if (snap && snap.distance <= 30) {
+if (snap && snap.distance <= getSnapThreshold()) {
     savedFreeLine.x2 = snap.port.x;
     savedFreeLine.y2 = snap.port.y;
     savedFreeLine.shape2Id = snap.shape.savedData.id;
@@ -7365,8 +7445,14 @@ function findNearestSnapPort(x, y) {
     let nearestDistance = Infinity;
 
     const allShapes = Array.from(
-    canvas.querySelectorAll(".shape:not(.textbox)")
+    canvas.querySelectorAll(
+        ".shape.rounded, " +
+        ".shape.rectangle, " +
+        ".shape.circle, " +
+        ".shape.diamond"
+    )
 );
+
 
     allShapes.forEach(function (shape) {
 
@@ -7392,6 +7478,16 @@ function findNearestSnapPort(x, y) {
             }
         });
     });
+
+    if (
+        canvas.classList.contains(
+            "endpoint-dragging"
+        )
+    ) {
+        updateSnapPortIndicator(
+            nearest
+        );
+    }
 
     return nearest;
 }
@@ -8012,7 +8108,7 @@ const y =
                     setEndpointLinkColour(
     endHandle,
     nearest &&
-    nearest.distance <= 30
+    nearest.distance <= getSnapThreshold()
 );
 
                 let endX = x;
@@ -8020,7 +8116,7 @@ const y =
 
                 if (
                     nearest &&
-                    nearest.distance <= 30
+                    nearest.distance <= getSnapThreshold()
                 ) {
                     endX = nearest.port.x;
                     endY = nearest.port.y;
@@ -8060,7 +8156,7 @@ const y =
 
                 if (
                     nearest &&
-                    nearest.distance <= 30
+                    nearest.distance <= getSnapThreshold()
                 ) {
 const oldShape2Id =
     connection.shape2.savedData.id;
@@ -8154,7 +8250,7 @@ const y =
                 setEndpointLinkColour(
                     startHandle,
                     nearest &&
-                    nearest.distance <= 30
+                    nearest.distance <= getSnapThreshold()
                 );
 
                 let startX = x;
@@ -8162,7 +8258,7 @@ const y =
 
                 if (
                     nearest &&
-                    nearest.distance <= 30
+                    nearest.distance <= getSnapThreshold()
                 ) {
                     startX = nearest.port.x;
                     startY = nearest.port.y;
@@ -8210,7 +8306,7 @@ const y =
 
                 if (
                     nearest &&
-                    nearest.distance <= 30
+                    nearest.distance <= getSnapThreshold()
                 ) {
 
                     connection.shape1 =
