@@ -2515,9 +2515,13 @@ function displayShapes() {
 
       console.log("Clicked shape:", shape.className);
 
-      if (selectedShape === shape && !connectionMode) {
-        return;
-      }
+      if (
+  selectedShape === shape &&
+  !connectionMode &&
+  shape.savedData.type !== "hover"
+) {
+  return;
+}
       clearStaleShapeSelections(shape);
 
       selectedShape = shape;
@@ -3340,9 +3344,13 @@ addShapeBtn.addEventListener("click", function () {
     ) {
       window.open(shape.savedData.bookmarkUrl, "_blank", "noopener,noreferrer");
     }
-    if (selectedShape === shape && !connectionMode) {
-      return;
-    }
+    if (
+  selectedShape === shape &&
+  !connectionMode &&
+  shape.savedData.type !== "hover"
+) {
+  return;
+}
 
     clearStaleShapeSelections(shape);
 
