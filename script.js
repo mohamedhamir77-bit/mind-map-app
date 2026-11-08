@@ -394,6 +394,8 @@ let connectionHandles = [];
 let startHandle = null;
 let endHandle = null;
 let freeLineControlHandles = [];
+let endpointLockHandle = null;
+
 function removeLineHandles() {
   if (connectionHandle) {
     connectionHandle.remove();
@@ -421,6 +423,11 @@ function removeLineHandles() {
   });
 
   freeLineControlHandles = [];
+
+  if (endpointLockHandle) {
+    endpointLockHandle.remove();
+    endpointLockHandle = null;
+  }
 
   selectedEndpoint = null;
   selectedControlPointIndex = null;
@@ -774,6 +781,27 @@ function makeFreeLineDraggable(line, savedLine) {
       },
     );
 
+    const lockedShape1 =
+      savedLine.lockShape1 === true
+        ? getCanvasShapeById(savedLine.shape1Id)
+        : null;
+
+    const lockedShape2 =
+      savedLine.lockShape2 === true
+        ? getCanvasShapeById(savedLine.shape2Id)
+        : null;
+
+    const moveShape1 = Boolean(lockedShape1);
+    const moveShape2 = Boolean(lockedShape2);
+
+    const shape1StartLeft = moveShape1 ? lockedShape1.offsetLeft : 0;
+
+    const shape1StartTop = moveShape1 ? lockedShape1.offsetTop : 0;
+
+    const shape2StartLeft = moveShape2 ? lockedShape2.offsetLeft : 0;
+
+    const shape2StartTop = moveShape2 ? lockedShape2.offsetTop : 0;
+
     let dragging = false;
 
     function moveWholeLine(event) {
@@ -789,27 +817,62 @@ function makeFreeLineDraggable(line, savedLine) {
         dragging = true;
         lineWasDragged = true;
 
-        /* Whole-line movement detaches
-                       snapped endpoints */
-        savedLine.shape1Id = null;
-        savedLine.point1Index = null;
+        /* Unlocked endpoints detach.
+   Locked endpoints move their attached shapes. */
+        if (!moveShape1) {
+          savedLine.shape1Id = null;
+          savedLine.point1Index = null;
+          savedLine.lockShape1 = false;
 
-        savedLine.shape2Id = null;
-        savedLine.point2Index = null;
-        setEndpointLinkColour(startHandle, false);
+          setEndpointLinkColour(startHandle, false);
+        }
 
-        setEndpointLinkColour(endHandle, false);
+        if (!moveShape2) {
+          savedLine.shape2Id = null;
+          savedLine.point2Index = null;
+          savedLine.lockShape2 = false;
+
+          setEndpointLinkColour(endHandle, false);
+        }
+
+        removeEndpointLockHandle();
       }
 
       event.preventDefault();
 
-      savedLine.x1 = startX1 + dx;
+      if (moveShape1) {
+        const newLeft = Math.max(0, shape1StartLeft + dx);
 
-      savedLine.y1 = startY1 + dy;
+        const newTop = Math.max(0, shape1StartTop + dy);
 
-      savedLine.x2 = startX2 + dx;
+        lockedShape1.style.left = newLeft + "px";
+        lockedShape1.style.top = newTop + "px";
 
-      savedLine.y2 = startY2 + dy;
+        lockedShape1.savedData.left = newLeft;
+        lockedShape1.savedData.top = newTop;
+
+        extendWorkspaceForShape(lockedShape1);
+      } else {
+        savedLine.x1 = startX1 + dx;
+        savedLine.y1 = startY1 + dy;
+      }
+
+      if (moveShape2 && lockedShape2 !== lockedShape1) {
+        const newLeft = Math.max(0, shape2StartLeft + dx);
+
+        const newTop = Math.max(0, shape2StartTop + dy);
+
+        lockedShape2.style.left = newLeft + "px";
+        lockedShape2.style.top = newTop + "px";
+
+        lockedShape2.savedData.left = newLeft;
+        lockedShape2.savedData.top = newTop;
+
+        extendWorkspaceForShape(lockedShape2);
+      } else if (!moveShape2) {
+        savedLine.x2 = startX2 + dx;
+        savedLine.y2 = startY2 + dy;
+      }
 
       startControlPoints.forEach(function (point, index) {
         savedLine.controlPoints[index].x = point.x + dx;
@@ -851,7 +914,9 @@ function makeFreeLineDraggable(line, savedLine) {
 
       if (dragging) {
         localStorage.setItem("connections", JSON.stringify(savedConnections));
-
+        if (moveShape1 || moveShape2) {
+          localStorage.setItem("shapes", JSON.stringify(shapes));
+        }
         /* Remove unnecessary blank workspace */
         recalculateOverflowWorkspace();
       }
@@ -877,6 +942,142 @@ function setEndpointLinkColour(handle, isLinked) {
 
   handle.setAttribute("fill", isLinked ? "#dc2626" : "#2563eb");
 }
+function getCanvasShapeById(shapeId) {
+  if (shapeId == null) {
+    return null;
+  }
+
+  return (
+    Array.from(canvas.querySelectorAll(".shape")).find(function (shape) {
+      return shape.savedData && shape.savedData.id === shapeId;
+    }) || null
+  );
+}
+
+function removeEndpointLockHandle() {
+  if (!endpointLockHandle) {
+    return;
+  }
+
+  endpointLockHandle.remove();
+  endpointLockHandle = null;
+}
+
+function positionEndpointLockHandle(x, y) {
+  if (!endpointLockHandle) {
+    return;
+  }
+
+  const isStart = endpointLockHandle._lockSide === "start";
+
+  endpointLockHandle.setAttribute("x", x + (isStart ? 22 : -22));
+
+  endpointLockHandle.setAttribute("y", y - 20);
+}
+
+function showSelectedEndpointLock() {
+  removeEndpointLockHandle();
+
+  if (!selectedConnectionData || !selectedEndpoint) {
+    return;
+  }
+
+  const savedData = selectedConnectionData.savedData;
+
+  if (!savedData) {
+    return;
+  }
+
+  const isStart = selectedEndpoint === "start";
+  const shapeKey = isStart ? "shape1Id" : "shape2Id";
+  const lockKey = isStart ? "lockShape1" : "lockShape2";
+
+  if (savedData[shapeKey] == null) {
+    return;
+  }
+
+  let x;
+  let y;
+
+  if (selectedConnectionData.type === "freeLine") {
+    x = isStart ? savedData.x1 : savedData.x2;
+    y = isStart ? savedData.y1 : savedData.y2;
+  } else {
+    const point = isStart
+      ? selectedConnectionData.point1
+      : selectedConnectionData.point2;
+
+    if (!point) {
+      return;
+    }
+
+    x = point.x;
+    y = point.y;
+  }
+
+  const connectionLayer = document.getElementById("connectionLayer");
+
+  const lockHandle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "text",
+  );
+
+  lockHandle._lockSide = selectedEndpoint;
+  lockHandle._savedData = savedData;
+
+  lockHandle.setAttribute("font-size", "16");
+  lockHandle.setAttribute("text-anchor", "middle");
+  lockHandle.setAttribute("dominant-baseline", "middle");
+
+  lockHandle.style.pointerEvents = "all";
+  lockHandle.style.cursor = "pointer";
+  lockHandle.style.userSelect = "none";
+  lockHandle.style.touchAction = "none";
+
+  lockHandle.textContent = savedData[lockKey] ? "🔒" : "🔓";
+
+  lockHandle.addEventListener("pointerdown", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  });
+
+  lockHandle.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    savedData[lockKey] = !savedData[lockKey];
+
+    lockHandle.textContent = savedData[lockKey] ? "🔒" : "🔓";
+
+    localStorage.setItem("connections", JSON.stringify(savedConnections));
+  });
+
+  connectionLayer.appendChild(lockHandle);
+
+  endpointLockHandle = lockHandle;
+
+  positionEndpointLockHandle(x, y);
+}
+
+document.addEventListener(
+  "click",
+  function (event) {
+    const clickedEndpoint =
+      event.target === startHandle || event.target === endHandle;
+
+    if (clickedEndpoint) {
+      setTimeout(showSelectedEndpointLock, 0);
+      return;
+    }
+
+    if (endpointLockHandle && event.target === endpointLockHandle) {
+      return;
+    }
+
+    removeEndpointLockHandle();
+  },
+  true,
+);
 let snapPortIndicator = null;
 
 function getSnapThreshold() {
@@ -3673,6 +3874,8 @@ connectBtn.addEventListener("click", function () {
     type: "freeLine",
     ...freeLineData,
     controlPoints: [],
+    lockShape1: false,
+    lockShape2: false,
   };
 
   line.setAttribute(
@@ -5058,6 +5261,13 @@ function updateConnections() {
   connections.forEach(function (connection) {
     if (connection.type === "freeLine") {
       const saved = connection.savedData;
+      if (saved.shape1Id == null) {
+        saved.lockShape1 = false;
+      }
+
+      if (saved.shape2Id == null) {
+        saved.lockShape2 = false;
+      }
 
       if (saved.shape1Id != null) {
         const shape1 = Array.from(canvas.querySelectorAll(".shape")).find(
@@ -5194,21 +5404,32 @@ function updateConnections() {
         endHandle.setAttribute("cx", connection.point2.x);
         endHandle.setAttribute("cy", connection.point2.y);
       }
-      connectionHandles.forEach(function (handle) {
-        if (handle._lockSide === "start") {
-          handle.setAttribute("x", connection.point1.x + 18);
-
-          handle.setAttribute("y", connection.point1.y - 16);
-        }
-
-        if (handle._lockSide === "end") {
-          handle.setAttribute("x", connection.point2.x - 18);
-
-          handle.setAttribute("y", connection.point2.y - 16);
-        }
-      });
     }
   });
+  if (endpointLockHandle && selectedConnectionData && selectedEndpoint) {
+    const savedData = selectedConnectionData.savedData;
+
+    const isStart = selectedEndpoint === "start";
+
+    const shapeKey = isStart ? "shape1Id" : "shape2Id";
+
+    if (!savedData || savedData[shapeKey] == null) {
+      removeEndpointLockHandle();
+    } else if (selectedConnectionData.type === "freeLine") {
+      positionEndpointLockHandle(
+        isStart ? savedData.x1 : savedData.x2,
+        isStart ? savedData.y1 : savedData.y2,
+      );
+    } else {
+      const point = isStart
+        ? selectedConnectionData.point1
+        : selectedConnectionData.point2;
+
+      if (point) {
+        positionEndpointLockHandle(point.x, point.y);
+      }
+    }
+  }
   if (
     selectedShape &&
     selectedShape.classList.contains("diamond") &&
@@ -5854,62 +6075,6 @@ function showConnectionHandle(line) {
     startHandle.setAttribute("stroke", "#2563eb");
     startHandle.setAttribute("stroke-width", "4");
   });
-  if (connection.savedData) {
-    function createEndpointLockHandle(side) {
-      const isStart = side === "start";
-
-      const savedKey = isStart ? "lockShape1" : "lockShape2";
-
-      const lockHandle = document.createElementNS(
-        "http://www.w3.org/2000/svg",
-        "text",
-      );
-
-      lockHandle._lockSide = side;
-
-      lockHandle.setAttribute("font-size", "16");
-      lockHandle.setAttribute("text-anchor", "middle");
-      lockHandle.setAttribute("dominant-baseline", "middle");
-
-      lockHandle.style.pointerEvents = "all";
-      lockHandle.style.cursor = "pointer";
-      lockHandle.style.userSelect = "none";
-      lockHandle.style.touchAction = "none";
-
-      function refreshLockHandle() {
-        const point = isStart ? connection.point1 : connection.point2;
-
-        lockHandle.setAttribute("x", point.x + (isStart ? 18 : -18));
-
-        lockHandle.setAttribute("y", point.y - 16);
-
-        lockHandle.textContent = connection.savedData[savedKey] ? "🔒" : "🔓";
-      }
-
-      lockHandle.addEventListener("pointerdown", function (event) {
-        event.stopPropagation();
-      });
-
-      lockHandle.addEventListener("click", function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-
-        connection.savedData[savedKey] = !connection.savedData[savedKey];
-
-        localStorage.setItem("connections", JSON.stringify(savedConnections));
-
-        refreshLockHandle();
-      });
-
-      refreshLockHandle();
-
-      connectionLayer.appendChild(lockHandle);
-      connectionHandles.push(lockHandle);
-    }
-
-    createEndpointLockHandle("start");
-    createEndpointLockHandle("end");
-  }
 
   // END BLACK HANDLE
   endHandle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
