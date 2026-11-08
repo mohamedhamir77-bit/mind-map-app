@@ -968,11 +968,46 @@ function positionEndpointLockHandle(x, y) {
     return;
   }
 
+  const savedData = endpointLockHandle._savedData;
   const isStart = endpointLockHandle._lockSide === "start";
 
-  endpointLockHandle.setAttribute("x", x + (isStart ? 22 : -22));
+  const shapeId = isStart
+    ? savedData.shape1Id
+    : savedData.shape2Id;
 
-  endpointLockHandle.setAttribute("y", y - 20);
+  const shape = getCanvasShapeById(shapeId);
+
+  if (!shape) {
+    endpointLockHandle.setAttribute("x", x);
+    endpointLockHandle.setAttribute("y", y - 24);
+    return;
+  }
+
+  const centreX =
+    shape.offsetLeft + shape.offsetWidth / 2;
+
+  const centreY =
+    shape.offsetTop + shape.offsetHeight / 2;
+
+  let dx = x - centreX;
+  let dy = y - centreY;
+
+  const length = Math.hypot(dx, dy) || 1;
+
+  dx /= length;
+  dy /= length;
+
+  const distance = 28;
+
+  endpointLockHandle.setAttribute(
+    "x",
+    x + dx * distance,
+  );
+
+  endpointLockHandle.setAttribute(
+    "y",
+    y + dy * distance,
+  );
 }
 
 function showSelectedEndpointLock() {
