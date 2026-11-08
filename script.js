@@ -3244,7 +3244,7 @@ startHandle = document.createElementNS(
 
 startHandle.setAttribute("cx", savedConnection.x1);
 startHandle.setAttribute("cy", savedConnection.y1);
-startHandle.setAttribute("r", "7");
+startHandle.setAttribute("r", "10");
 setEndpointLinkColour(
     startHandle,
     savedConnection.shape1Id != null
@@ -3257,7 +3257,7 @@ endHandle = document.createElementNS(
 
 endHandle.setAttribute("cx", savedConnection.x2);
 endHandle.setAttribute("cy", savedConnection.y2);
-endHandle.setAttribute("r", "7");
+endHandle.setAttribute("r", "10");
 setEndpointLinkColour(
     endHandle,
     savedConnection.shape2Id != null
@@ -5149,7 +5149,7 @@ startHandle = document.createElementNS(
 
 startHandle.setAttribute("cx", savedFreeLine.x1);
 startHandle.setAttribute("cy", savedFreeLine.y1);
-startHandle.setAttribute("r", "7");
+startHandle.setAttribute("r", "10");
 setEndpointLinkColour(
     startHandle,
     savedFreeLine.shape1Id != null
@@ -5162,7 +5162,7 @@ endHandle = document.createElementNS(
 
 endHandle.setAttribute("cx", savedFreeLine.x2);
 endHandle.setAttribute("cy", savedFreeLine.y2);
-endHandle.setAttribute("r", "7");
+endHandle.setAttribute("r", "10");
 setEndpointLinkColour(
     endHandle,
     savedFreeLine.shape2Id != null
@@ -6712,11 +6712,21 @@ if (selectedConnection === connection.line) {
     if (startHandle) {
         startHandle.setAttribute("cx", saved.x1);
         startHandle.setAttribute("cy", saved.y1);
+
+        setEndpointLinkColour(
+            startHandle,
+            saved.shape1Id != null
+        );
     }
 
     if (endHandle) {
         endHandle.setAttribute("cx", saved.x2);
         endHandle.setAttribute("cy", saved.y2);
+
+        setEndpointLinkColour(
+            endHandle,
+            saved.shape2Id != null
+        );
     }
 }
     return;
@@ -7765,7 +7775,7 @@ point.offsetY = y - baseY;
         connection.point1.y
     );
 
-    startHandle.setAttribute("r", "7");
+    startHandle.setAttribute("r", "10");
     setEndpointLinkColour(
     startHandle,
     connection.savedData &&
@@ -7813,7 +7823,7 @@ point.offsetY = y - baseY;
         connection.point2.y
     );
 
-    endHandle.setAttribute("r", "7");
+    endHandle.setAttribute("r", "10");
     setEndpointLinkColour(
     endHandle,
     connection.savedData &&
