@@ -8351,38 +8351,60 @@ hoverPopup.addEventListener("mouseleave", function () {
   scheduleHoverPopupHide();
 });
 canvas.addEventListener("click", function (event) {
-  if (event.target !== canvas) {
+  const connectionLayer =
+    document.getElementById("connectionLayer");
+
+  const clickedBlankCanvas =
+    event.target === canvas ||
+    event.target === connectionLayer;
+
+  if (!clickedBlankCanvas) {
     return;
   }
 
-  /*
-   * Preserve the exact current view.
-   * The iPad toolbar changes layout when
-   * switching back to default mode.
-   */
   const savedScrollY = window.scrollY;
 
-  const viewport = document.getElementById("canvasViewport");
+  const viewport =
+    document.getElementById("canvasViewport");
 
-  const savedScrollLeft = viewport ? viewport.scrollLeft : 0;
+  const savedScrollLeft =
+    viewport ? viewport.scrollLeft : 0;
 
-  if (selectedShape) {
-    clearStaleShapeSelections();
+  /*
+   * Hide hover/info content immediately.
+   */
+  clearTimeout(hoverHideTimer);
 
-    selectedShape = null;
-
-    showHoverTools(false);
-    showNormalShapeTools(true);
-    setSidebarMode("default");
+  if (hoverPopup) {
+    hoverPopup.style.display = "none";
   }
+
+  activeHoverShape = null;
+
+  /*
+   * Clear selected shape immediately.
+   */
+  clearStaleShapeSelections();
+
+  selectedShape = null;
+
+  showHoverTools(false);
+  showNormalShapeTools(true);
+  setSidebarMode("default");
 
   if (shapeSelectionOutline) {
     shapeSelectionOutline.remove();
     shapeSelectionOutline = null;
   }
 
+  /*
+   * Clear selected line and handles.
+   */
   if (selectedConnection) {
-    selectedConnection.setAttribute("stroke-width", "3");
+    selectedConnection.setAttribute(
+      "stroke-width",
+      "3",
+    );
 
     selectedConnection = null;
     selectedConnectionData = null;
@@ -8391,23 +8413,28 @@ canvas.addEventListener("click", function (event) {
   }
 
   /*
-   * Restore position after Safari
-   * has processed the toolbar reflow.
+   * Preserve the current view after
+   * the toolbar changes layout.
    */
   requestAnimationFrame(function () {
-    window.scrollTo(window.scrollX, savedScrollY);
+    window.scrollTo(
+      window.scrollX,
+      savedScrollY,
+    );
 
     if (viewport) {
-      viewport.scrollLeft = savedScrollLeft;
+      viewport.scrollLeft =
+        savedScrollLeft;
     }
   });
 });
 function clearStuckHoverDrag() {
-  document.querySelectorAll(".dragging-hover").forEach(function (shape) {
-    shape.classList.remove("dragging-hover");
-  });
+  document
+    .querySelectorAll(".dragging-hover")
+    .forEach(function (shape) {
+      shape.classList.remove("dragging-hover");
+    });
 }
-
 window.addEventListener("blur", clearStuckHoverDrag);
 
 document.addEventListener("mousemove", function (event) {
