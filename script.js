@@ -3941,7 +3941,17 @@ function drawConnection(
   }
   line.style.pointerEvents = "stroke";
   line.style.cursor = "pointer";
+  line.style.touchAction = "none";
+
+  let linkedLineWasDragged = false;
+
   line.addEventListener("click", function (event) {
+    if (linkedLineWasDragged) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     event.stopPropagation();
 
     if (selectedConnection === line) {
@@ -4013,6 +4023,106 @@ function drawConnection(
     }
     line.setAttribute("stroke-width", "5");
     showConnectionHandle(line);
+  });
+
+  line.addEventListener("pointerdown", function (event) {
+    if (selectedConnection !== line) {
+      return;
+    }
+
+    if (event.pointerType === "mouse" && event.button !== 0) {
+      return;
+    }
+
+    const connection = connections.find(function (item) {
+      return item.line === line;
+    });
+
+    if (!connection || !connection.savedData) {
+      return;
+    }
+
+    const moveShape1 = connection.savedData.lockShape1 === true;
+    const moveShape2 = connection.savedData.lockShape2 === true;
+
+    if (!moveShape1 && !moveShape2) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    const dragStartX = event.clientX;
+    const dragStartY = event.clientY;
+
+    const shape1StartLeft = connection.shape1.offsetLeft;
+    const shape1StartTop = connection.shape1.offsetTop;
+
+    const shape2StartLeft = connection.shape2.offsetLeft;
+    const shape2StartTop = connection.shape2.offsetTop;
+
+    let dragging = false;
+
+    function moveLockedLinkedLine(event) {
+      const dx = (event.clientX - dragStartX) / canvasZoom;
+      const dy = (event.clientY - dragStartY) / canvasZoom;
+
+      if (!dragging && Math.hypot(dx, dy) < 6) {
+        return;
+      }
+
+      if (!dragging) {
+        dragging = true;
+        linkedLineWasDragged = true;
+      }
+
+      event.preventDefault();
+
+      function moveLockedShape(shape, startLeft, startTop) {
+        const newLeft = Math.max(0, startLeft + dx);
+        const newTop = Math.max(0, startTop + dy);
+
+        shape.style.left = newLeft + "px";
+        shape.style.top = newTop + "px";
+
+        if (shape.savedData) {
+          shape.savedData.left = newLeft;
+          shape.savedData.top = newTop;
+        }
+
+        extendWorkspaceForShape(shape);
+      }
+
+      if (moveShape1) {
+        moveLockedShape(connection.shape1, shape1StartLeft, shape1StartTop);
+      }
+
+      if (moveShape2 && connection.shape2 !== connection.shape1) {
+        moveLockedShape(connection.shape2, shape2StartLeft, shape2StartTop);
+      }
+
+      updateConnections();
+    }
+
+    function finishLockedLinkedLineDrag() {
+      window.removeEventListener("pointermove", moveLockedLinkedLine);
+      window.removeEventListener("pointerup", finishLockedLinkedLineDrag);
+      window.removeEventListener("pointercancel", finishLockedLinkedLineDrag);
+
+      if (dragging) {
+        localStorage.setItem("shapes", JSON.stringify(shapes));
+        localStorage.setItem("connections", JSON.stringify(savedConnections));
+
+        recalculateOverflowWorkspace();
+      }
+
+      setTimeout(function () {
+        linkedLineWasDragged = false;
+      }, 0);
+    }
+
+    window.addEventListener("pointermove", moveLockedLinkedLine);
+    window.addEventListener("pointerup", finishLockedLinkedLineDrag);
+    window.addEventListener("pointercancel", finishLockedLinkedLineDrag);
   });
 
   line.addEventListener(
@@ -4217,6 +4327,8 @@ function drawConnection(
       shape2Id: shape2.savedData.id,
       point1Index: runtimeConnection.point1Index,
       point2Index: runtimeConnection.point2Index,
+      lockShape1: false,
+      lockShape2: false,
       controlPoints: runtimeConnection.controlPoints.map(function (point) {
         return { ...point };
       }),
@@ -5082,6 +5194,19 @@ function updateConnections() {
         endHandle.setAttribute("cx", connection.point2.x);
         endHandle.setAttribute("cy", connection.point2.y);
       }
+      connectionHandles.forEach(function (handle) {
+        if (handle._lockSide === "start") {
+          handle.setAttribute("x", connection.point1.x + 18);
+
+          handle.setAttribute("y", connection.point1.y - 16);
+        }
+
+        if (handle._lockSide === "end") {
+          handle.setAttribute("x", connection.point2.x - 18);
+
+          handle.setAttribute("y", connection.point2.y - 16);
+        }
+      });
     }
   });
   if (
@@ -5729,6 +5854,62 @@ function showConnectionHandle(line) {
     startHandle.setAttribute("stroke", "#2563eb");
     startHandle.setAttribute("stroke-width", "4");
   });
+  if (connection.savedData) {
+    function createEndpointLockHandle(side) {
+      const isStart = side === "start";
+
+      const savedKey = isStart ? "lockShape1" : "lockShape2";
+
+      const lockHandle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "text",
+      );
+
+      lockHandle._lockSide = side;
+
+      lockHandle.setAttribute("font-size", "16");
+      lockHandle.setAttribute("text-anchor", "middle");
+      lockHandle.setAttribute("dominant-baseline", "middle");
+
+      lockHandle.style.pointerEvents = "all";
+      lockHandle.style.cursor = "pointer";
+      lockHandle.style.userSelect = "none";
+      lockHandle.style.touchAction = "none";
+
+      function refreshLockHandle() {
+        const point = isStart ? connection.point1 : connection.point2;
+
+        lockHandle.setAttribute("x", point.x + (isStart ? 18 : -18));
+
+        lockHandle.setAttribute("y", point.y - 16);
+
+        lockHandle.textContent = connection.savedData[savedKey] ? "🔒" : "🔓";
+      }
+
+      lockHandle.addEventListener("pointerdown", function (event) {
+        event.stopPropagation();
+      });
+
+      lockHandle.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        connection.savedData[savedKey] = !connection.savedData[savedKey];
+
+        localStorage.setItem("connections", JSON.stringify(savedConnections));
+
+        refreshLockHandle();
+      });
+
+      refreshLockHandle();
+
+      connectionLayer.appendChild(lockHandle);
+      connectionHandles.push(lockHandle);
+    }
+
+    createEndpointLockHandle("start");
+    createEndpointLockHandle("end");
+  }
 
   // END BLACK HANDLE
   endHandle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
