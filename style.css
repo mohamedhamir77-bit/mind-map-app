@@ -2324,8 +2324,11 @@ h1 {
     padding: 6px 8px;
   }
 }
-/* Keep diamond movement handle clearly visible */
 .diamond .drag-handle {
+    display: none;
+}
+/* Keep diamond movement handle clearly visible */
+.diamond.shape-selected .drag-handle {
     width: 26px;
     height: 26px;
 
