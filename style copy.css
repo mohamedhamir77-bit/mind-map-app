@@ -1,0 +1,2381 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    color: #222;
+}
+
+body > h1,
+body > h2,
+body > button,
+body > ul,
+#topicPage {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+h1 {
+    margin-top: 30px;
+    font-size: 34px;
+}
+
+h2 {
+    margin-top: 30px;
+}
+
+button {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 16px;
+    cursor: pointer;
+    background: #111827;
+    color: white;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+#topicList,
+#resourceList {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+}
+
+#topicList li,
+#resourceList li {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+#topicList button {
+    width: 100%;
+    background: transparent;
+    color: #222;
+    text-align: left;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#topicPage {
+    margin-top: 30px;
+    max-width: 900px;
+}
+
+#backBtn {
+    background: #e5e7eb;
+    color: #222;
+    margin-bottom: 20px;
+}
+
+#addResourceBtn {
+    margin-bottom: 20px;
+}
+#canvas {
+    position: relative;
+    margin-top: 20px;
+    width: 100%;
+    height: 600px;
+    background: white;
+    border: 2px solid #d1d5db;
+    border-radius: 16px;
+}
+#connectionLayer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 1;
+}
+
+
+
+.shape {
+    width: 140px;
+    height: auto;
+
+    background: #facc15;
+
+    border-radius: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-weight: normal;
+
+    cursor: move;
+
+    position: absolute;
+
+    left: 50px;
+    top: 50px;
+
+    resize: both;
+
+    overflow: visible;
+
+    min-width: 60px;
+    min-height: 70px;
+
+    z-index: 2;
+
+    white-space: normal;
+    word-break: break-word;
+}
+.rounded {
+    border-radius: 12px;
+}
+
+.rectangle {
+    border-radius: 0;
+}
+
+.circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+.diamond {
+    width: 120px;
+    height: 90px;
+    border-radius: 0;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    overflow: visible;
+    cursor: pointer;
+}
+.resize-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    right: 4px;
+    bottom: 4px;
+    background: #111827;
+    border-radius: 50%;
+    cursor: se-resize;
+    z-index: 10;
+}
+.diamond .resize-handle {
+    right: 28%;
+    bottom: 20%;
+    transform: none;
+    display: block;
+    z-index: 50;
+}
+.connection-line {
+    position: absolute;
+    height: 3px;
+    background: #111827;
+    transform-origin: 0 50%;
+    z-index: 1;
+    pointer-events: none;
+}
+.connection-selected {
+    outline: 4px solid #2563eb;
+    outline-offset: 4px;
+}
+.diamond.connection-selected {
+    outline: none;
+    background: #2563eb !important;
+}
+
+.diamond.connection-selected::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    background: var(--diamond-colour, #facc15);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    z-index: -1;
+}
+.connection-point {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: white;
+    border: 2px solid #111827;
+    border-radius: 50%;
+    z-index: 20;
+}
+
+.connection-point.top {
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.connection-point.right {
+    right: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.connection-point.bottom {
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.connection-point.left {
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.diamond .connection-point.top {
+    top: 10px;
+}
+
+.diamond .connection-point.right {
+    right: 10px;
+}
+
+.diamond .connection-point.bottom {
+    bottom: 10px;
+}
+
+.diamond .connection-point.left {
+    left: 10px;
+}
+.connection-point {
+    display: none;
+}
+/* Tiny snap nodes while dragging a line endpoint */
+/* Show only the nearest exact snap port while dragging */
+
+.snap-port-indicator {
+    position: absolute;
+
+    width: 8px;
+    height: 8px;
+
+    transform: translate(-50%, -50%);
+
+    background: #2563eb;
+    border: 1px solid white;
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 1px
+        rgba(17, 24, 39, 0.35);
+
+    z-index: 60;
+    pointer-events: none;
+
+    display: none;
+}
+
+#canvas.endpoint-dragging
+.snap-port-indicator.visible {
+    display: block;
+}
+#canvasResizeHandle {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    right: 4px;
+    bottom: 4px;
+    background: #111827;
+    border-radius: 4px;
+    cursor: se-resize;
+    z-index: 100;
+    touch-action: none;
+user-select: none;
+-webkit-user-select: none;
+-webkit-touch-callout: none;
+}
+#canvasResizeHandle::before {
+    content: "";
+    position: absolute;
+
+    width: var(--canvas-resize-hit-size, 44px);
+    height: var(--canvas-resize-hit-size, 44px);
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    background: transparent;
+
+    pointer-events: auto;
+}
+#canvasResizeHandle *,
+#canvasSizeLabel {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-touch-callout: none !important;
+    touch-action: none !important;
+}
+body {
+    padding-bottom: 500px;
+}
+#canvasSizeLabel {
+    position: absolute;
+    right: 24px;
+    bottom: 0;
+    background: #111827;
+    color: white;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    display: none;
+}
+.shape-text {
+    width: 100%;
+    min-height: 100%;
+    box-sizing: border-box;
+
+    padding: 10px;
+
+    white-space: normal;
+    word-break: break-word;
+
+    outline: none;
+    cursor: text;
+}
+.circle .shape-text {
+    width: 70%;
+    padding: 5px;
+    text-align: center;
+}
+.diamond .shape-text {
+    width: 55%;
+    min-height: 0;
+    padding: 50px 5px;
+    text-align: center;
+    box-sizing: border-box;
+}
+.drag-handle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: move;
+    z-index: 30;
+}
+.shape-selected {
+    outline: 3px solid #111827;
+    outline-offset: 3px;
+}
+.diamond.shape-selected {
+    outline: none;
+}
+.diamond.custom-border::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    background: var(--diamond-colour, #facc15);
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.diamond.custom-border .shape-text {
+    position: relative;
+    z-index: 2;
+}
+.textbox {
+    background: white;
+    border: 2px dashed #9ca3af;
+    border-radius: 0;
+    box-sizing: border-box;
+    min-width: 140px;
+    min-height: 70px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    z-index: 100;
+}
+.checkbox {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    min-height: 42px !important;
+
+    padding: 0 !important;
+
+    border-radius: 6px !important;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    resize: none !important;
+
+    cursor: pointer;
+}
+
+.checkbox .shape-text {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+
+    padding: 0 !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+
+    pointer-events: none;
+    user-select: none;
+}
+.checkbox .resize-handle,
+.checkbox .connection-point {
+    display: none !important;
+}
+.beacon {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    min-height: 46px !important;
+
+    padding: 0 !important;
+
+    background: transparent !important;
+    border: none !important;
+    border-radius: 50% !important;
+
+    box-shadow: none !important;
+
+    resize: none !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+}
+
+.beacon .resize-handle,
+.beacon .connection-point {
+    display: none !important;
+}
+.beacon .shape-text {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+
+    padding: 0 !important;
+
+    border-radius: 50% 50% 35% 35%;
+
+    background: var(--beacon-colour, #2563eb);
+
+    box-shadow:
+        0 0 0 3px rgba(17, 24, 39, 0.8),
+        0 0 10px var(--beacon-colour, #2563eb);
+
+    pointer-events: none;
+    user-select: none;
+
+    animation: urgentBeaconFlash 0.7s infinite;
+}
+
+@keyframes urgentBeaconFlash {
+
+    0%,
+    100% {
+        opacity: 0.45;
+        transform: scale(0.92);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.08);
+
+        box-shadow:
+            0 0 0 3px rgba(17, 24, 39, 0.8),
+            0 0 20px 8px var(--beacon-colour, #2563eb);
+    }
+}
+.bookmark {
+    width: 44px !important;
+    height: 52px !important;
+    min-width: 44px !important;
+    min-height: 52px !important;
+
+    padding: 0 !important;
+
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    resize: none !important;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+}
+
+.bookmark .shape-text {
+    width: 30px;
+    height: 40px;
+    min-height: 40px;
+
+    padding: 0 !important;
+
+    background: var(--bookmark-colour, #ef4444);
+
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 100%,
+        50% 75%,
+        0 100%
+    );
+
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+
+    pointer-events: none;
+    user-select: none;
+}
+
+.bookmark .resize-handle,
+.bookmark .connection-point {
+    display: none !important;
+}
+#canvasToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+
+    padding: 10px;
+    margin-bottom: 12px;
+
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+#canvasToolbar button {
+    padding: 8px 12px;
+    font-size: 14px;
+    border-radius: 8px;
+}
+
+#canvasToolbar select {
+    height: 34px;
+    padding: 0 8px;
+    font-size: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+}
+
+#canvasToolbar input[type="color"] {
+    width: 38px;
+    height: 34px;
+    padding: 3px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+/* Toolbar order */
+
+/* SHAPES */
+#shapeType { order: 1; }
+#addShapeBtn { order: 2; }
+#deleteShapeBtn { order: 3; }
+#colourPicker { order: 4; }
+#borderColourPicker { order: 5; }
+
+/* TEXT */
+#boldBtn {
+    order: 10;
+    margin-left: 14px;
+}
+
+#underlineBtn { order: 11; }
+#fontDecreaseBtn { order: 12; }
+#fontIncreaseBtn { order: 13; }
+#fontColourPicker { order: 14; }
+
+/* LINES */
+#connectBtn {
+    order: 20;
+    margin-left: 14px;
+}
+
+#deleteLineBtn { order: 21; }
+#addBendBtn { order: 22; }
+#deleteBendBtn { order: 23; }
+#arrowEndBtn { order: 24; }
+
+/* CANVAS */
+#canvasSizeSelect {
+    order: 30;
+    margin-left: 14px;
+}
+.colour-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+
+    padding: 4px 6px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+.colour-control input[type="color"] {
+    width: 32px;
+    height: 28px;
+    padding: 2px;
+}
+.toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+
+    padding-right: 14px;
+    margin-right: 4px;
+
+    border-right: 1px solid #d1d5db;
+}
+
+.toolbar-group:last-child {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+.toolbar-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+
+    margin-right: 3px;
+    white-space: nowrap;
+}
+
+/* Remove the old spacing now that we have groups */
+#boldBtn,
+#connectBtn,
+#canvasSizeSelect {
+    margin-left: 0;
+}
+@media print {
+
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    body > h1,
+    body > h2,
+    body > button,
+    body > ul,
+    #backBtn,
+    #canvasToolbar {
+        display: none !important;
+    }
+
+    #topicPage {
+        display: block !important;
+        margin: 0 !important;
+        max-width: none !important;
+    }
+
+    #topicTitle {
+        display: block !important;
+        margin: 0 0 12px 0 !important;
+    }
+
+    #canvas {
+        margin: 0 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    #canvasResizeHandle,
+    .resize-handle,
+    .drag-handle,
+    .connection-point {
+        display: none !important;
+    }
+
+    .shape-selected {
+        outline: none !important;
+    }
+
+    @page {
+        margin: 10mm;
+    }
+}
+#attachmentPanel {
+    position: absolute;
+    min-width: 260px;
+    max-width: 360px;
+    padding: 12px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+}
+
+#closeAttachmentPanelBtn {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+}
+#attachmentPanel h3 {
+    margin: 0 30px 10px 0;
+    font-size: 16px;
+}
+
+#attachmentList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#attachmentList > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f9fafb;
+}
+
+#attachmentList span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#attachmentList button {
+    padding: 5px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.hover-symbol {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    padding: 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    line-height: 1;
+    cursor: help;
+}
+
+.hover-symbol .shape-text {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+.hover-symbol .resize-handle {
+    display: none;
+}
+
+.hover-symbol .drag-handle {
+    display: none;
+}
+.hover-popup {
+    position: absolute;
+    max-width: 320px;
+
+    /* Keep long hover content inside the screen */
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* Smooth finger scrolling on iPad/iPhone */
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+
+    padding: 10px 12px;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    line-height: 1.4;
+    z-index: 2000;
+    display: none;
+}
+.hover-symbol.shape-selected {
+    outline: none;
+    background: #e0efff !important;
+    border-radius: 4px;
+}
+
+.hover-symbol.dragging-hover {
+    background: #2563eb !important;
+    border-radius: 4px;
+}
+.hover-symbol,
+.hover-symbol .shape-text {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+
+    touch-action: none !important;
+
+    cursor: grab;
+}
+.hover-symbol.dragging-hover,
+.hover-symbol.dragging-hover .shape-text {
+    cursor: grabbing;
+}
+
+.hover-tool {
+    display: none;
+}
+.toolbar-group {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 7px 9px;
+    margin-right: 4px;
+}
+
+.toolbar-label {
+    padding-right: 6px;
+    border-right: 1px solid #d1d5db;
+}
+.toolbar-group {
+    flex-wrap: wrap;
+}
+
+.toolbar-label {
+    flex-basis: 100%;
+    border-right: none;
+    padding-right: 0;
+    margin-bottom: 2px;
+    font-size: 10px;
+}
+#hoverToolsGroup {
+    display: none;
+}
+#canvasWorkspace {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+#canvasToolbar {
+    width: 260px;
+    flex-shrink: 0;
+
+    position: sticky;
+    top: 12px;
+    align-self: flex-start;
+
+    box-sizing: border-box;
+}
+
+#canvas {
+    flex: 1;
+    min-width: 0;
+}
+#canvasWorkspace {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+#canvasToolbar {
+    width: 260px;
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 8px;
+
+    position: sticky;
+    top: 12px;
+
+    box-sizing: border-box;
+}
+
+#canvasToolbar > .toolbar-group {
+    width: 100%;
+    box-sizing: border-box;
+    margin-right: 0;
+}
+
+#canvas {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0;
+}
+#loginEmail,
+#loginPassword {
+    font-size: 18px;
+    padding: 10px 12px;
+    height: 44px;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#loginBtn,
+#logoutBtn {
+    font-size: 18px;
+    padding: 10px 18px;
+    min-height: 44px;
+    border-radius: 10px;
+}
+
+#loginStatus {
+    margin-top: 8px;
+    font-size: 16px;
+    font-weight: 600;
+}
+/* Larger desktop home screen */
+
+h1 {
+    font-size: 42px;
+    margin-bottom: 24px;
+}
+
+#loginEmail,
+#loginPassword {
+    width: 320px;
+    height: 54px;
+    font-size: 20px;
+    padding: 12px 14px;
+}
+
+#loginBtn,
+#logoutBtn {
+    min-height: 54px;
+    font-size: 20px;
+    padding: 12px 22px;
+}
+
+#loginStatus {
+    font-size: 18px;
+    margin: 10px 0 18px;
+}
+
+#createTopicBtn {
+    font-size: 20px;
+    padding: 14px 22px;
+    min-height: 54px;
+}
+
+#topicList {
+    max-width: 1100px;
+}
+
+#topicList button {
+    width: 100%;
+    min-height: 72px;
+    padding: 18px 22px;
+    font-size: 22px;
+    text-align: left;
+    border-radius: 16px;
+}
+/* Keep mind-map menu permanently visible while scrolling */
+
+#canvasToolbar {
+    position: relative;
+    width: 260px;
+    z-index: 500;
+}
+
+#canvasToolbar.toolbar-fixed {
+    position: fixed;
+    top: 12px;
+    left: 30px;
+
+    width: 260px;
+    max-height: calc(100vh - 50px);
+    overflow-y: auto;
+}
+#canvasWorkspace {
+    grid-template-columns: 260px minmax(0, 1fr);
+}
+
+#canvas {
+    grid-column: 2;
+}
+#canvasWorkspace {
+    width: calc(100vw - 60px);
+    max-width: calc(100vw - 60px);
+    min-width: 0;
+}
+
+#canvasViewport {
+    grid-column: 2;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding-bottom: 12px;
+}
+
+#canvas {
+    grid-column: auto;
+    flex-shrink: 0;
+}
+/* Learning Library */
+
+#topicList {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+    max-width: 700px;
+}
+
+.topic-list-item,
+.folder-list-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.topic-open-btn,
+.folder-open-btn {
+    flex: 1;
+    text-align: left;
+    padding: 14px 18px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.topic-open-btn:hover,
+.folder-open-btn:hover {
+    background: #f3f4f6;
+}
+
+.folder-open-btn {
+    font-weight: 600;
+}
+
+.topic-delete-btn,
+.folder-delete-btn {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    cursor: pointer;
+}
+
+.topic-move-select {
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: white;
+}
+
+.folder-back-btn {
+    margin-bottom: 15px;
+}
+
+.folder-heading {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+#libraryToolbar {
+    display: flex;
+    gap: 10px;
+    margin: 18px 0 10px 0;
+    flex-wrap: wrap;
+}
+
+#createTopicBtn,
+#createFolderBtn,
+#createCategoryBtn {
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+#createTopicBtn:hover,
+#createFolderBtn:hover {
+    background: #f3f4f6;
+}
+.folder-empty-message {
+    padding: 18px;
+    color: #6b7280;
+    font-style: italic;
+}
+/* Final Learning Library layout fixes */
+
+#libraryToolbar {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#createTopicBtn,
+#createFolderBtn,
+#createCategoryBtn {
+    width: auto;
+    min-height: 44px;
+    padding: 10px 16px;
+    background: #111827;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#topicList .topic-open-btn,
+#topicList .folder-open-btn {
+    flex: 1;
+    width: auto;
+    min-height: 54px;
+    padding: 14px 18px;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
+#topicList .folder-delete-btn,
+#topicList .folder-rename-btn {
+    width: auto;
+    min-height: 42px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#topicList .topic-move-select {
+    width: auto;
+    min-height: 42px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+
+.topic-list-item,
+.folder-list-item {
+    width: 100%;
+    box-sizing: border-box;
+}
+/* FINAL LIBRARY OVERRIDES */
+
+#libraryToolbar {
+    margin-left: 30px;
+    margin-right: 30px;
+}
+
+#createTopicBtn,
+#createFolderBtn,
+#createCategoryBtn {
+    width: auto !important;
+    min-height: 46px !important;
+    padding: 10px 18px !important;
+    background: #111827 !important;
+    color: white !important;
+    font-size: 16px !important;
+}
+
+#topicList {
+    display: block;
+    max-width: 900px;
+}
+
+#topicList .topic-list-item,
+#topicList .folder-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+}
+
+#topicList .topic-open-btn,
+#topicList .folder-open-btn {
+    flex: 1;
+    width: auto !important;
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    font-size: 18px !important;
+    background: white;
+    color: #222;
+}
+
+#topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
+#topicList .folder-delete-btn,
+#topicList .folder-rename-btn {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-height: 40px !important;
+    padding: 9px 12px !important;
+    font-size: 14px !important;
+    background: white;
+    color: #222;
+    border: 1px solid #d1d5db;
+}
+
+#topicList .topic-move-select {
+    flex: 0 0 auto;
+    width: auto !important;
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 14px;
+}
+/* Distinguish folders from mind maps */
+
+#topicList .folder-list-item {
+    background: #eaf2ff;
+    border: 2px solid #93c5fd;
+    box-shadow: none;
+}
+
+#topicList .folder-open-btn {
+    background: transparent !important;
+    border: none !important;
+    color: #1e3a8a !important;
+    font-size: 19px !important;
+    font-weight: 700 !important;
+}
+
+#topicList .folder-rename-btn,
+#topicList .folder-delete-btn {
+    background: white !important;
+    border: 1px solid #93c5fd !important;
+}
+/* Compact library view */
+
+#topicList .topic-list-item,
+#topicList .folder-list-item {
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+#topicList .topic-open-btn,
+#topicList .folder-open-btn {
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+}
+
+#topicList .topic-delete-btn,
+#topicList .topic-rename-btn,
+#topicList .folder-delete-btn,
+#topicList .folder-rename-btn {
+    min-height: 34px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+}
+
+#topicList .topic-move-select {
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+}
+/* Mobile - Learning Library */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    body > h1,
+    body > h2,
+    #topicPage {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    #authBox {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    #loginEmail,
+    #loginPassword {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    #libraryToolbar {
+        margin-left: 16px;
+        margin-right: 16px;
+    }
+
+    #createTopicBtn,
+    #createFolderBtn {
+        flex: 1 1 140px;
+    }
+
+    #topicList {
+        margin-left: 16px;
+        margin-right: 16px;
+        width: auto;
+        max-width: none;
+    }
+
+    #topicList .topic-list-item,
+    #topicList .folder-list-item {
+        flex-wrap: wrap;
+    }
+
+    #topicList .topic-open-btn,
+    #topicList .folder-open-btn {
+        flex: 1 1 100%;
+        width: 100% !important;
+    }
+
+    #topicList .topic-move-select {
+        flex: 1 1 150px;
+        min-width: 0;
+    }
+    /* Mobile mind-map layout */
+
+#canvasWorkspace {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+#canvasToolbar,
+#canvasToolbar.toolbar-fixed {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    gap: 8px;
+    box-sizing: border-box;
+}
+
+#canvasToolbar .toolbar-group {
+    flex: 0 0 auto;
+}
+
+#canvasViewport {
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-column: auto !important;
+    overflow-x: auto;
+}
+}
+/* Mobile mind-map override */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    #topicPage #canvasWorkspace {
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 12px !important;
+    }
+
+    #topicPage #canvasToolbar,
+    #topicPage #canvasToolbar.toolbar-fixed {
+         position: sticky !important;
+    left: auto !important;
+    top: 0 !important;
+
+    z-index: 1000 !important;
+    background: white;
+
+        width: 100% !important;
+        max-width: 100% !important;
+
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+
+        box-sizing: border-box !important;
+    }
+
+    #topicPage #canvasToolbar > .toolbar-group {
+        width: auto !important;
+        min-width: 260px;
+        flex: 0 0 auto !important;
+    }
+
+    #topicPage #canvasViewport {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: auto !important;
+        grid-column: auto !important;
+    }
+
+    #topicPage #canvas {
+        grid-column: auto !important;
+    }
+}
+/* Prevent whole-page sideways scrolling on mobile */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+}
+/* Hide library header while editing a mind map on mobile */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    body:has(#topicPage[style*="display: block"]) > h1,
+    body:has(#topicPage[style*="display: block"]) > #authBox,
+    body:has(#topicPage[style*="display: block"]) > h2,
+    body:has(#topicPage[style*="display: block"]) > #libraryToolbar {
+        display: none !important;
+    }
+
+    body:has(#topicPage[style*="display: block"]) #topicPage {
+        margin-top: 12px !important;
+    }
+}
+/* Mobile drag handle */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    .drag-handle {
+        display: none;
+    }
+
+    .shape-selected .drag-handle {
+    width: 24px;
+    height: 24px;
+
+    left: auto;
+    right: 4px;
+    top: 4px;
+
+    transform: none;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 14px;
+    line-height: 1;
+
+    background: #111827;
+    color: white;
+
+    border: 1px solid white;
+    border-radius: 6px;
+
+    box-shadow:
+        0 1px 4px
+        rgba(0, 0, 0, 0.25);
+
+    touch-action: none;
+    cursor: grab;
+    z-index: 100;
+}
+}
+/* Mobile - allow selecting/editing text inside normal shapes */
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    .shape:not(.hover-symbol) .shape-text {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        -webkit-touch-callout: default;
+        touch-action: auto !important;
+        cursor: text;
+    }
+}
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    #topicPage #canvasViewport {
+    touch-action: none !important;
+    overscroll-behavior-x: none !important;
+
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    
+}
+#topicPage #connectionLayer {
+    touch-action: none !important;
+}
+}
+@media (max-width: 700px), (hover: none) and (pointer: coarse) {
+
+    .hover-symbol .drag-handle {
+        display: none !important;
+    }
+
+    
+
+}
+@media (max-width: 700px), (max-width: 1366px) and (any-pointer: coarse) {
+
+    #topicPage #canvasToolbar,
+    #topicPage #canvasToolbar.toolbar-fixed {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+
+        width: 100% !important;
+        max-width: 100% !important;
+
+        z-index: 5000 !important;
+        background: white !important;
+
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #topicPage {
+    padding-top: 105px !important;
+}
+
+#topicPage #canvasWorkspace {
+    padding-top: 0 !important;
+}
+}
+/* Category creator */
+
+#categoryCreator {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.35);
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.category-creator-box {
+    width: 100%;
+    max-width: 420px;
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+}
+
+.category-creator-box h3 {
+    margin: 0 0 16px 0;
+    font-size: 22px;
+}
+
+#categoryNameInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 17px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+}
+
+.category-colour-swatches {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.category-colour-swatch {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    padding: 0 !important;
+    border: 3px solid transparent !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 0 1px #d1d5db;
+}
+
+.category-colour-swatch:nth-child(1) { background: #dbeafe !important; }
+.category-colour-swatch:nth-child(2) { background: #dcfce7 !important; }
+.category-colour-swatch:nth-child(3) { background: #f3e8ff !important; }
+.category-colour-swatch:nth-child(4) { background: #fef3c7 !important; }
+.category-colour-swatch:nth-child(5) { background: #fee2e2 !important; }
+.category-colour-swatch:nth-child(6) { background: #e5e7eb !important; }
+.category-colour-swatch:nth-child(7) { background: #ccfbf1 !important; }
+.category-colour-swatch:nth-child(8) { background: #fce7f3 !important; }
+
+.category-colour-swatch.selected {
+    border-color: #111827 !important;
+    transform: scale(1.08);
+}
+
+.category-custom-colour {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#categoryCustomColour {
+    width: 44px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    background: white;
+}
+
+#saveCategoryBtn,
+#cancelCategoryBtn {
+    margin-right: 8px;
+}
+
+#cancelCategoryBtn {
+    background: #e5e7eb;
+    color: #222;
+}
+/* Library category bars */
+
+#topicList .library-category-item {
+    display: block;
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 0 8px 0 !important;
+
+    border-radius: 14px;
+    overflow: hidden;
+
+    box-shadow: none !important;
+    box-sizing: border-box;
+}
+
+#topicList .library-category-btn {
+    display: block;
+
+    width: 100% !important;
+    min-height: 52px !important;
+
+    padding: 12px 16px !important;
+
+    background: transparent !important;
+    color: #1f2937 !important;
+
+    border: none !important;
+    border-radius: 14px !important;
+
+    text-align: left;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+}
+
+#topicList .library-category-btn:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+}
+#topicList .folder-list-item {
+    margin-left: 18px;
+    width: calc(100% - 18px);
+}
+#topicList .category-delete-btn,
+#topicList .category-rename-btn {
+    width: auto !important;
+    min-height: 30px !important;
+    padding: 5px 9px !important;
+    font-size: 12px !important;
+    border-radius: 7px !important;
+    background: white !important;
+    color: #222 !important;
+    border: 1px solid #d1d5db !important;
+}
+/* Hover document/resource links */
+
+.hover-popup .hover-resource-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    min-width: 180px;
+    padding: 9px 11px;
+    margin-top: 8px;
+
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+
+    color: #111827;
+    text-decoration: none;
+    font-weight: 600;
+
+    box-sizing: border-box;
+}
+
+.hover-popup .hover-resource-link:hover {
+    background: #eef2f7;
+}
+/* Keep shape text scaling correctly during Safari pinch zoom */
+#canvas,
+#canvas .shape,
+#canvas .shape-text {
+    -webkit-text-size-adjust: none !important;
+    text-size-adjust: none !important;
+}
+/* Prevent Safari text spilling outside shapes at very low zoom */
+#canvas.very-zoomed-out
+.shape:not(.hover-symbol):not(.checkbox):not(.beacon):not(.bookmark)
+.shape-text {
+    max-height: 100% !important;
+    overflow: hidden !important;
+}/* iPad: show all toolbar controls without sideways scrolling */
+@media (min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse) {
+
+    #topicPage #canvasToolbar,
+    #topicPage #canvasToolbar.toolbar-fixed {
+        flex-wrap: wrap !important;
+
+        overflow-x: hidden !important;
+        overflow-y: visible !important;
+
+        align-items: flex-start !important;
+        align-content: flex-start !important;
+
+        gap: 8px !important;
+
+        max-height: none !important;
+    }
+
+    #topicPage #canvasToolbar > .toolbar-group {
+        width: auto !important;
+        min-width: 0 !important;
+
+        flex: 1 1 300px !important;
+
+        box-sizing: border-box !important;
+    }
+    #topicPage {
+    padding-top: 220px !important;
+}
+#topicPage #backBtn {
+    margin-top: 12px !important;
+}
+}
+/* Clearly show the currently selected line */
+#connectionLayer path[stroke-width="5"] {
+    stroke: #2563eb !important;
+}
+/* Rich hover text editor */
+
+#hoverEditorOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 16px;
+    box-sizing: border-box;
+
+    background: rgba(0, 0, 0, 0.4);
+}
+
+#hoverEditorPanel {
+    width: min(680px, 100%);
+    max-height: calc(100vh - 32px);
+
+    display: flex;
+    flex-direction: column;
+
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+
+    box-shadow:
+        0 12px 40px
+        rgba(0, 0, 0, 0.25);
+}
+
+#hoverEditorTitle {
+    padding: 14px 16px 8px;
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+#hoverEditorToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    gap: 7px;
+
+    padding: 8px 12px;
+
+    border-bottom:
+        1px solid #d1d5db;
+}
+
+#hoverEditorToolbar button {
+    min-width: 44px;
+    min-height: 40px;
+
+    padding: 7px 10px;
+    border-radius: 7px;
+
+    font-size: 16px;
+}
+
+#hoverEditorToolbar label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#hoverEditorSpacing {
+    min-height: 38px;
+    padding: 4px 7px;
+}
+
+#hoverRichEditor {
+    height: 320px;
+    max-height: 50vh;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 14px;
+
+    border: none;
+    outline: none;
+
+    box-sizing: border-box;
+
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+#hoverRichEditor:focus {
+    box-shadow:
+        inset 0 0 0 2px #2563eb;
+}
+
+#hoverEditorActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    padding: 10px 12px;
+
+    border-top:
+        1px solid #d1d5db;
+}
+
+#cancelHoverEditorBtn {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.hover-rich-text {
+    white-space: normal;
+    word-break: break-word;
+}
+/* Show / hide mind-map menu */
+
+#menuToggleBtn {
+    position: fixed;
+
+    right: 18px;
+    bottom: 18px;
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+/* Movable floating controls */
+
+#chapterBtn {
+    position: fixed;
+
+    left: 140px;
+    bottom:
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+
+#navigationModeBtn,
+#chapterBtn,
+#menuToggleBtn {
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.floating-control-dragging {
+    cursor: grabbing !important;
+}
+
+/* Completely hide the toolbar */
+#topicPage.menu-hidden #canvasToolbar {
+    display: none !important;
+}
+
+/*
+ * Desktop:
+ * remove the empty toolbar column so
+ * the mind map gets the extra space.
+ */
+#topicPage.menu-hidden #canvasWorkspace {
+    grid-template-columns:
+        minmax(0, 1fr) !important;
+}
+
+#topicPage.menu-hidden #canvasViewport {
+    grid-column: 1 !important;
+    width: 100% !important;
+}
+
+/*
+ * iPhone / iPad:
+ * remove the large space normally
+ * reserved for the fixed toolbar.
+ */
+/* Keep the map in the same vertical position
+   when the menu is hidden */
+
+@media (max-width: 700px) {
+
+    #topicPage.menu-hidden {
+        padding-top: 105px !important;
+    }
+}
+
+@media (min-width: 701px)
+       and (max-width: 1366px)
+       and (any-pointer: coarse) {
+
+    #topicPage.menu-hidden {
+        padding-top: 220px !important;
+    }
+}
+/* Mind-map Navigate / Edit mode */
+
+#navigationModeBtn {
+    position: fixed;
+
+    left: 18px;
+    bottom:
+        calc(
+            18px +
+            env(safe-area-inset-bottom)
+        );
+
+    z-index: 7000;
+
+    min-height: 44px;
+    padding: 9px 14px;
+
+    border-radius: 10px;
+
+    background: #111827;
+    color: white;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, 0.22);
+}
+
+/* Blue = currently navigating */
+#topicPage.navigation-mode
+#navigationModeBtn {
+    background: #2563eb;
+}
+
+/*
+ * In Navigate mode shapes become
+ * visual objects rather than controls.
+ */
+#topicPage.navigation-mode .shape {
+    pointer-events: none !important;
+
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* Don't expose editing handles */
+#topicPage.navigation-mode .drag-handle,
+#topicPage.navigation-mode .resize-handle,
+#topicPage.navigation-mode .connection-point,
+#topicPage.navigation-mode #canvasResizeHandle {
+    display: none !important;
+}
+
+/* Lines should not intercept navigation */
+#topicPage.navigation-mode
+#connectionLayer path,
+#topicPage.navigation-mode
+#connectionLayer circle {
+    pointer-events: none !important;
+}
+
+#topicPage.navigation-mode
+#canvasViewport,
+#topicPage.navigation-mode
+#canvas {
+    cursor: grab !important;
+}
+/* Chapter / jump-marker navigation */
+
+#chapterRail {
+    position: fixed;
+
+    right: 14px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    z-index: 6500;
+
+    width: 185px;
+    max-height: 62vh;
+
+    overflow: hidden;
+
+    padding: 10px;
+
+    box-sizing: border-box;
+
+    background:
+        rgba(255, 255, 255, 0.96);
+
+    border:
+        1px solid #d1d5db;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 4px 16px
+        rgba(0, 0, 0, 0.16);
+}
+
+
+#chapterRailTitle {
+    margin-bottom: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+
+    color: #6b7280;
+}
+
+
+#chapterRailList {
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+
+    max-height:
+        calc(62vh - 42px);
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+
+    padding-right: 2px;
+}
+
+
+.chapter-jump-btn {
+    width: 100%;
+
+    min-height: 36px;
+
+    padding: 7px 9px;
+
+    text-align: left;
+
+    font-size: 13px;
+    line-height: 1.25;
+
+    color: #111827;
+    background: #f8fafc;
+
+    border:
+        1px solid #e5e7eb;
+
+    border-radius: 8px;
+
+    white-space: normal;
+    word-break: break-word;
+}
+
+.chapter-row {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+}
+
+.chapter-row
+.chapter-jump-btn {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.chapter-edit-btn,
+.chapter-delete-btn {
+    flex: 0 0 30px;
+
+    width: 30px;
+    min-width: 30px;
+
+    padding: 4px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.chapter-edit-btn {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.chapter-delete-btn {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#topicPage.navigation-mode
+.chapter-edit-btn,
+#topicPage.navigation-mode
+.chapter-delete-btn {
+    display: none !important;
+}
+.chapter-jump-btn:hover {
+    opacity: 1;
+    background: #eaf2ff;
+}
+
+
+/*
+ * Small chapter number on the shape.
+ */
+.chapter-marker-badge {
+    position: absolute;
+
+    left: 4px;
+    top: 4px;
+
+    z-index: 160;
+
+    min-width: 20px;
+    height: 20px;
+
+    padding: 0 5px;
+
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #2563eb;
+    color: white;
+
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 20px;
+
+    pointer-events: none;
+
+    box-shadow:
+        0 1px 4px
+        rgba(0, 0, 0, 0.25);
+}
+
+
+.circle .chapter-marker-badge,
+.diamond .chapter-marker-badge {
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+}
+
+
+/*
+ * Flash the destination after jumping.
+ */
+.chapter-jump-highlight {
+    animation:
+        chapterJumpPulse
+        1.25s ease-out;
+}
+
+
+@keyframes chapterJumpPulse {
+
+    0% {
+        filter:
+            drop-shadow(
+                0 0 0
+                rgba(37, 99, 235, 0)
+            );
+    }
+
+    35% {
+        filter:
+            drop-shadow(
+                0 0 12px
+                rgba(37, 99, 235, 1)
+            );
+    }
+
+    100% {
+        filter:
+            drop-shadow(
+                0 0 0
+                rgba(37, 99, 235, 0)
+            );
+    }
+}
+
+
+/*
+ * Chapter editing belongs to Edit mode.
+ */
+#topicPage.navigation-mode
+#chapterBtn {
+    display: none !important;
+}
+
+
+/* Smaller chapter rail on phones */
+@media (max-width: 700px) {
+
+    #chapterRail {
+        right: 8px;
+
+        width: 145px;
+
+        max-height: 55vh;
+
+        padding: 8px;
+    }
+
+    #chapterRailList {
+        max-height:
+            calc(55vh - 38px);
+    }
+
+    .chapter-jump-btn {
+        font-size: 12px;
+
+        padding: 6px 8px;
+    }
+}

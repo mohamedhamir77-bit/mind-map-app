@@ -1,0 +1,12983 @@
+const SUPABASE_URL =
+    "https://ozjpfrserwtmceezvalo.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_RiJZXka04VC85cVq_hC_GA__fYN3q-Q";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+const createTopicBtn = document.getElementById("createTopicBtn");
+const createFolderBtn = document.getElementById("createFolderBtn");
+const createCategoryBtn = document.getElementById("createCategoryBtn");
+const categoryCreator =
+    document.getElementById("categoryCreator");
+
+const categoryNameInput =
+    document.getElementById("categoryNameInput");
+
+const saveCategoryBtn =
+    document.getElementById("saveCategoryBtn");
+
+const cancelCategoryBtn =
+    document.getElementById("cancelCategoryBtn");
+
+const categoryCustomColour =
+    document.getElementById("categoryCustomColour");
+
+const categoryColourSwatches =
+    document.querySelectorAll(".category-colour-swatch");
+
+let selectedCategoryColour = "#dbeafe";
+const libraryToolbar = document.getElementById("libraryToolbar");
+const topicList = document.getElementById("topicList");
+
+const topicPage = document.getElementById("topicPage");
+const topicTitle = document.getElementById("topicTitle");
+const backBtn = document.getElementById("backBtn");
+
+const addShapeBtn = document.getElementById("addShapeBtn");
+const addLinkBtn = document.getElementById("addLinkBtn");
+const removeLinkBtn = document.getElementById("removeLinkBtn");
+const editLinkBtn = document.getElementById("editLinkBtn");
+const canvas = document.getElementById("canvas");
+const savedCanvasWidth = localStorage.getItem("canvasWidth");
+const savedCanvasHeight = localStorage.getItem("canvasHeight");
+const savedCanvasSizeMode =
+    localStorage.getItem("canvasSizeMode");
+
+if (savedCanvasWidth && savedCanvasHeight) {
+    canvas.style.width = savedCanvasWidth + "px";
+    canvas.style.height = savedCanvasHeight + "px";
+}
+
+const colourPicker = document.getElementById("colourPicker");
+const borderColourPicker = document.getElementById("borderColourPicker");
+const shapeType = document.getElementById("shapeType");
+const connectBtn = document.getElementById("connectBtn");
+const arrowEndBtn = document.getElementById("arrowEndBtn");
+const boldBtn = document.getElementById("boldBtn");
+const underlineBtn = document.getElementById("underlineBtn");
+const fontDecreaseBtn = document.getElementById("fontDecreaseBtn");
+const fontIncreaseBtn = document.getElementById("fontIncreaseBtn");
+const fontColourPicker = document.getElementById("fontColourPicker");
+let savedTextRange = null;
+document.addEventListener("selectionchange", function () {
+
+    const selection = window.getSelection();
+
+    if (!selection.rangeCount || selection.isCollapsed) {
+        return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    let element = range.commonAncestorContainer;
+
+    if (element.nodeType === Node.TEXT_NODE) {
+        element = element.parentElement;
+    }
+
+    if (element && element.closest(".shape-text")) {
+        savedTextRange = range.cloneRange();
+    }
+});
+fontColourPicker.addEventListener("input", function () {
+
+    if (!savedTextRange) {
+        return;
+    }
+
+    const selection = window.getSelection();
+
+    selection.removeAllRanges();
+    selection.addRange(savedTextRange);
+
+    document.execCommand(
+        "foreColor",
+        false,
+        fontColourPicker.value
+    );
+
+    const range = selection.getRangeAt(0);
+
+    let element = range.commonAncestorContainer;
+
+    if (element.nodeType === Node.TEXT_NODE) {
+        element = element.parentElement;
+    }
+
+    const textEditor =
+        element && element.closest
+            ? element.closest(".shape-text")
+            : null;
+
+    if (textEditor) {
+        textEditor.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+    }
+});
+const deleteShapeBtn = document.getElementById("deleteShapeBtn");
+const deleteLineBtn = document.getElementById("deleteLineBtn");
+const deleteBendBtn = document.getElementById("deleteBendBtn");
+const addBendBtn = document.getElementById("addBendBtn");
+const canvasSizeSelect = document.getElementById("canvasSizeSelect");
+const zoomOutBtn = document.getElementById("zoomOutBtn");
+const zoomInBtn = document.getElementById("zoomInBtn");
+const zoomFitBtn = document.getElementById("zoomFitBtn");
+const zoomLevel = document.getElementById("zoomLevel");
+const saveMindMapBtn = document.getElementById("saveMindMapBtn");
+const saveCloudBtn =
+    document.createElement("button");
+
+saveCloudBtn.type = "button";
+saveCloudBtn.id = "saveCloudBtn";
+saveCloudBtn.textContent = "Save to Cloud";
+
+saveMindMapBtn.insertAdjacentElement(
+    "afterend",
+    saveCloudBtn
+);
+saveCloudBtn.addEventListener(
+    "click",
+    async function () {
+
+        const originalText =
+            "Save to Cloud";
+
+        saveCloudBtn.disabled = true;
+        saveCloudBtn.textContent =
+            "Saving...";
+
+        /*
+         * Cancel any waiting automatic save
+         * and force a fresh complete save now.
+         */
+        clearTimeout(cloudSaveTimer);
+
+        hasUnsavedLocalChanges = true;
+        localChangeVersion += 1;
+
+        const success =
+            await saveUserDataToCloud();
+
+        if (success) {
+
+            saveCloudBtn.textContent =
+                "Saved ✓";
+
+            setTimeout(function () {
+                saveCloudBtn.textContent =
+                    originalText;
+
+                saveCloudBtn.disabled =
+                    false;
+            }, 1500);
+
+        } else {
+
+            saveCloudBtn.textContent =
+                "Save failed";
+
+            saveCloudBtn.disabled = false;
+
+            alert(
+                "The cloud save did not complete. " +
+                "Please check that you are signed in " +
+                "and try again."
+            );
+        }
+    }
+);
+const openMindMapBtn = document.getElementById("openMindMapBtn");
+const printMindMapBtn = document.getElementById("printMindMapBtn");
+const mindMapFileInput = document.getElementById("mindMapFileInput");
+boldBtn.addEventListener("mousedown", function (event) {
+    event.preventDefault();
+    document.execCommand("bold");
+});
+underlineBtn.addEventListener("mousedown", function (event) {
+    event.preventDefault();
+    document.execCommand("underline");
+});
+fontIncreaseBtn.addEventListener("mousedown", function (event) {
+
+    event.preventDefault();
+
+    const selection = window.getSelection();
+
+    if (!selection.rangeCount || selection.isCollapsed) {
+        return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    const startElement =
+        range.startContainer.nodeType === 3
+            ? range.startContainer.parentElement
+            : range.startContainer;
+
+    const currentSize =
+        parseFloat(window.getComputedStyle(startElement).fontSize);
+
+    const span = document.createElement("span");
+    span.style.fontSize = (currentSize + 2) + "px";
+
+    const contents = range.extractContents();
+    span.appendChild(contents);
+    range.insertNode(span);
+
+    selection.removeAllRanges();
+
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+
+    selection.addRange(newRange);
+
+    const textEditor = span.closest(".shape-text");
+
+    if (textEditor) {
+        textEditor.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+    }
+});
+fontDecreaseBtn.addEventListener("mousedown", function (event) {
+
+    event.preventDefault();
+
+    const selection = window.getSelection();
+
+    if (!selection.rangeCount || selection.isCollapsed) {
+        return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    let sizeElement = range.startContainer;
+
+    if (sizeElement.nodeType === Node.TEXT_NODE) {
+        sizeElement = sizeElement.parentElement;
+    } else {
+        const firstTextNode = sizeElement.querySelector
+            ? sizeElement.querySelector("span, b, strong, u, i, em")
+            : null;
+
+        if (firstTextNode) {
+            sizeElement = firstTextNode;
+        }
+    }
+
+    const currentSize =
+        parseFloat(
+            window.getComputedStyle(sizeElement).fontSize
+        );
+
+    const newSize =
+        Math.max(currentSize - 2, 8);
+
+    const span = document.createElement("span");
+    span.style.fontSize = newSize + "px";
+
+    const contents = range.extractContents();
+
+    span.appendChild(contents);
+    range.insertNode(span);
+
+    selection.removeAllRanges();
+
+    const newRange = document.createRange();
+    newRange.selectNodeContents(span);
+    selection.addRange(newRange);
+
+    const textEditor = span.closest(".shape-text");
+
+    if (textEditor) {
+        textEditor.dispatchEvent(
+            new Event("input", { bubbles: true })
+        );
+    }
+});
+deleteShapeBtn.addEventListener("click", function () {
+
+    if (!selectedShape) {
+        alert("Select a shape first.");
+        return;
+    }
+
+    shapes[currentTopic] = shapes[currentTopic].filter(function (item) {
+        return item !== selectedShape.savedData;
+    });
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    selectedShape.remove();
+
+if (shapeSelectionOutline) {
+    shapeSelectionOutline.remove();
+    shapeSelectionOutline = null;
+}
+
+selectedShape = null;
+
+updateConnections();
+renderChapterRail();
+});
+deleteLineBtn.addEventListener("click", function () {
+
+    if (!selectedConnection) {
+        alert("Select a line first.");
+        return;
+    }
+
+    const connectionData = connections.find(function (item) {
+        return item.line === selectedConnection;
+    });
+
+    if (connectionData && connectionData.savedData) {
+        savedConnections[currentTopic] =
+            savedConnections[currentTopic].filter(function (item) {
+                return item !== connectionData.savedData;
+            });
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+
+        connections = connections.filter(function (item) {
+            return item !== connectionData;
+        });
+    }
+
+   if (
+    selectedConnection._wideHitObserver
+) {
+    selectedConnection._wideHitObserver.disconnect();
+}
+
+if (
+    selectedConnection._wideHitArea
+) {
+    selectedConnection._wideHitArea.remove();
+}
+
+selectedConnection.remove();
+
+removeLineHandles();
+
+    selectedConnection = null;
+    selectedConnectionData = null;
+});
+deleteBendBtn.addEventListener("click", function () {
+
+    if (
+        !selectedConnectionData ||
+        selectedControlPointIndex === null
+    ) {
+        alert("Select a blue bend point first.");
+        return;
+    }
+
+    const savedLine = selectedConnectionData.savedData;
+
+    savedLine.controlPoints.splice(
+        selectedControlPointIndex,
+        1
+    );
+
+    selectedConnectionData.controlPoints =
+        savedLine.controlPoints;
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    selectedControlPointIndex = null;
+    selectedControlPointHandle = null;
+
+    updateConnections();
+
+    showFreeLineControlHandles(
+        selectedConnectionData.line,
+        savedLine
+    );
+});
+addBendBtn.addEventListener("click", function () {
+
+    if (!selectedConnectionData || !selectedConnectionData.savedData) {
+        alert("Select a line first.");
+        return;
+    }
+
+    const savedLine = selectedConnectionData.savedData;
+    const line = selectedConnectionData.line;
+
+    if (!Array.isArray(savedLine.controlPoints)) {
+        savedLine.controlPoints = [];
+    }
+
+    const totalLength = line.getTotalLength();
+
+    const position =
+        (savedLine.controlPoints.length + 1) /
+        (savedLine.controlPoints.length + 2);
+
+    const point = line.getPointAtLength(
+        totalLength * position
+    );
+
+    savedLine.controlPoints.push({
+        x: point.x,
+        y: point.y
+    });
+
+    selectedConnectionData.controlPoints =
+        savedLine.controlPoints;
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    updateConnections();
+
+    showFreeLineControlHandles(
+        line,
+        savedLine
+    );
+});
+let selectedShape = null;
+let shapeSelectionOutline = null;
+function clearStaleShapeSelections(
+    keepShape = null
+) {
+
+    canvas
+        .querySelectorAll(
+            ".shape.shape-selected"
+        )
+        .forEach(function (shape) {
+
+            if (shape !== keepShape) {
+                shape.classList.remove(
+                    "shape-selected"
+                );
+            }
+        });
+}
+let selectedConnection = null;
+let selectedConnectionData = null;
+let selectedControlPointIndex = null;
+let selectedControlPointHandle = null;
+let connectionHandle = null;
+let connectionHandles = [];
+let startHandle = null;
+let endHandle = null;
+let freeLineControlHandles = [];
+function removeLineHandles() {
+
+    if (connectionHandle) {
+        connectionHandle.remove();
+        connectionHandle = null;
+    }
+
+    connectionHandles.forEach(function (handle) {
+        handle.remove();
+    });
+
+    connectionHandles = [];
+
+    if (startHandle) {
+        startHandle.remove();
+        startHandle = null;
+    }
+
+    if (endHandle) {
+        endHandle.remove();
+        endHandle = null;
+    }
+
+    freeLineControlHandles.forEach(function (handle) {
+        handle.remove();
+    });
+
+    freeLineControlHandles = [];
+
+    selectedEndpoint = null;
+    selectedControlPointIndex = null;
+    selectedControlPointHandle = null;
+}
+function addWideLineHitArea(line) {
+
+    if (
+        !line ||
+        !line.parentNode ||
+        line._wideHitArea
+    ) {
+        return;
+    }
+
+    const hitLine =
+        document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+    hitLine.setAttribute("fill", "none");
+
+    /*
+     * Almost fully transparent,
+     * but still counts as an SVG stroke
+     * for pointer/touch detection.
+     */
+    hitLine.setAttribute(
+        "stroke",
+        "rgba(0,0,0,0.001)"
+    );
+
+    /*
+     * Wider invisible touch target.
+     * Visible line remains 3px.
+     */
+    hitLine.setAttribute(
+        "stroke-width",
+        "22"
+    );
+
+    hitLine.setAttribute(
+        "stroke-linecap",
+        "round"
+    );
+
+    hitLine.setAttribute(
+        "stroke-linejoin",
+        "round"
+    );
+
+    hitLine.style.pointerEvents = "stroke";
+hitLine.style.cursor = "pointer";
+hitLine.style.touchAction = "none";
+    function syncHitLine() {
+
+        const pathData =
+            line.getAttribute("d");
+
+        if (pathData) {
+            hitLine.setAttribute(
+                "d",
+                pathData
+            );
+        }
+    }
+
+    syncHitLine();
+
+    /*
+     * Keep invisible hit area matching
+     * the real line whenever it moves.
+     */
+    const observer =
+        new MutationObserver(
+            function (mutations) {
+
+                mutations.forEach(
+                    function (mutation) {
+
+                        if (
+                            mutation.attributeName ===
+                            "d"
+                        ) {
+                            syncHitLine();
+                        }
+                    }
+                );
+            }
+        );
+
+    observer.observe(
+        line,
+        {
+            attributes: true,
+            attributeFilter: ["d"]
+        }
+    );
+/*
+ * Once a line is selected, allow the
+ * wider invisible touch area to drag it.
+ */
+hitLine.addEventListener(
+    "pointerdown",
+    function (event) {
+
+        if (selectedConnection !== line) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        line.dispatchEvent(
+            new PointerEvent(
+                "pointerdown",
+                {
+                    bubbles: true,
+                    cancelable: true,
+                    pointerId: event.pointerId,
+                    pointerType: event.pointerType,
+                    isPrimary: event.isPrimary,
+                    button: event.button,
+                    buttons: event.buttons,
+                    clientX: event.clientX,
+                    clientY: event.clientY
+                }
+            )
+        );
+    }
+);
+    /*
+     * Tapping the invisible wider area
+     * activates the real line.
+     */
+    hitLine.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!line.isConnected) {
+                return;
+            }
+
+            line.dispatchEvent(
+                new MouseEvent(
+                    "click",
+                    {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: event.clientX,
+                        clientY: event.clientY
+                    }
+                )
+            );
+        }
+    );
+
+    line.parentNode.insertBefore(
+        hitLine,
+        line
+    );
+
+    line._wideHitArea = hitLine;
+    line._wideHitObserver = observer;
+}
+
+function showFreeLineControlHandles(line, savedLine) {
+
+    freeLineControlHandles.forEach(function (handle) {
+        handle.remove();
+    });
+
+    freeLineControlHandles = [];
+
+    if (!Array.isArray(savedLine.controlPoints)) {
+        savedLine.controlPoints = [];
+    }
+
+    const connectionLayer =
+        document.getElementById("connectionLayer");
+
+    savedLine.controlPoints.forEach(function (point, index) {
+
+        const handle = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+
+        handle.setAttribute("cx", point.x);
+        handle.setAttribute("cy", point.y);
+        handle.setAttribute("r", "8");
+        handle.setAttribute("fill", "#2563eb");
+
+        handle.style.pointerEvents = "all";
+        handle.style.cursor = "move";
+        handle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedControlPointHandle) {
+        selectedControlPointHandle.removeAttribute("stroke");
+        selectedControlPointHandle.removeAttribute("stroke-width");
+    }
+
+    selectedConnectionData = connections.find(function (item) {
+        return item.line === line;
+    });
+
+    selectedControlPointIndex = index;
+    selectedControlPointHandle = handle;
+
+    handle.setAttribute("stroke", "#111827");
+    handle.setAttribute("stroke-width", "3");
+});
+        handle.addEventListener("pointerdown", function (event) {
+
+    event.stopPropagation();
+    handle.setPointerCapture(event.pointerId);
+
+    function moveHandle(event) {
+
+        const canvasRect = canvas.getBoundingClientRect();
+
+       point.x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+point.y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+        handle.setAttribute("cx", point.x);
+handle.setAttribute("cy", point.y);
+
+extendWorkspaceForPoint(
+    point.x,
+    point.y
+);
+
+updateConnections();
+    }
+
+    function stopHandle(event) {
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+
+        handle.releasePointerCapture(event.pointerId);
+        recalculateOverflowWorkspace();
+
+        handle.removeEventListener(
+            "pointermove",
+            moveHandle
+        );
+
+        handle.removeEventListener(
+            "pointerup",
+            stopHandle
+        );
+    }
+
+    handle.addEventListener(
+        "pointermove",
+        moveHandle
+    );
+
+    handle.addEventListener(
+        "pointerup",
+        stopHandle
+    );
+});
+
+        connectionLayer.appendChild(handle);
+        freeLineControlHandles.push(handle);
+    });
+}
+function makeFreeLineDraggable(line, savedLine) {
+
+    let lineWasDragged = false;
+
+    line.style.touchAction = "none";
+    let lastFreeLineTap = 0;
+let lastFreeLineTapX = 0;
+let lastFreeLineTapY = 0;
+
+line.addEventListener(
+    "pointerup",
+    function (event) {
+
+        /* Ignore a real line drag */
+        if (lineWasDragged) {
+            lastFreeLineTap = 0;
+            return;
+        }
+
+        const now = Date.now();
+
+        const distance =
+            Math.hypot(
+                event.clientX - lastFreeLineTapX,
+                event.clientY - lastFreeLineTapY
+            );
+
+        if (
+            now - lastFreeLineTap < 450 &&
+            distance < 25
+        ) {
+
+            const canvasRect =
+    canvas.getBoundingClientRect();
+
+const tapX =
+    (event.clientX - canvasRect.left) /
+    canvasZoom;
+
+const tapY =
+    (event.clientY - canvasRect.top) /
+    canvasZoom;
+
+if (!Array.isArray(savedLine.controlPoints)) {
+    savedLine.controlPoints = [];
+}
+
+const totalLength =
+    line.getTotalLength();
+
+function findClosestPointOnLine(x, y) {
+
+    let bestLength = 0;
+    let bestDistance = Infinity;
+    let bestPoint =
+        line.getPointAtLength(0);
+
+    for (let i = 0; i <= 200; i++) {
+
+        const length =
+            totalLength * (i / 200);
+
+        const point =
+            line.getPointAtLength(length);
+
+        const distance =
+            Math.hypot(
+                point.x - x,
+                point.y - y
+            );
+
+        if (distance < bestDistance) {
+            bestDistance = distance;
+            bestLength = length;
+            bestPoint = point;
+        }
+    }
+
+    return {
+        length: bestLength,
+        point: bestPoint
+    };
+}
+
+const newLocation =
+    findClosestPointOnLine(
+        tapX,
+        tapY
+    );
+
+let insertIndex =
+    savedLine.controlPoints.length;
+
+savedLine.controlPoints.forEach(
+    function (point, index) {
+
+        const existingLocation =
+            findClosestPointOnLine(
+                point.x,
+                point.y
+            );
+
+        if (
+            newLocation.length <
+            existingLocation.length &&
+            insertIndex ===
+                savedLine.controlPoints.length
+        ) {
+            insertIndex = index;
+        }
+    }
+);
+
+savedLine.controlPoints.splice(
+    insertIndex,
+    0,
+    {
+        x: newLocation.point.x,
+        y: newLocation.point.y
+    }
+);
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+
+            updateConnections();
+
+            showFreeLineControlHandles(
+                line,
+                savedLine
+            );
+
+            lastFreeLineTap = 0;
+            return;
+        }
+
+        lastFreeLineTap = now;
+        lastFreeLineTapX = event.clientX;
+        lastFreeLineTapY = event.clientY;
+    }
+);
+
+/* Prevent the old browser dblclick handler
+   from adding the point a second time */
+line.addEventListener(
+    "dblclick",
+    function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+    },
+    true
+);
+
+    /* Stop the click after a drag from deselecting the line */
+    /* Keep an already-selected line selected */
+line.addEventListener(
+    "click",
+    function (event) {
+
+        if (lineWasDragged) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            return;
+        }
+
+        if (selectedConnection === line) {
+            event.stopImmediatePropagation();
+        }
+    },
+    true
+);
+
+    line.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            /* Drag only after the line has been selected */
+            if (selectedConnection !== line) {
+                return;
+            }
+
+            if (
+                event.pointerType === "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            event.stopPropagation();
+
+const startX = event.clientX;
+const startY = event.clientY;
+
+            const startX1 = savedLine.x1;
+            const startY1 = savedLine.y1;
+            const startX2 = savedLine.x2;
+            const startY2 = savedLine.y2;
+
+            const startControlPoints =
+                (savedLine.controlPoints || []).map(
+                    function (point) {
+                        return {
+                            x: point.x,
+                            y: point.y
+                        };
+                    }
+                );
+
+            let dragging = false;
+
+            function moveWholeLine(event) {
+
+                const dx =
+                    (event.clientX - startX) /
+                    canvasZoom;
+
+                const dy =
+                    (event.clientY - startY) /
+                    canvasZoom;
+
+                if (
+                    !dragging &&
+                    Math.hypot(dx, dy) < 8
+                ) {
+                    return;
+                }
+
+                if (!dragging) {
+
+                    dragging = true;
+                    lineWasDragged = true;
+
+                    /* Whole-line movement detaches
+                       snapped endpoints */
+                    savedLine.shape1Id = null;
+                    savedLine.point1Index = null;
+
+                    savedLine.shape2Id = null;
+                    savedLine.point2Index = null;
+                    setEndpointLinkColour(
+    startHandle,
+    false
+);
+
+setEndpointLinkColour(
+    endHandle,
+    false
+);
+                }
+
+                event.preventDefault();
+
+                savedLine.x1 =
+                    startX1 + dx;
+
+                savedLine.y1 =
+                    startY1 + dy;
+
+                savedLine.x2 =
+                    startX2 + dx;
+
+                savedLine.y2 =
+                    startY2 + dy;
+
+                startControlPoints.forEach(
+    function (point, index) {
+
+        savedLine.controlPoints[index].x =
+            point.x + dx;
+
+        savedLine.controlPoints[index].y =
+            point.y + dy;
+    }
+);
+
+/* Keep the whole dragged line reachable */
+extendWorkspaceForPoint(
+    savedLine.x1,
+    savedLine.y1
+);
+
+extendWorkspaceForPoint(
+    savedLine.x2,
+    savedLine.y2
+);
+
+savedLine.controlPoints.forEach(
+    function (point) {
+        extendWorkspaceForPoint(
+            point.x,
+            point.y
+        );
+    }
+);
+
+updateConnections();
+
+                /* Move visible blue bend handles too */
+                freeLineControlHandles.forEach(
+                    function (handle, index) {
+
+                        const point =
+                            savedLine.controlPoints[index];
+
+                        if (!point) {
+                            return;
+                        }
+
+                        handle.setAttribute(
+                            "cx",
+                            point.x
+                        );
+
+                        handle.setAttribute(
+                            "cy",
+                            point.y
+                        );
+                    }
+                );
+            }
+
+            function finishWholeLineDrag() {
+
+                window.removeEventListener(
+                    "pointermove",
+                    moveWholeLine
+                );
+
+                window.removeEventListener(
+                    "pointerup",
+                    finishWholeLineDrag
+                );
+
+                window.removeEventListener(
+                    "pointercancel",
+                    finishWholeLineDrag
+                );
+
+                if (dragging) {
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    /* Remove unnecessary blank workspace */
+    recalculateOverflowWorkspace();
+}
+
+                setTimeout(function () {
+                    lineWasDragged = false;
+                }, 0);
+            }
+
+            window.addEventListener(
+                "pointermove",
+                moveWholeLine
+            );
+
+            window.addEventListener(
+                "pointerup",
+                finishWholeLineDrag
+            );
+
+            window.addEventListener(
+                "pointercancel",
+                finishWholeLineDrag
+            );
+        }
+    );
+}
+let selectedEndpoint = null;
+
+function setEndpointLinkColour(
+    handle,
+    isLinked
+) {
+
+    if (!handle) {
+        return;
+    }
+
+    handle.setAttribute(
+        "fill",
+        isLinked
+            ? "#dc2626"
+            : "#2563eb"
+    );
+}
+let snapPortIndicator = null;
+
+function getSnapThreshold() {
+
+    return 44 / Math.max(
+        canvasZoom,
+        0.1
+    );
+}
+
+function updateSnapPortIndicator(nearest) {
+
+    const previewDistance =
+        110 / Math.max(
+            canvasZoom,
+            0.1
+        );
+
+    if (
+        !nearest ||
+        nearest.distance > previewDistance
+    ) {
+
+        if (snapPortIndicator) {
+            snapPortIndicator.classList.remove(
+                "visible"
+            );
+        }
+
+        return;
+    }
+
+    if (!snapPortIndicator) {
+
+        snapPortIndicator =
+            document.createElement(
+                "div"
+            );
+
+        snapPortIndicator.classList.add(
+            "snap-port-indicator"
+        );
+
+        canvas.appendChild(
+            snapPortIndicator
+        );
+    }
+
+    snapPortIndicator.style.left =
+        nearest.port.x + "px";
+
+    snapPortIndicator.style.top =
+        nearest.port.y + "px";
+
+    snapPortIndicator.classList.add(
+        "visible"
+    );
+}
+
+function hideSnapPortIndicator() {
+
+    if (!snapPortIndicator) {
+        return;
+    }
+
+    snapPortIndicator.classList.remove(
+        "visible"
+    );
+}
+
+document.addEventListener(
+    "pointerup",
+    hideSnapPortIndicator,
+    true
+);
+
+document.addEventListener(
+    "pointercancel",
+    hideSnapPortIndicator,
+    true
+);
+
+function isLineConnectableShape(shape) {
+
+    if (
+        !shape ||
+        !shape.savedData
+    ) {
+        return false;
+    }
+
+    if (
+        shape.classList.contains("hover-symbol") ||
+        shape.classList.contains("bookmark") ||
+        shape.classList.contains("checkbox") ||
+        shape.classList.contains("beacon") ||
+        shape.classList.contains("textbox")
+    ) {
+        return false;
+    }
+
+    const type =
+        shape.savedData.type ||
+        (
+            shape.classList.contains("rounded")
+                ? "rounded"
+                : ""
+        );
+
+    return (
+        type === "rounded" ||
+        type === "rectangle" ||
+        type === "circle" ||
+        type === "diamond"
+    );
+}
+
+let firstConnectionShape = null;
+let secondConnectionShape = null;
+let connectionMode = false;
+let connections = [];
+let savedConnections = JSON.parse(localStorage.getItem("connections")) || {};
+
+let topics = JSON.parse(localStorage.getItem("topics")) || [];
+let shapes = JSON.parse(localStorage.getItem("shapes")) || {};
+let currentTopic = localStorage.getItem("currentTopic");
+let folders =
+    JSON.parse(localStorage.getItem("folders")) || [];
+
+let topicFolders =
+    JSON.parse(localStorage.getItem("topicFolders")) || {};
+
+let libraryCategories =
+    JSON.parse(
+        localStorage.getItem("libraryCategories")
+    ) || [];
+
+let folderCategories =
+    JSON.parse(
+        localStorage.getItem("folderCategories")
+    ) || {};
+
+let currentFolder = null;
+addLinkBtn.addEventListener("click", function () {
+
+    if (!selectedShape) {
+        alert("Select a shape first.");
+        return;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        alert("Highlight some text inside the shape first.");
+        return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    const selectedContainer =
+        range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+            ? range.commonAncestorContainer.parentElement
+            : range.commonAncestorContainer;
+
+    if (!selectedShape.contains(selectedContainer)) {
+        alert("Highlight some text inside the selected shape.");
+        return;
+    }
+
+    const savedRange = range.cloneRange();
+
+    let linkUrl = prompt(
+        "Paste the website address:"
+    );
+
+    if (!linkUrl) {
+        return;
+    }
+
+    linkUrl = linkUrl.trim();
+
+    if (
+        !linkUrl.startsWith("http://") &&
+        !linkUrl.startsWith("https://")
+    ) {
+        linkUrl = "https://" + linkUrl;
+    }
+
+    const link = document.createElement("a");
+
+    link.href = linkUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+
+    const selectedContents = savedRange.extractContents();
+
+    link.appendChild(selectedContents);
+
+    savedRange.insertNode(link);
+
+    const textEditor =
+        selectedShape.querySelector(".shape-text");
+
+    selectedShape.savedData.html =
+        textEditor.innerHTML;
+
+    selectedShape.savedData.text =
+        textEditor.innerText;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    selection.removeAllRanges();
+});
+removeLinkBtn.addEventListener("click", function () {
+
+    if (!selectedShape) {
+        alert("Select a shape first.");
+        return;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+        alert("Click inside the linked text first.");
+        return;
+    }
+
+    let node = selection.anchorNode;
+
+    if (node && node.nodeType === Node.TEXT_NODE) {
+        node = node.parentElement;
+    }
+
+    const link = node ? node.closest("a") : null;
+
+    if (!link || !selectedShape.contains(link)) {
+        alert("Click inside a link first.");
+        return;
+    }
+
+    const parent = link.parentNode;
+
+    while (link.firstChild) {
+        parent.insertBefore(link.firstChild, link);
+    }
+
+    parent.removeChild(link);
+
+    const textEditor =
+        selectedShape.querySelector(".shape-text");
+
+    selectedShape.savedData.html =
+        textEditor.innerHTML;
+
+    selectedShape.savedData.text =
+        textEditor.innerText;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+});
+editLinkBtn.addEventListener("click", function () {
+
+    if (!selectedShape) {
+        alert("Select a shape first.");
+        return;
+    }
+
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+        alert("Click inside a link first.");
+        return;
+    }
+
+    let node = selection.anchorNode;
+
+    if (node && node.nodeType === Node.TEXT_NODE) {
+        node = node.parentElement;
+    }
+
+    const link = node ? node.closest("a") : null;
+
+    if (!link || !selectedShape.contains(link)) {
+        alert("Click inside a link first.");
+        return;
+    }
+
+    let newUrl = prompt(
+        "Edit website address:",
+        link.href
+    );
+
+    if (!newUrl) {
+        return;
+    }
+
+    newUrl = newUrl.trim();
+
+    if (
+        !newUrl.startsWith("http://") &&
+        !newUrl.startsWith("https://")
+    ) {
+        newUrl = "https://" + newUrl;
+    }
+
+    link.href = newUrl;
+
+    const textEditor =
+        selectedShape.querySelector(".shape-text");
+
+    selectedShape.savedData.html =
+        textEditor.innerHTML;
+
+    selectedShape.savedData.text =
+        textEditor.innerText;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+});
+topicTitle.addEventListener("keydown", function (event) {
+
+    if (event.key === "Enter") {
+        event.preventDefault();
+        topicTitle.blur();
+    }
+
+});
+
+topicTitle.addEventListener("blur", function () {
+
+    if (!currentTopic) {
+        return;
+    }
+
+    const newTitle = topicTitle.textContent.trim();
+
+    if (!newTitle) {
+        topicTitle.textContent = currentTopic;
+        return;
+    }
+
+    if (newTitle === currentTopic) {
+        return;
+    }
+
+    if (topics.includes(newTitle)) {
+        alert("A topic with that name already exists.");
+        topicTitle.textContent = currentTopic;
+        return;
+    }
+
+    const oldTitle = currentTopic;
+
+    const topicIndex = topics.indexOf(oldTitle);
+
+    if (topicIndex !== -1) {
+        topics[topicIndex] = newTitle;
+    }
+
+    shapes[newTitle] = shapes[oldTitle] || [];
+    delete shapes[oldTitle];
+
+    savedConnections[newTitle] =
+        savedConnections[oldTitle] || [];
+
+    delete savedConnections[oldTitle];
+
+if (topicFolders[oldTitle]) {
+    topicFolders[newTitle] = topicFolders[oldTitle];
+    delete topicFolders[oldTitle];
+}
+
+currentTopic = newTitle;
+
+    localStorage.setItem(
+        "topics",
+        JSON.stringify(topics)
+    );
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+    localStorage.setItem(
+    "topicFolders",
+    JSON.stringify(topicFolders)
+);
+
+    localStorage.setItem(
+        "currentTopic",
+        currentTopic
+    );
+
+    topicTitle.textContent = currentTopic;
+
+    displayTopics();
+
+});
+saveMindMapBtn.addEventListener("click", function () {
+
+    if (!currentTopic) {
+        alert("Open a topic first.");
+        return;
+    }
+
+    const mindMapData = {
+        version: 1,
+        topic: currentTopic,
+
+        canvas: {
+            width: canvas.offsetWidth,
+            height: canvas.offsetHeight,
+            sizeMode: canvasSizeSelect.value
+        },
+
+        shapes: shapes[currentTopic] || [],
+        connections: savedConnections[currentTopic] || []
+    };
+
+    const fileContents = JSON.stringify(
+        mindMapData,
+        null,
+        2
+    );
+
+    const blob = new Blob(
+        [fileContents],
+        { type: "application/json" }
+    );
+
+    const downloadUrl = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    const safeName = currentTopic
+        .replace(/[^a-z0-9]/gi, "-")
+        .replace(/-+/g, "-");
+
+    link.href = downloadUrl;
+    link.download = safeName + "-mind-map.json";
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(downloadUrl);
+});
+
+openMindMapBtn.addEventListener("click", function () {
+    mindMapFileInput.value = "";
+    mindMapFileInput.click();
+});
+printMindMapBtn.addEventListener("click", function () {
+    window.print();
+});
+mindMapFileInput.addEventListener("change", function (event) {
+
+    const file = event.target.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function () {
+
+        try {
+
+            const mindMapData = JSON.parse(reader.result);
+
+            if (
+                !Array.isArray(mindMapData.shapes) ||
+                !Array.isArray(mindMapData.connections)
+            ) {
+                throw new Error("Invalid mind map file");
+            }
+
+            let importedTopic =
+    mindMapData.topic || "Imported Mind Map";
+
+if (topics.includes(importedTopic)) {
+
+    const newName = prompt(
+        'A mind map named "' +
+        importedTopic +
+        '" already exists.\n\nEnter a different name for the imported map:',
+        importedTopic + " (Imported)"
+    );
+
+    if (!newName || !newName.trim()) {
+        return;
+    }
+
+    const cleanName = newName.trim();
+
+    if (topics.includes(cleanName)) {
+        alert("A mind map with that name already exists.");
+        return;
+    }
+
+    importedTopic = cleanName;
+}
+
+currentTopic = importedTopic;
+
+            if (!topics.includes(currentTopic)) {
+                topics.push(currentTopic);
+
+                localStorage.setItem(
+                    "topics",
+                    JSON.stringify(topics)
+                );
+            }
+
+            shapes[currentTopic] = mindMapData.shapes;
+
+            savedConnections[currentTopic] =
+                mindMapData.connections;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+
+            localStorage.setItem(
+                "currentTopic",
+                currentTopic
+            );
+
+            if (mindMapData.canvas) {
+
+                if (mindMapData.canvas.width) {
+                    canvas.style.width =
+                        mindMapData.canvas.width + "px";
+
+                    localStorage.setItem(
+                        "canvasWidth",
+                        mindMapData.canvas.width
+                    );
+                }
+
+                if (mindMapData.canvas.height) {
+                    canvas.style.height =
+                        mindMapData.canvas.height + "px";
+
+                    localStorage.setItem(
+                        "canvasHeight",
+                        mindMapData.canvas.height
+                    );
+                }
+
+                if (mindMapData.canvas.sizeMode) {
+                    canvasSizeSelect.value =
+                        mindMapData.canvas.sizeMode;
+
+                    localStorage.setItem(
+                        "canvasSizeMode",
+                        mindMapData.canvas.sizeMode
+                    );
+                }
+            }
+
+            topicTitle.textContent = currentTopic;
+
+            libraryToolbar.style.display = "none";
+topicList.style.display = "none";
+topicPage.style.display = "block";
+
+            displayShapes();
+
+            alert("Mind map opened successfully.");
+
+        } catch (error) {
+
+            alert("This file could not be opened as a mind map.");
+
+        }
+
+    };
+
+    reader.readAsText(file);
+});
+
+function displayTopics() {
+
+    topicList.innerHTML = "";
+    /* SHOW LIBRARY CATEGORIES ON MAIN PAGE */
+if (!currentFolder) {
+
+    libraryCategories.forEach(function (category) {
+
+        const categoryItem =
+            document.createElement("li");
+            categoryItem.dataset.categoryId =
+    category.id;
+
+        categoryItem.classList.add(
+            "library-category-item"
+        );
+
+        categoryItem.style.backgroundColor =
+            category.colour;
+
+        const categoryButton =
+            document.createElement("button");
+
+        categoryButton.type = "button";
+
+        categoryButton.classList.add(
+            "library-category-btn"
+        );
+
+        const categoryFolderCount =
+    folders.filter(
+        function (folder) {
+            return (
+                folderCategories[folder] ===
+                category.id
+            );
+        }
+    ).length;
+
+categoryButton.textContent =
+    (category.collapsed ? "▶ " : "▼ ") +
+    category.name +
+    " (" +
+    categoryFolderCount +
+    (categoryFolderCount === 1
+        ? " folder)"
+        : " folders)");
+
+        categoryButton.addEventListener(
+            "click",
+            function () {
+
+                category.collapsed =
+                    !category.collapsed;
+
+                localStorage.setItem(
+                    "libraryCategories",
+                    JSON.stringify(
+                        libraryCategories
+                    )
+                );
+
+                displayTopics();
+            }
+        );
+
+        categoryItem.appendChild(
+    categoryButton
+);
+const renameCategoryBtn =
+    document.createElement("button");
+
+renameCategoryBtn.type = "button";
+
+renameCategoryBtn.classList.add(
+    "category-rename-btn"
+);
+
+renameCategoryBtn.textContent =
+    "Rename";
+
+renameCategoryBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename category:",
+            category.name
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === category.name) {
+            return;
+        }
+
+        const duplicate =
+            libraryCategories.some(
+                function (item) {
+                    return (
+                        item.id !==
+                            category.id &&
+                        item.name
+                            .toLowerCase() ===
+                        cleanName
+                            .toLowerCase()
+                    );
+                }
+            );
+
+        if (duplicate) {
+            alert(
+                "A category with that name already exists."
+            );
+            return;
+        }
+
+        category.name =
+            cleanName;
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(
+                libraryCategories
+            )
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+categoryItem.appendChild(
+    renameCategoryBtn
+);
+if (categoryFolderCount === 0) {
+
+    const deleteCategoryBtn =
+        document.createElement("button");
+
+    deleteCategoryBtn.type = "button";
+
+    deleteCategoryBtn.classList.add(
+        "category-delete-btn"
+    );
+
+    deleteCategoryBtn.textContent =
+        "Delete";
+
+    deleteCategoryBtn.addEventListener(
+        "click",
+        function (event) {
+
+            event.stopPropagation();
+
+            const confirmed =
+                confirm(
+                    'Delete category "' +
+                    category.name +
+                    '"?'
+                );
+
+            if (!confirmed) {
+                return;
+            }
+
+            libraryCategories =
+                libraryCategories.filter(
+                    function (item) {
+                        return (
+                            item.id !==
+                            category.id
+                        );
+                    }
+                );
+
+            localStorage.setItem(
+                "libraryCategories",
+                JSON.stringify(
+                    libraryCategories
+                )
+            );
+
+            displayTopics();
+            scheduleCloudSave();
+        }
+    );
+
+    categoryItem.appendChild(
+        deleteCategoryBtn
+    );
+}
+
+topicList.appendChild(
+    categoryItem
+);
+    });
+}
+
+    // INSIDE A FOLDER
+    if (currentFolder) {
+
+        const backToTopicsBtn =
+            document.createElement("button");
+
+        backToTopicsBtn.type = "button";
+        backToTopicsBtn.classList.add("folder-back-btn");
+        backToTopicsBtn.textContent =
+            "← All Topics";
+
+        backToTopicsBtn.addEventListener(
+            "click",
+            function () {
+                currentFolder = null;
+                displayTopics();
+            }
+        );
+
+        topicList.appendChild(backToTopicsBtn);
+
+        const folderHeading =
+            document.createElement("li");
+
+        folderHeading.classList.add(
+            "folder-heading"
+        );
+
+        folderHeading.textContent =
+            "📁 " + currentFolder;
+
+        topicList.appendChild(folderHeading);
+        const topicsInFolder =
+    topics.filter(function (topic) {
+        return topicFolders[topic] === currentFolder;
+    });
+
+if (topicsInFolder.length === 0) {
+
+    const emptyMessage =
+        document.createElement("li");
+
+    emptyMessage.classList.add(
+        "folder-empty-message"
+    );
+
+    emptyMessage.textContent =
+        "This folder is empty.";
+
+    topicList.appendChild(
+        emptyMessage
+    );
+}
+    }
+
+    // SHOW FOLDERS ONLY ON MAIN PAGE
+    if (!currentFolder) {
+
+        folders.forEach(function (folder) {
+            const assignedCategoryId =
+    folderCategories[folder] || "";
+
+const assignedCategory =
+    libraryCategories.find(
+        function (category) {
+            return category.id === assignedCategoryId;
+        }
+    );
+
+if (
+    assignedCategory &&
+    assignedCategory.collapsed
+) {
+    return;
+}
+
+            const folderItem =
+                document.createElement("li");
+
+            folderItem.classList.add(
+                "folder-list-item"
+            );
+
+            const folderButton =
+                document.createElement("button");
+
+            folderButton.type = "button";
+
+            folderButton.classList.add(
+                "folder-open-btn"
+            );
+
+            const folderTopicCount =
+    topics.filter(function (topic) {
+        return topicFolders[topic] === folder;
+    }).length;
+
+folderButton.textContent =
+    "📁 " +
+    folder +
+    " (" +
+    folderTopicCount +
+    ")";
+
+            folderButton.addEventListener(
+                "click",
+                function () {
+                    currentFolder = folder;
+                    displayTopics();
+                }
+            );
+            const folderCategorySelect =
+    document.createElement("select");
+
+folderCategorySelect.classList.add(
+    "folder-category-select"
+);
+
+const noCategoryOption =
+    document.createElement("option");
+
+noCategoryOption.value = "";
+noCategoryOption.textContent =
+    "No category";
+
+folderCategorySelect.appendChild(
+    noCategoryOption
+);
+
+libraryCategories.forEach(
+    function (category) {
+
+        const option =
+            document.createElement("option");
+
+        option.value = category.id;
+        option.textContent = category.name;
+
+        folderCategorySelect.appendChild(
+            option
+        );
+    }
+);
+
+folderCategorySelect.value =
+    folderCategories[folder] || "";
+
+folderCategorySelect.addEventListener(
+    "change",
+    function () {
+
+        if (folderCategorySelect.value) {
+
+            folderCategories[folder] =
+                folderCategorySelect.value;
+
+        } else {
+
+            delete folderCategories[folder];
+        }
+
+        localStorage.setItem(
+            "folderCategories",
+            JSON.stringify(folderCategories)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+            const renameFolderBtn =
+    document.createElement("button");
+
+renameFolderBtn.type = "button";
+
+renameFolderBtn.classList.add(
+    "folder-rename-btn"
+);
+
+renameFolderBtn.textContent =
+    "Rename";
+
+renameFolderBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename folder:",
+            folder
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === folder) {
+            return;
+        }
+
+        if (folders.includes(cleanName)) {
+            alert(
+                "A folder with that name already exists."
+            );
+            return;
+        }
+
+        folders = folders.map(
+            function (item) {
+                return item === folder
+                    ? cleanName
+                    : item;
+            }
+        );
+
+        Object.keys(topicFolders).forEach(
+            function (topic) {
+
+                if (
+                    topicFolders[topic] === folder
+                ) {
+                    topicFolders[topic] =
+                        cleanName;
+                }
+            }
+        );
+
+        if (currentFolder === folder) {
+            currentFolder = cleanName;
+        }
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+
+            const deleteFolderBtn =
+    document.createElement("button");
+
+deleteFolderBtn.type = "button";
+
+deleteFolderBtn.classList.add(
+    "folder-delete-btn"
+);
+
+deleteFolderBtn.textContent =
+    "Delete Folder";
+
+deleteFolderBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const confirmed = confirm(
+            'Delete folder "' +
+            folder +
+            '"?\n\nMind maps inside it will be moved back to All Topics.'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        Object.keys(topicFolders).forEach(
+            function (topic) {
+
+                if (
+                    topicFolders[topic] === folder
+                ) {
+                    delete topicFolders[topic];
+                }
+            }
+        );
+
+        folders = folders.filter(
+            function (item) {
+                return item !== folder;
+            }
+        );
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+
+folderItem.appendChild(
+    folderButton
+);
+
+folderItem.appendChild(
+    folderCategorySelect
+);
+
+folderItem.appendChild(
+    renameFolderBtn
+);
+
+folderItem.appendChild(
+    deleteFolderBtn
+);
+if (assignedCategory) {
+
+    const categoryRows =
+        topicList.querySelectorAll(
+            ".library-category-item"
+        );
+
+    categoryRows.forEach(
+        function (categoryRow) {
+
+            if (
+                categoryRow.dataset.categoryId ===
+                assignedCategory.id
+            ) {
+                categoryRow.after(folderItem);
+            }
+        }
+    );
+
+} else {
+
+    topicList.appendChild(
+        folderItem
+    );
+}
+
+        });
+    }
+
+    // SHOW RELEVANT TOPICS
+    topics.forEach(function (topic) {
+
+        const topicFolder =
+            topicFolders[topic] || null;
+
+        if (currentFolder) {
+
+            if (topicFolder !== currentFolder) {
+                return;
+            }
+
+        } else {
+
+            if (topicFolder) {
+                return;
+            }
+        }
+
+        const newTopic =
+            document.createElement("li");
+
+        newTopic.classList.add(
+            "topic-list-item"
+        );
+
+        const topicButton =
+            document.createElement("button");
+
+        topicButton.type = "button";
+
+        topicButton.classList.add(
+            "topic-open-btn"
+        );
+
+        topicButton.textContent = "📄 " + topic;
+
+        topicButton.addEventListener(
+            "click",
+            function () {
+                openTopic(topic);
+            }
+        );
+        const moveTopicSelect =
+    document.createElement("select");
+
+moveTopicSelect.classList.add(
+    "topic-move-select"
+);
+
+const movePlaceholder =
+    document.createElement("option");
+
+movePlaceholder.value = "";
+movePlaceholder.textContent =
+    "Move to…";
+
+moveTopicSelect.appendChild(
+    movePlaceholder
+);
+
+// Option to move back to main page
+const rootOption =
+    document.createElement("option");
+
+rootOption.value = "__root__";
+rootOption.textContent =
+    "All Topics";
+
+moveTopicSelect.appendChild(
+    rootOption
+);
+
+// Add each folder
+folders.forEach(function (folder) {
+
+    const option =
+        document.createElement("option");
+
+    option.value = folder;
+    option.textContent =
+        "📁 " + folder;
+
+    moveTopicSelect.appendChild(
+        option
+    );
+});
+
+moveTopicSelect.addEventListener(
+    "change",
+    function () {
+
+        const destination =
+            moveTopicSelect.value;
+
+        if (!destination) {
+            return;
+        }
+
+        if (destination === "__root__") {
+            delete topicFolders[topic];
+        } else {
+            topicFolders[topic] =
+                destination;
+        }
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+const renameTopicBtn =
+    document.createElement("button");
+
+renameTopicBtn.type = "button";
+
+renameTopicBtn.classList.add(
+    "topic-rename-btn"
+);
+
+renameTopicBtn.textContent =
+    "Rename";
+
+renameTopicBtn.addEventListener(
+    "click",
+    function (event) {
+
+        event.stopPropagation();
+
+        const newName = prompt(
+            "Rename mind map:",
+            topic
+        );
+
+        if (!newName || !newName.trim()) {
+            return;
+        }
+
+        const cleanName =
+            newName.trim();
+
+        if (cleanName === topic) {
+            return;
+        }
+
+        if (topics.includes(cleanName)) {
+            alert(
+                "A mind map with that name already exists."
+            );
+            return;
+        }
+
+        /*
+         * Rename in the main topic list.
+         */
+        topics = topics.map(
+            function (item) {
+                return item === topic
+                    ? cleanName
+                    : item;
+            }
+        );
+
+        /*
+         * Move the shapes to the new key.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                shapes,
+                topic
+            )
+        ) {
+            shapes[cleanName] =
+                shapes[topic];
+
+            delete shapes[topic];
+        }
+
+        /*
+         * Move saved connections
+         * to the new key.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                savedConnections,
+                topic
+            )
+        ) {
+            savedConnections[cleanName] =
+                savedConnections[topic];
+
+            delete savedConnections[topic];
+        }
+
+        /*
+         * Keep the mind map in
+         * the same folder.
+         */
+        if (
+            Object.prototype.hasOwnProperty.call(
+                topicFolders,
+                topic
+            )
+        ) {
+            topicFolders[cleanName] =
+                topicFolders[topic];
+
+            delete topicFolders[topic];
+        }
+
+        /*
+         * Update current topic too,
+         * if required.
+         */
+        if (currentTopic === topic) {
+
+            currentTopic = cleanName;
+
+            localStorage.setItem(
+                "currentTopic",
+                cleanName
+            );
+
+            topicTitle.textContent =
+                cleanName;
+        }
+
+        localStorage.setItem(
+            "topics",
+            JSON.stringify(topics)
+        );
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(
+                savedConnections
+            )
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(
+                topicFolders
+            )
+        );
+
+        displayTopics();
+        scheduleCloudSave();
+    }
+);
+        const deleteTopicBtn =
+            document.createElement("button");
+
+        deleteTopicBtn.type = "button";
+
+        deleteTopicBtn.classList.add(
+            "topic-delete-btn"
+        );
+
+        deleteTopicBtn.textContent =
+            "Delete";
+
+        deleteTopicBtn.addEventListener(
+            "click",
+            function () {
+
+                const confirmed =
+                    confirm(
+                        'Delete "' +
+                        topic +
+                        '" and its mind map?'
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                topics =
+                    topics.filter(
+                        function (item) {
+                            return item !== topic;
+                        }
+                    );
+
+                delete shapes[topic];
+                delete savedConnections[topic];
+                delete topicFolders[topic];
+
+                localStorage.setItem(
+                    "topics",
+                    JSON.stringify(topics)
+                );
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
+                );
+
+                localStorage.setItem(
+                    "connections",
+                    JSON.stringify(
+                        savedConnections
+                    )
+                );
+
+                localStorage.setItem(
+                    "topicFolders",
+                    JSON.stringify(
+                        topicFolders
+                    )
+                );
+
+                if (currentTopic === topic) {
+                    currentTopic = null;
+                    localStorage.removeItem(
+                        "currentTopic"
+                    );
+                }
+
+                displayTopics();
+                scheduleCloudSave();
+            }
+        );
+
+        newTopic.appendChild(
+    topicButton
+);
+
+newTopic.appendChild(
+    moveTopicSelect
+);
+
+newTopic.appendChild(
+    renameTopicBtn
+);
+
+newTopic.appendChild(
+    deleteTopicBtn
+);
+
+        topicList.appendChild(
+            newTopic
+        );
+    });
+}
+
+
+function openTopic(topic) {
+
+    currentTopic = topic;
+    if (!shapes[currentTopic]) {
+    shapes[currentTopic] = [];
+}
+    localStorage.setItem("currentTopic", topic);
+
+    libraryToolbar.style.display = "none";
+topicList.style.display = "none";
+
+    topicTitle.textContent = topic;
+    topicPage.style.display = "block";
+displayShapes();
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
+}
+function displayShapes() {
+
+    const oldOverflowSpacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (oldOverflowSpacer) {
+        oldOverflowSpacer.remove();
+    }
+
+    canvas.innerHTML = "";
+    connections = [];
+firstConnectionShape = null;
+secondConnectionShape = null;
+const newConnectionLayer = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "svg"
+);
+
+newConnectionLayer.id = "connectionLayer";
+canvas.appendChild(newConnectionLayer);
+const canvasResizeHandle = document.createElement("div");
+canvasResizeHandle.id = "canvasResizeHandle";
+canvas.appendChild(canvasResizeHandle);
+const canvasSizeLabel = document.createElement("div");
+canvasSizeLabel.id = "canvasSizeLabel";
+canvasResizeHandle.appendChild(canvasSizeLabel);
+const defs = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "defs"
+);
+
+const arrowMarker = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "marker"
+);
+
+arrowMarker.setAttribute("id", "arrowhead");
+arrowMarker.setAttribute("markerWidth", "18");
+arrowMarker.setAttribute("markerHeight", "18");
+arrowMarker.setAttribute("refX", "6");
+arrowMarker.setAttribute("refY", "3");
+arrowMarker.setAttribute("orient", "auto-start-reverse");
+arrowMarker.setAttribute("markerUnits", "userSpaceOnUse");
+arrowMarker.setAttribute("viewBox", "0 0 6 6");
+
+const arrowPath = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path"
+);
+
+arrowPath.setAttribute("d", "M0,0 L6,3 L0,6 z");
+arrowPath.setAttribute("fill", "#111827");
+
+arrowMarker.appendChild(arrowPath);
+defs.appendChild(arrowMarker);
+newConnectionLayer.appendChild(defs);
+    const topicShapes = shapes[currentTopic] || [];
+
+    topicShapes.forEach(function (savedShape) {
+        if (!savedShape.id) {
+    savedShape.id = Date.now().toString() + Math.random().toString(36).slice(2);
+    localStorage.setItem("shapes", JSON.stringify(shapes));
+}
+
+        const shape = document.createElement("div");
+shape.savedData = savedShape;
+
+shape.classList.add("shape");
+shape.classList.add(savedShape.type || "rounded");
+
+
+const textEditor = document.createElement("div");
+textEditor.classList.add("shape-text");
+
+if (savedShape.type === "hover") {
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "ⓘ";
+    shape.classList.add("hover-symbol");
+    
+
+shape.addEventListener("mouseleave", function () {
+    scheduleHoverPopupHide();
+});
+} else if (
+    savedShape.type === "checkbox" ||
+    savedShape.type === "beacon" ||
+    savedShape.type === "bookmark"
+) {
+
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "";
+
+} else {
+
+    textEditor.contentEditable = "true";
+    textEditor.innerHTML =
+        savedShape.html ||
+        savedShape.text ||
+        "";
+}
+
+shape.appendChild(textEditor);
+if (
+    savedShape.attachments &&
+    savedShape.attachments.length > 0
+) {
+    const attachmentBadge =
+        document.createElement("div");
+
+    attachmentBadge.classList.add("attachment-badge");
+
+    attachmentBadge.textContent =
+        "📎 " + savedShape.attachments.length;
+
+    attachmentBadge.addEventListener(
+    "mousedown",
+    function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+);
+
+attachmentBadge.addEventListener(
+    "click",
+    function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        showAttachmentPanel(shape);
+    }
+);
+
+    shape.appendChild(attachmentBadge);
+}
+textEditor.addEventListener("click", function (event) {
+
+    const link = event.target.closest("a");
+
+    if (!link) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    window.open(
+        link.href,
+        "_blank",
+        "noopener,noreferrer"
+    );
+});
+const dragHandle = document.createElement("div");
+dragHandle.classList.add("drag-handle");
+dragHandle.textContent = "⠿";
+
+shape.appendChild(dragHandle);
+textEditor.addEventListener("input", function () {
+
+    savedShape.html = textEditor.innerHTML;
+    savedShape.text = textEditor.innerText;
+
+ if (
+    savedShape.type === "diamond" &&
+    diamondTextNeedsMoreRoom(shape, textEditor)
+) {
+
+    const textHeight = Math.max(
+        40,
+        textEditor.scrollHeight - 100
+    );
+
+   const newSize = Math.max(
+    shape.offsetWidth,
+    textHeight * 2.4
+);
+
+    shape.style.width = newSize + "px";
+    shape.style.height = newSize + "px";
+
+    savedShape.width = shape.offsetWidth;
+    savedShape.height = shape.offsetHeight;
+
+} else if (textEditor.scrollHeight > shape.offsetHeight) {
+
+    shape.style.height = textEditor.scrollHeight + "px";
+    savedShape.height = shape.offsetHeight;
+}
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    updateConnections();
+});
+
+        shape.style.background = savedShape.colour;
+        if (savedShape.type === "beacon") {
+    shape.style.setProperty(
+        "--beacon-colour",
+        savedShape.colour || "#2563eb"
+    );
+}
+if (savedShape.type === "bookmark") {
+    shape.style.setProperty(
+        "--bookmark-colour",
+        savedShape.colour || "#ef4444"
+    );
+}
+        if (savedShape.type === "checkbox") {
+    updateCheckboxAppearance(shape);
+}
+        shape.style.setProperty("--diamond-colour", savedShape.colour);
+        if (savedShape.borderColour) {
+
+    if (savedShape.type === "diamond") {
+
+        shape.classList.add("custom-border");
+
+        shape.style.background =
+            savedShape.borderColour;
+
+        shape.style.setProperty(
+            "--diamond-colour",
+            savedShape.colour
+        );
+
+    } else {
+
+        shape.style.boxShadow =
+            `0 0 0 4px ${savedShape.borderColour}`;
+    }
+}
+        const safeSavedLeft =
+    Math.max(
+        20,
+        Number(savedShape.left) || 20
+    );
+
+const safeSavedTop =
+    Math.max(
+        20,
+        Number(savedShape.top) || 20
+    );
+
+savedShape.left = safeSavedLeft;
+savedShape.top = safeSavedTop;
+
+shape.style.left =
+    safeSavedLeft + "px";
+
+shape.style.top =
+    safeSavedTop + "px";
+    localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+if (savedShape.width) {
+    shape.style.width = savedShape.width + "px";
+}
+
+if (savedShape.height) {
+    shape.style.height = savedShape.height + "px";
+}
+const resizeHandle = document.createElement("div");
+resizeHandle.classList.add("resize-handle");
+shape.appendChild(resizeHandle);
+["top", "right", "bottom", "left"].forEach(function (position) {
+
+    const point = document.createElement("div");
+
+    point.classList.add("connection-point");
+    point.classList.add(position);
+
+    shape.appendChild(point);
+});
+makeResizable(shape, resizeHandle);
+canvas.appendChild(shape);
+
+/* Rebuild workspace for saved off-canvas shapes */
+extendWorkspaceForShape(shape);
+
+makeDraggable(shape);
+
+shape.addEventListener("click", function () {
+
+    /*
+     * Ignore the click Safari fires
+     * immediately after dragging.
+     */
+    if (
+        shape.dragIgnoreClickUntil &&
+        Date.now() <
+            shape.dragIgnoreClickUntil
+    ) {
+        return;
+    }
+
+    if (
+        shape.savedData.type === "checkbox" &&
+        !connectionMode
+    ) {
+        toggleCheckbox(shape);
+    }
+
+   if (
+    shape.savedData.type === "bookmark" &&
+    shape.bookmarkIgnoreClickUntil &&
+    Date.now() <
+        shape.bookmarkIgnoreClickUntil
+) {
+    return;
+}
+
+if (
+    shape.savedData.type === "bookmark" &&
+    shape.savedData.bookmarkUrl &&
+    !connectionMode
+) {
+    window.open(
+        shape.savedData.bookmarkUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+
+    console.log("Clicked shape:", shape.className);
+
+    if (selectedShape === shape && !connectionMode) {
+        return;
+    }
+    clearStaleShapeSelections(shape);
+
+selectedShape = shape;
+setSidebarMode(
+    shape.savedData.type === "hover"
+        ? "hover"
+        : "shape"
+);
+
+showHoverTools(
+    shape.savedData.type === "hover"
+);
+
+showNormalShapeTools(
+    shape.savedData.type !== "hover"
+);
+
+if (shape.savedData.type === "hover") {
+
+    shape.classList.add("shape-selected");
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    return;
+}
+
+selectedShape.classList.add("shape-selected");
+
+if (shapeSelectionOutline) {
+    shapeSelectionOutline.remove();
+    shapeSelectionOutline = null;
+}
+
+if (shape.classList.contains("diamond")) {
+    const outline = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polygon"
+    );
+
+  const gap = 4;
+
+const left = shape.offsetLeft - gap;
+const top = shape.offsetTop - gap;
+const width = shape.offsetWidth + gap * 2;
+const height = shape.offsetHeight + gap * 2;
+
+    outline.setAttribute(
+        "points",
+        `${left + width / 2},${top} ` +
+        `${left + width},${top + height / 2} ` +
+        `${left + width / 2},${top + height} ` +
+        `${left},${top + height / 2}`
+    );
+
+    outline.setAttribute("fill", "none");
+    outline.setAttribute("stroke", "#111827");
+    outline.setAttribute("stroke-width", "3");
+    outline.setAttribute("pointer-events", "none");
+
+    connectionLayer.appendChild(outline);
+    shapeSelectionOutline = outline;
+}
+if (!connectionMode) {
+    return;
+}
+
+    if (shape === firstConnectionShape) {
+        shape.classList.remove("connection-selected");
+        firstConnectionShape = null;
+        return;
+    }
+
+    if (shape === secondConnectionShape) {
+        shape.classList.remove("connection-selected");
+        secondConnectionShape = null;
+        return;
+    }
+
+    if (!firstConnectionShape) {
+        firstConnectionShape = shape;
+        shape.classList.add("connection-selected");
+        return;
+    }
+
+   if (!secondConnectionShape) {
+    secondConnectionShape = shape;
+    shape.classList.add("connection-selected");
+
+    drawConnection(firstConnectionShape, secondConnectionShape);
+
+    firstConnectionShape.classList.remove("connection-selected");
+    secondConnectionShape.classList.remove("connection-selected");
+
+    firstConnectionShape = null;
+    secondConnectionShape = null;
+    connectionMode = false;
+
+    return;
+}
+
+});
+
+    });
+    const topicConnections = savedConnections[currentTopic] || [];
+    topicConnections.forEach(function (savedConnection) {
+
+    if (savedConnection.type === "freeLine") {
+
+        const connectionLayer =
+            document.getElementById("connectionLayer");
+
+        const line = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+        line.setAttribute(
+            "d",
+            `M ${savedConnection.x1} ${savedConnection.y1} ` +
+            `L ${savedConnection.x2} ${savedConnection.y2}`
+        );
+
+        line.setAttribute("fill", "none");
+        line.setAttribute("stroke", "#111827");
+        line.setAttribute("stroke-width", "3");
+        if (savedConnection.arrowStart) {
+    line.setAttribute("marker-start", "url(#arrowhead)");
+}
+
+if (savedConnection.arrowEnd) {
+    line.setAttribute("marker-end", "url(#arrowhead)");
+}
+line.style.pointerEvents = "stroke";
+line.style.cursor = "pointer";
+
+/* Rebuild workspace for saved free lines */
+extendWorkspaceForPoint(
+    savedConnection.x1,
+    savedConnection.y1
+);
+
+extendWorkspaceForPoint(
+    savedConnection.x2,
+    savedConnection.y2
+);
+
+if (Array.isArray(savedConnection.controlPoints)) {
+    savedConnection.controlPoints.forEach(
+        function (point) {
+            extendWorkspaceForPoint(
+                point.x,
+                point.y
+            );
+        }
+    );
+}
+
+makeFreeLineDraggable(
+    line,
+    savedConnection
+);
+
+line.addEventListener("click", function (event) {
+    event.stopPropagation();
+
+    if (selectedConnection === line) {
+    line.setAttribute("stroke-width", "3");
+    selectedConnection = null;
+
+   removeLineHandles();
+
+    return;
+}
+
+    if (selectedConnection) {
+        selectedConnection.setAttribute("stroke-width", "3");
+    }
+
+    selectedConnection = line;
+
+selectedConnectionData = connections.find(function (item) {
+    return item.line === line;
+});
+
+line.setAttribute("stroke-width", "5");
+   removeLineHandles();
+startHandle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle"
+);
+
+startHandle.setAttribute("cx", savedConnection.x1);
+startHandle.setAttribute("cy", savedConnection.y1);
+startHandle.setAttribute("r", "10");
+setEndpointLinkColour(
+    startHandle,
+    savedConnection.shape1Id != null
+);
+
+endHandle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle"
+);
+
+endHandle.setAttribute("cx", savedConnection.x2);
+endHandle.setAttribute("cy", savedConnection.y2);
+endHandle.setAttribute("r", "10");
+setEndpointLinkColour(
+    endHandle,
+    savedConnection.shape2Id != null
+);
+startHandle.style.pointerEvents = "all";
+startHandle.style.cursor = "grab";
+startHandle.style.touchAction = "none";
+startHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "start") {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (endHandle) {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "start";
+
+    startHandle.setAttribute("stroke", "#2563eb");
+    startHandle.setAttribute("stroke-width", "4");
+});
+startHandle.addEventListener("pointerdown", function (event) {
+    event.stopPropagation();
+
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
+    function moveStartHandle(event) {
+        const canvasRect = canvas.getBoundingClientRect();
+
+       const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
+const snap = findNearestSnapPort(newX, newY);
+        if (snap && snap.distance <= getSnapThreshold()) {
+    savedConnection.x1 = snap.port.x;
+    savedConnection.y1 = snap.port.y;
+    savedConnection.shape1Id = snap.shape.savedData.id;
+    savedConnection.point1Index = snap.portIndex;
+} else {
+    savedConnection.x1 = newX;
+    savedConnection.y1 = newY;
+    savedConnection.shape1Id = null;
+    savedConnection.point1Index = null;
+}
+setEndpointLinkColour(
+    startHandle,
+    savedConnection.shape1Id != null
+);
+       startHandle.setAttribute("cx", savedConnection.x1);
+startHandle.setAttribute("cy", savedConnection.y1);
+
+extendWorkspaceForPoint(
+    savedConnection.x1,
+    savedConnection.y1
+);
+
+updateConnections();
+    }
+
+   function stopMovingStartHandle() {
+    canvas.classList.remove(
+    "endpoint-dragging"
+);
+    document.removeEventListener("pointermove", moveStartHandle);
+    document.removeEventListener("pointerup", stopMovingStartHandle);
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveStartHandle);
+document.addEventListener("pointerup", stopMovingStartHandle);
+});
+endHandle.style.pointerEvents = "all";
+endHandle.style.cursor = "grab";
+endHandle.style.touchAction = "none";
+endHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "end") {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (startHandle) {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "end";
+
+    endHandle.setAttribute("stroke", "#2563eb");
+    endHandle.setAttribute("stroke-width", "4");
+});
+endHandle.addEventListener("pointerdown", function (event) {
+    event.stopPropagation();
+
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
+    function moveEndHandle(event) {
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
+const snap = findNearestSnapPort(newX, newY);
+      if (snap && snap.distance <= getSnapThreshold()) {
+    savedConnection.x2 = snap.port.x;
+    savedConnection.y2 = snap.port.y;
+    savedConnection.shape2Id = snap.shape.savedData.id;
+    savedConnection.point2Index = snap.portIndex;
+} else {
+    savedConnection.x2 = newX;
+    savedConnection.y2 = newY;
+    savedConnection.shape2Id = null;
+    savedConnection.point2Index = null;
+}
+setEndpointLinkColour(
+    endHandle,
+    savedConnection.shape2Id != null
+);
+
+        endHandle.setAttribute("cx", savedConnection.x2);
+endHandle.setAttribute("cy", savedConnection.y2);
+
+extendWorkspaceForPoint(
+    savedConnection.x2,
+    savedConnection.y2
+);
+
+updateConnections();
+}
+   function stopMovingEndHandle() {
+    canvas.classList.remove(
+    "endpoint-dragging"
+);
+    document.removeEventListener("pointermove", moveEndHandle);
+    document.removeEventListener("pointerup", stopMovingEndHandle);
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveEndHandle);
+document.addEventListener("pointerup", stopMovingEndHandle);
+});
+connectionLayer.appendChild(startHandle);
+connectionLayer.appendChild(endHandle);
+ showFreeLineControlHandles(
+    line,
+    savedConnection
+);
+});
+line.addEventListener("dblclick", function (event) {
+
+    event.stopPropagation();
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+    savedConnection.controlPoints.push({
+        x: x,
+        y: y
+    });
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    updateConnections();
+
+    showFreeLineControlHandles(
+        line,
+        savedConnection
+    );
+});
+        connectionLayer.appendChild(line);
+
+addWideLineHitArea(line);
+
+if (!Array.isArray(savedConnection.controlPoints)) {
+    savedConnection.controlPoints = [];
+}
+
+connections.push({
+    type: "freeLine",
+    line: line,
+    savedData: savedConnection,
+    controlPoints: savedConnection.controlPoints
+});
+updateConnections();
+        return;
+    }
+});
+
+topicConnections.forEach(function (savedConnection) {
+
+    if (savedConnection.type === "freeLine") {
+        return;
+    }
+
+    const shape1 = Array.from(
+        canvas.querySelectorAll(".shape")
+    ).find(function (shape) {
+
+        return (
+            shape.savedData.id ===
+            savedConnection.shape1Id
+        );
+    });
+
+    const shape2 = Array.from(
+        canvas.querySelectorAll(".shape")
+    ).find(function (shape) {
+
+        return (
+            shape.savedData.id ===
+            savedConnection.shape2Id
+        );
+    });
+
+    if (shape1 && shape2) {
+
+        drawConnection(
+            shape1,
+            shape2,
+            false,
+            savedConnection
+        );
+    }
+});
+
+/*
+ * Refresh chapter navigator after
+ * rebuilding the map.
+ */
+renderChapterRail();
+
+}
+
+backBtn.addEventListener("click", function () {
+
+    topicPage.style.display = "none";
+
+    libraryToolbar.style.display = "flex";
+topicList.style.display = "block";
+
+});
+
+
+createTopicBtn.addEventListener("click", function () {
+
+    const topicName =
+        prompt("What would you like to call this topic?");
+
+    if (!topicName || !topicName.trim()) {
+        return;
+    }
+
+    const cleanName = topicName.trim();
+
+    if (topics.includes(cleanName)) {
+        alert("A mind map with that name already exists.");
+        return;
+    }
+
+    topics.push(cleanName);
+
+    if (currentFolder) {
+        topicFolders[cleanName] = currentFolder;
+    }
+
+    localStorage.setItem(
+        "topics",
+        JSON.stringify(topics)
+    );
+
+    localStorage.setItem(
+        "topicFolders",
+        JSON.stringify(topicFolders)
+    );
+
+    displayTopics();
+    scheduleCloudSave();
+});
+createFolderBtn.addEventListener("click", function () {
+
+    const folderName =
+        prompt("What would you like to call this folder?");
+
+    if (!folderName || !folderName.trim()) {
+        return;
+    }
+
+    const cleanName = folderName.trim();
+
+    if (folders.includes(cleanName)) {
+        alert("A folder with that name already exists.");
+        return;
+    }
+
+    folders.push(cleanName);
+
+    localStorage.setItem(
+        "folders",
+        JSON.stringify(folders)
+    );
+
+    displayTopics();
+    scheduleCloudSave();
+});
+
+createCategoryBtn.addEventListener("click", function () {
+
+    categoryNameInput.value = "";
+
+    selectedCategoryColour = "#dbeafe";
+
+    categoryColourSwatches.forEach(
+        function (swatch) {
+            swatch.classList.remove("selected");
+        }
+    );
+
+    if (categoryColourSwatches.length > 0) {
+        categoryColourSwatches[0].classList.add(
+            "selected"
+        );
+    }
+
+    categoryCreator.style.display = "flex";
+
+    setTimeout(function () {
+        categoryNameInput.focus();
+    }, 50);
+});
+
+
+categoryColourSwatches.forEach(
+    function (swatch) {
+
+        swatch.addEventListener(
+            "click",
+            function () {
+
+                categoryColourSwatches.forEach(
+                    function (otherSwatch) {
+                        otherSwatch.classList.remove(
+                            "selected"
+                        );
+                    }
+                );
+
+                swatch.classList.add("selected");
+
+                selectedCategoryColour =
+                    swatch.dataset.colour;
+            }
+        );
+    }
+);
+
+
+categoryCustomColour.addEventListener(
+    "input",
+    function () {
+
+        categoryColourSwatches.forEach(
+            function (swatch) {
+                swatch.classList.remove(
+                    "selected"
+                );
+            }
+        );
+
+        selectedCategoryColour =
+            categoryCustomColour.value;
+    }
+);
+
+
+cancelCategoryBtn.addEventListener(
+    "click",
+    function () {
+        categoryCreator.style.display = "none";
+    }
+);
+
+
+saveCategoryBtn.addEventListener(
+    "click",
+    function () {
+
+        const cleanName =
+            categoryNameInput.value.trim();
+
+        if (!cleanName) {
+            alert("Please enter a category name.");
+            return;
+        }
+
+        const alreadyExists =
+            libraryCategories.some(
+                function (category) {
+                    return (
+                        category.name.toLowerCase() ===
+                        cleanName.toLowerCase()
+                    );
+                }
+            );
+
+        if (alreadyExists) {
+            alert(
+                "A category with that name already exists."
+            );
+            return;
+        }
+
+        libraryCategories.push({
+            id: "category-" + Date.now(),
+            name: cleanName,
+            colour: selectedCategoryColour,
+            collapsed: false
+        });
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(libraryCategories)
+        );
+displayTopics();
+        categoryCreator.style.display = "none";
+
+        alert("Category created.");
+    }
+);
+function getCurrentCanvasViewCentre() {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    const visibleLeft =
+        Math.max(0, viewportRect.left);
+
+    const visibleRight =
+        Math.min(
+            window.innerWidth,
+            viewportRect.right
+        );
+
+    const visibleTop =
+        Math.max(0, canvasRect.top);
+
+    const visibleBottom =
+        Math.min(
+            window.innerHeight,
+            canvasRect.bottom
+        );
+
+    const screenX =
+        visibleRight > visibleLeft
+            ? (visibleLeft + visibleRight) / 2
+            : window.innerWidth / 2;
+
+    const screenY =
+        visibleBottom > visibleTop
+            ? (visibleTop + visibleBottom) / 2
+            : window.innerHeight / 2;
+
+    return {
+        x:
+            (screenX - canvasRect.left) /
+            canvasZoom,
+
+        y:
+            (screenY - canvasRect.top) /
+            canvasZoom
+    };
+}
+function getCheckboxTickColour(hexColour) {
+
+    const hex =
+        (hexColour || "#facc15")
+            .replace("#", "");
+
+    const r =
+        parseInt(hex.substring(0, 2), 16);
+
+    const g =
+        parseInt(hex.substring(2, 4), 16);
+
+    const b =
+        parseInt(hex.substring(4, 6), 16);
+
+    const brightness =
+        (r * 299 + g * 587 + b * 114) /
+        1000;
+
+    return brightness > 170
+        ? "#111827"
+        : "#ffffff";
+}
+
+
+function updateCheckboxAppearance(shape) {
+
+    if (
+        !shape ||
+        !shape.savedData ||
+        shape.savedData.type !== "checkbox"
+    ) {
+        return;
+    }
+
+    const textEditor =
+        shape.querySelector(".shape-text");
+
+    const colour =
+        shape.savedData.colour ||
+        "#facc15";
+
+    shape.style.background = colour;
+
+    if (!textEditor) {
+        return;
+    }
+
+    textEditor.contentEditable = "false";
+
+    textEditor.textContent =
+        shape.savedData.checked
+            ? "✓"
+            : "";
+
+    textEditor.style.color =
+        getCheckboxTickColour(colour);
+}
+
+
+function toggleCheckbox(shape) {
+
+    if (
+        !shape.savedData ||
+        shape.savedData.type !== "checkbox"
+    ) {
+        return;
+    }
+
+    shape.savedData.checked =
+        !shape.savedData.checked;
+
+    updateCheckboxAppearance(shape);
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+}
+addShapeBtn.addEventListener("click", function () {
+
+    let bookmarkUrl = "";
+
+    if (shapeType.value === "bookmark") {
+
+        bookmarkUrl = prompt(
+            "Paste the web address for this bookmark:"
+        );
+
+        if (!bookmarkUrl) {
+            return;
+        }
+
+        bookmarkUrl = bookmarkUrl.trim();
+
+        if (
+            !/^https?:\/\//i.test(bookmarkUrl)
+        ) {
+            bookmarkUrl =
+                "https://" + bookmarkUrl;
+        }
+    }
+
+    const shape = document.createElement("div");
+
+    shape.classList.add("shape");
+
+const textEditor = document.createElement("div");
+textEditor.classList.add("shape-text");
+if (shapeType.value === "hover") {
+
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "ⓘ";
+
+} else if (
+    shapeType.value === "checkbox" ||
+    shapeType.value === "beacon" ||
+    shapeType.value === "bookmark"
+) {
+
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "";
+
+} else {
+
+    textEditor.contentEditable = "true";
+    textEditor.textContent = "New Shape";
+}
+
+shape.appendChild(textEditor);
+textEditor.addEventListener("click", function (event) {
+
+    const link = event.target.closest("a");
+
+    if (!link) {
+        return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    window.open(
+        link.href,
+        "_blank",
+        "noopener,noreferrer"
+    );
+});
+const dragHandle = document.createElement("div");
+dragHandle.classList.add("drag-handle");
+dragHandle.textContent = "⠿";
+
+shape.appendChild(dragHandle);
+textEditor.addEventListener("input", function () {
+
+    shape.savedData.html = textEditor.innerHTML;
+    shape.savedData.text = textEditor.innerText;
+
+    if (
+    shape.savedData.type === "diamond" &&
+    diamondTextNeedsMoreRoom(shape, textEditor)
+) {
+
+        const neededHeight = textEditor.scrollHeight + 100;
+
+        const neededWidth = Math.max(
+            shape.offsetWidth,
+            neededHeight * 0.9
+        );
+
+        shape.style.height = neededHeight + "px";
+        shape.style.width = neededWidth + "px";
+
+        shape.savedData.height = shape.offsetHeight;
+        shape.savedData.width = shape.offsetWidth;
+
+    } else if (textEditor.scrollHeight > shape.offsetHeight) {
+
+        shape.style.height = textEditor.scrollHeight + "px";
+        shape.savedData.height = shape.offsetHeight;
+    }
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    updateConnections();
+});
+
+canvas.appendChild(shape);
+    
+if (!shapes[currentTopic]) {
+    shapes[currentTopic] = [];
+}
+const currentView =
+    getCurrentCanvasViewCentre();
+
+let halfWidth = 70;
+let halfHeight = 35;
+
+if (shapeType.value === "hover") {
+    halfWidth = 15;
+    halfHeight = 15;
+}
+
+if (shapeType.value === "circle") {
+    halfWidth = 50;
+    halfHeight = 50;
+}
+
+if (shapeType.value === "diamond") {
+    halfWidth = 60;
+    halfHeight = 45;
+}
+
+if (shapeType.value === "checkbox") {
+    halfWidth = 21;
+    halfHeight = 21;
+}
+if (shapeType.value === "beacon") {
+    halfWidth = 23;
+    halfHeight = 23;
+}
+if (shapeType.value === "bookmark") {
+    halfWidth = 22;
+    halfHeight = 26;
+}
+const spawnLeft =
+    Math.max(
+        20,
+        currentView.x - halfWidth
+    );
+
+const spawnTop =
+    Math.max(
+        20,
+        currentView.y - halfHeight
+    );
+const newShapeData = {
+    id: Date.now().toString(),
+   text:
+    shapeType.value === "hover"
+        ? "ⓘ"
+        : (
+            shapeType.value === "checkbox" ||
+shapeType.value === "beacon" ||
+shapeType.value === "bookmark"
+        )
+            ? ""
+            : "New Shape",
+
+left: spawnLeft,
+top: spawnTop,
+
+colour:
+    (
+        shapeType.value === "checkbox" ||
+shapeType.value === "beacon" ||
+shapeType.value === "bookmark"
+    )
+        ? colourPicker.value
+        : "#facc15",
+
+type: shapeType.value,
+
+checked: false,
+bookmarkUrl: bookmarkUrl,
+
+hoverText: ""
+};
+
+shapes[currentTopic].push(newShapeData);
+
+shape.savedData = newShapeData;
+shape.style.left =
+    spawnLeft + "px";
+
+shape.style.top =
+    spawnTop + "px";
+shape.classList.add(newShapeData.type);
+if (newShapeData.type === "beacon") {
+    shape.style.setProperty(
+        "--beacon-colour",
+        newShapeData.colour
+    );
+}
+if (newShapeData.type === "bookmark") {
+    shape.style.setProperty(
+        "--bookmark-colour",
+        newShapeData.colour
+    );
+}
+if (newShapeData.type === "checkbox") {
+    updateCheckboxAppearance(shape);
+}
+if (newShapeData.type === "hover") {
+    textEditor.contentEditable = "false";
+    textEditor.textContent = "ⓘ";
+    newShapeData.text = "ⓘ";
+    newShapeData.html = "ⓘ";
+}
+if (newShapeData.type === "hover") {
+    shape.classList.add("hover-symbol");
+
+    
+
+    shape.addEventListener("mouseleave", function () {
+    scheduleHoverPopupHide();
+});
+}
+const resizeHandle = document.createElement("div");
+resizeHandle.classList.add("resize-handle");
+shape.appendChild(resizeHandle);
+
+makeResizable(shape, resizeHandle);
+
+localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+
+makeDraggable(shape);
+
+shape.addEventListener("click", function () {
+
+    /*
+     * Ignore the click Safari fires
+     * immediately after dragging.
+     */
+    if (
+        shape.dragIgnoreClickUntil &&
+        Date.now() <
+            shape.dragIgnoreClickUntil
+    ) {
+        return;
+    }
+
+    if (
+        shape.savedData.type === "checkbox" &&
+        !connectionMode
+    ) {
+        toggleCheckbox(shape);
+    }
+
+    if (
+    shape.savedData.type === "bookmark" &&
+    shape.bookmarkIgnoreClickUntil &&
+    Date.now() <
+        shape.bookmarkIgnoreClickUntil
+) {
+    return;
+}
+
+if (
+    shape.savedData.type === "bookmark" &&
+    shape.savedData.bookmarkUrl &&
+    !connectionMode
+) {
+    window.open(
+        shape.savedData.bookmarkUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+}
+    if (selectedShape === shape && !connectionMode) {
+        return;
+    }
+
+clearStaleShapeSelections(shape);
+
+selectedShape = shape;
+setSidebarMode(
+    shape.savedData.type === "hover"
+        ? "hover"
+        : "shape"
+);
+showHoverTools(
+    shape.savedData.type === "hover"
+);
+showNormalShapeTools(
+    shape.savedData.type !== "hover"
+);
+if (shape.savedData.type === "hover") {
+
+    shape.classList.add("shape-selected");
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    return;
+}
+
+selectedShape.classList.add("shape-selected");
+
+if (shapeSelectionOutline) {
+    shapeSelectionOutline.remove();
+    shapeSelectionOutline = null;
+}
+
+if (shape.classList.contains("diamond")) {
+    const outline = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "polygon"
+    );
+
+    const gap = 4;
+
+    const left = shape.offsetLeft - gap;
+    const top = shape.offsetTop - gap;
+    const width = shape.offsetWidth + gap * 2;
+    const height = shape.offsetHeight + gap * 2;
+
+    outline.setAttribute(
+        "points",
+        `${left + width / 2},${top} ` +
+        `${left + width},${top + height / 2} ` +
+        `${left + width / 2},${top + height} ` +
+        `${left},${top + height / 2}`
+    );
+
+    outline.setAttribute("fill", "none");
+    outline.setAttribute("stroke", "#111827");
+    outline.setAttribute("stroke-width", "3");
+    outline.setAttribute("pointer-events", "none");
+
+    const connectionLayer =
+        document.getElementById("connectionLayer");
+
+    connectionLayer.appendChild(outline);
+    shapeSelectionOutline = outline;
+}
+if (!connectionMode) {
+    return;
+}
+
+    if (shape === firstConnectionShape) {
+        shape.classList.remove("connection-selected");
+        firstConnectionShape = null;
+        return;
+    }
+
+    if (shape === secondConnectionShape) {
+        shape.classList.remove("connection-selected");
+        secondConnectionShape = null;
+        return;
+    }
+
+    if (!firstConnectionShape) {
+        firstConnectionShape = shape;
+        shape.classList.add("connection-selected");
+        return;
+    }
+
+    if (!secondConnectionShape) {
+        secondConnectionShape = shape;
+        shape.classList.add("connection-selected");
+        return;
+    }
+
+});
+
+    
+
+});
+function extendWorkspaceForShape(shape) {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    if (!viewport) {
+        return;
+    }
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents = "none";
+        spacer.style.height = "0px";
+
+        viewport.appendChild(spacer);
+    }
+
+    const neededWidth =
+        shape.offsetLeft +
+        shape.offsetWidth +
+        200;
+
+    const neededExtraHeight =
+        Math.max(
+            0,
+            shape.offsetTop +
+            shape.offsetHeight +
+            200 -
+            canvas.offsetHeight
+        );
+
+    const currentWidth =
+        parseFloat(
+            spacer.style.width
+        ) || canvas.offsetWidth;
+
+    const currentHeight =
+        parseFloat(
+            spacer.style.height
+        ) || 0;
+
+    spacer.style.width =
+        Math.max(
+            currentWidth,
+            canvas.offsetWidth,
+            neededWidth
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            currentHeight,
+            neededExtraHeight
+        ) + "px";
+}
+function extendWorkspaceForPoint(x, y) {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    if (!viewport) {
+        return;
+    }
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents =
+            "none";
+
+        spacer.style.height =
+            "0px";
+
+        viewport.appendChild(spacer);
+    }
+
+    const neededWidth =
+        x + 200;
+
+    const neededExtraHeight =
+        Math.max(
+            0,
+            y + 200 -
+            canvas.offsetHeight
+        );
+
+    const currentWidth =
+        parseFloat(
+            spacer.style.width
+        ) || canvas.offsetWidth;
+
+    const currentHeight =
+        parseFloat(
+            spacer.style.height
+        ) || 0;
+
+    spacer.style.width =
+        Math.max(
+            currentWidth,
+            canvas.offsetWidth,
+            neededWidth
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            currentHeight,
+            neededExtraHeight
+        ) + "px";
+}
+function recalculateOverflowWorkspace() {
+
+    const viewport =
+        document.getElementById("canvasViewport");
+
+    if (!viewport) {
+        return;
+    }
+
+    let maxRight =
+        canvas.offsetWidth;
+
+    let maxBottom =
+        canvas.offsetHeight;
+
+    /* Include all shapes */
+    canvas
+        .querySelectorAll(".shape")
+        .forEach(function (shape) {
+
+            maxRight = Math.max(
+                maxRight,
+                shape.offsetLeft +
+                shape.offsetWidth +
+                200
+            );
+
+            maxBottom = Math.max(
+                maxBottom,
+                shape.offsetTop +
+                shape.offsetHeight +
+                200
+            );
+        });
+
+    /* Include free-line endpoints and bends */
+    const topicConnections =
+        savedConnections[currentTopic] || [];
+
+    topicConnections.forEach(
+        function (connection) {
+
+            if (
+                connection.type !== "freeLine"
+            ) {
+                return;
+            }
+
+            maxRight = Math.max(
+                maxRight,
+                connection.x1 + 200,
+                connection.x2 + 200
+            );
+
+            maxBottom = Math.max(
+                maxBottom,
+                connection.y1 + 200,
+                connection.y2 + 200
+            );
+
+            if (
+                Array.isArray(
+                    connection.controlPoints
+                )
+            ) {
+                connection.controlPoints.forEach(
+                    function (point) {
+
+                        maxRight = Math.max(
+                            maxRight,
+                            point.x + 200
+                        );
+
+                        maxBottom = Math.max(
+                            maxBottom,
+                            point.y + 200
+                        );
+                    }
+                );
+            }
+        }
+    );
+
+    let spacer =
+        document.getElementById(
+            "canvasOverflowSpacer"
+        );
+
+    if (!spacer) {
+        spacer =
+            document.createElement("div");
+
+        spacer.id =
+            "canvasOverflowSpacer";
+
+        spacer.style.pointerEvents =
+            "none";
+
+        viewport.appendChild(spacer);
+    }
+
+    spacer.style.width =
+        Math.max(
+            canvas.offsetWidth,
+            maxRight
+        ) + "px";
+
+    spacer.style.height =
+        Math.max(
+            0,
+            maxBottom -
+            canvas.offsetHeight
+        ) + "px";
+}
+function makeDraggable(shape) {
+
+    let offsetX = 0;
+    let offsetY = 0;
+    let dragging = false;
+let activePointerId = null;
+let captureTarget = null;
+
+let dragStartClientX = 0;
+let dragStartClientY = 0;
+let actuallyMoved = false;
+
+    shape.addEventListener("pointerdown", function (event) {
+
+    /*
+     * Navigate mode owns one-finger dragging.
+     */
+    if (navigationMode) {
+        return;
+    }
+
+    const dragHandle =
+        event.target.closest(
+            ".drag-handle"
+        );
+
+      /*
+ * On touch/pen, normal shapes move only
+ * from the drag grip.
+ *
+ * First tap on shape text selects the shape
+ * without opening the iPad keyboard.
+ * A second tap can then edit the text.
+ */
+if (
+    event.pointerType !== "mouse" &&
+    shape.savedData.type !== "hover" &&
+    !dragHandle
+) {
+
+    if (
+        event.pointerType === "touch" &&
+        event.target.closest(".shape-text") &&
+        selectedShape !== shape
+    ) {
+        event.preventDefault();
+    }
+
+    return;
+}
+
+        /* Keep text editable */
+        if (
+            event.target.closest(".shape-text") &&
+            shape.savedData.type !== "hover"
+        ) {
+            return;
+        }
+
+        /* Don't start dragging from the resize handle */
+        if (event.target.closest(".resize-handle")) {
+            return;
+        }
+
+        event.preventDefault();
+event.stopPropagation();
+
+/*
+ * Prevent old iPad selection grips
+ * remaining on previously selected shapes.
+ */
+clearStaleShapeSelections(shape);
+
+selectedShape = shape;
+
+shape.classList.add(
+    "shape-selected"
+);
+
+dragging = true;
+activePointerId = event.pointerId;
+        dragStartClientX = event.clientX;
+dragStartClientY = event.clientY;
+actuallyMoved = false;
+
+        captureTarget = dragHandle || shape;
+
+        if (captureTarget.setPointerCapture) {
+            captureTarget.setPointerCapture(event.pointerId);
+        }
+
+        if (shape.savedData.type === "hover") {
+            shape.classList.add("dragging-hover");
+        }
+
+        const canvasRect = canvas.getBoundingClientRect();
+
+        offsetX =
+            (event.clientX - canvasRect.left) / canvasZoom -
+            shape.offsetLeft;
+
+        offsetY =
+            (event.clientY - canvasRect.top) / canvasZoom -
+            shape.offsetTop;
+    });
+
+    document.addEventListener("pointermove", function (event) {
+
+    if (
+        !dragging ||
+        event.pointerId !== activePointerId
+    ) {
+        return;
+    }
+
+    /*
+     * Two-finger pinch always wins
+     * over shape dragging.
+     */
+    if (
+        twoFingerGestureActive &&
+        event.pointerType !== "mouse"
+    ) {
+
+        if (
+            captureTarget &&
+            captureTarget.hasPointerCapture &&
+            captureTarget.hasPointerCapture(
+                activePointerId
+            )
+        ) {
+            captureTarget.releasePointerCapture(
+                activePointerId
+            );
+        }
+
+        shape.classList.remove(
+            "dragging-hover"
+        );
+
+        dragging = false;
+        activePointerId = null;
+        captureTarget = null;
+        actuallyMoved = false;
+
+        return;
+    }
+
+    event.preventDefault();
+        if (
+    Math.hypot(
+        event.clientX - dragStartClientX,
+        event.clientY - dragStartClientY
+    ) > 6
+) {
+    actuallyMoved = true;
+}
+
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const newLeft =
+            (event.clientX - canvasRect.left) / canvasZoom -
+            offsetX;
+
+        const newTop =
+            (event.clientY - canvasRect.top) / canvasZoom -
+            offsetY;
+
+       const safeLeft =
+    Math.max(0, newLeft);
+
+const safeTop =
+    Math.max(0, newTop);
+
+shape.style.left =
+    safeLeft + "px";
+
+shape.style.top =
+    safeTop + "px";
+    extendWorkspaceForShape(shape);
+if (
+    shape.savedData.type === "hover" &&
+    activeHoverShape === shape
+) {
+    positionHoverPopup(shape);
+}
+
+
+        updateConnections();
+    });
+
+    function stopDragging(event) {
+
+        if (
+            !dragging ||
+            event.pointerId !== activePointerId
+        ) {
+            return;
+        }
+
+        if (shape.savedData) {
+            shape.savedData.left = shape.offsetLeft;
+            shape.savedData.top = shape.offsetTop;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+        }
+if (
+    shape.savedData.type === "hover" &&
+    actuallyMoved
+) {
+    shape.hoverIgnoreClickUntil =
+        Date.now() + 500;
+}
+
+if (
+    shape.savedData.type === "bookmark" &&
+    actuallyMoved
+) {
+    shape.bookmarkIgnoreClickUntil =
+        Date.now() + 500;
+}
+/*
+ * Prevent the post-drag click from
+ * selecting the shape again.
+ */
+if (actuallyMoved) {
+
+    shape.dragIgnoreClickUntil =
+        Date.now() + 500;
+}
+
+/*
+ * After moving a normal shape,
+ * hide its movement grip.
+ */
+if (
+    actuallyMoved &&
+    shape.savedData.type !== "hover"
+) {
+
+    shape.classList.remove(
+        "shape-selected"
+    );
+
+    clearStaleShapeSelections();
+
+    if (selectedShape === shape) {
+        selectedShape = null;
+    }
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    showHoverTools(false);
+    showNormalShapeTools(true);
+    setSidebarMode("default");
+}
+        if (shape.savedData.type === "hover") {
+            shape.classList.remove("dragging-hover");
+        }
+
+        if (
+            captureTarget &&
+            captureTarget.hasPointerCapture &&
+            captureTarget.hasPointerCapture(activePointerId)
+        ) {
+            captureTarget.releasePointerCapture(activePointerId);
+        }
+
+        dragging = false;
+activePointerId = null;
+captureTarget = null;
+
+/* Remove any unnecessary blank workspace */
+recalculateOverflowWorkspace();
+    }
+
+    document.addEventListener("pointerup", stopDragging);
+    document.addEventListener("pointercancel", stopDragging);
+}
+
+colourPicker.addEventListener("input", function () {
+
+    if (selectedShape) {
+        selectedShape.style.background = colourPicker.value;
+
+        if (selectedShape.savedData) {
+
+    selectedShape.savedData.colour =
+    colourPicker.value;
+
+if (
+    selectedShape.savedData.type ===
+    "beacon"
+) {
+    selectedShape.style.setProperty(
+        "--beacon-colour",
+        colourPicker.value
+    );
+}
+
+if (
+    selectedShape.savedData.type ===
+    "bookmark"
+) {
+    selectedShape.style.setProperty(
+        "--bookmark-colour",
+        colourPicker.value
+    );
+}
+
+if (
+    selectedShape.savedData.type ===
+    "checkbox"
+) {
+    updateCheckboxAppearance(
+        selectedShape
+    );
+}
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+}
+    }
+
+});
+borderColourPicker.addEventListener("input", function () {
+
+    if (!selectedShape) {
+        return;
+    }
+
+    const borderColour = borderColourPicker.value;
+
+    selectedShape.savedData.borderColour = borderColour;
+
+    if (selectedShape.classList.contains("diamond")) {
+
+    selectedShape.style.filter = "";
+
+    selectedShape.classList.add("custom-border");
+
+    selectedShape.style.background = borderColour;
+
+    selectedShape.style.setProperty(
+        "--diamond-colour",
+        selectedShape.savedData.colour || "#facc15"
+    );
+
+} else {
+
+    selectedShape.style.boxShadow =
+        `0 0 0 4px ${borderColour}`;
+}
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+});
+function diamondTextNeedsMoreRoom(shape, textEditor) {
+
+    const safeHeight = shape.offsetHeight * 0.45;
+
+    return textEditor.scrollHeight > safeHeight;
+}
+function makeResizable(shape, handle) {
+
+    let resizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+
+    function startResize(clientX, clientY) {
+        resizing = true;
+
+        startX = clientX;
+        startY = clientY;
+
+        startWidth = shape.offsetWidth;
+        startHeight = shape.offsetHeight;
+    }
+
+    function resizeTo(clientX, clientY) {
+
+        if (!resizing) {
+            return;
+        }
+
+        const newWidth =
+            startWidth +
+            ((clientX - startX) / canvasZoom);
+
+        const newHeight =
+            startHeight +
+            ((clientY - startY) / canvasZoom);
+
+        shape.style.width =
+            Math.max(60, newWidth) + "px";
+
+        shape.style.height =
+            Math.max(40, newHeight) + "px";
+
+        updateConnections();
+    }
+
+    function finishResize() {
+
+    if (!resizing) {
+        return;
+    }
+
+    resizing = false;
+
+    const textEditor =
+        shape.querySelector(".shape-text");
+
+    if (
+        textEditor &&
+        shape.savedData &&
+        ![
+            "checkbox",
+            "beacon",
+            "bookmark",
+            "hover"
+        ].includes(shape.savedData.type)
+    ) {
+
+        const neededHeight =
+            textEditor.scrollHeight;
+
+        if (
+            neededHeight >
+            shape.offsetHeight
+        ) {
+            shape.style.height =
+                neededHeight + "px";
+        }
+    }
+
+    if (shape.savedData) {
+
+            shape.savedData.width = shape.offsetWidth;
+            shape.savedData.height = shape.offsetHeight;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+        }
+    }
+
+    /* Desktop / Safari simulator */
+    handle.addEventListener("mousedown", function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        startResize(
+            event.clientX,
+            event.clientY
+        );
+
+        function mouseMove(event) {
+            event.preventDefault();
+
+            resizeTo(
+                event.clientX,
+                event.clientY
+            );
+        }
+
+        function mouseUp() {
+            finishResize();
+
+            window.removeEventListener(
+                "mousemove",
+                mouseMove
+            );
+
+            window.removeEventListener(
+                "mouseup",
+                mouseUp
+            );
+        }
+
+        window.addEventListener(
+            "mousemove",
+            mouseMove
+        );
+
+        window.addEventListener(
+            "mouseup",
+            mouseUp
+        );
+    });
+
+    /* Real iPhone / iPad */
+    handle.addEventListener(
+        "touchstart",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const touch = event.touches[0];
+
+            startResize(
+                touch.clientX,
+                touch.clientY
+            );
+
+            function touchMove(event) {
+
+    event.preventDefault();
+
+    /* Two fingers means pinch zoom,
+       not shape resizing */
+    if (event.touches.length !== 1) {
+
+        shape.style.width =
+            startWidth + "px";
+
+        shape.style.height =
+            startHeight + "px";
+
+        resizing = false;
+
+        updateConnections();
+
+        return;
+    }
+
+    const touch = event.touches[0];
+
+    resizeTo(
+        touch.clientX,
+        touch.clientY
+    );
+}
+
+            function touchEnd() {
+
+                finishResize();
+
+                window.removeEventListener(
+                    "touchmove",
+                    touchMove
+                );
+
+                window.removeEventListener(
+                    "touchend",
+                    touchEnd
+                );
+
+                window.removeEventListener(
+                    "touchcancel",
+                    touchEnd
+                );
+            }
+
+            window.addEventListener(
+                "touchmove",
+                touchMove,
+                { passive: false }
+            );
+
+            window.addEventListener(
+                "touchend",
+                touchEnd
+            );
+
+            window.addEventListener(
+                "touchcancel",
+                touchEnd
+            );
+        },
+        { passive: false }
+    );
+}
+
+    
+        
+
+        
+connectBtn.addEventListener("click", function () {
+
+   const connectionLayer =
+    document.getElementById("connectionLayer");
+
+const line = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path"
+);
+
+const currentView =
+    getCurrentCanvasViewCentre();
+
+const freeLineData = {
+    x1: Math.max(20, currentView.x - 100),
+    y1: currentView.y,
+    x2: currentView.x + 100,
+    y2: currentView.y
+};
+const savedFreeLine = {
+    type: "freeLine",
+    ...freeLineData,
+    controlPoints: []
+};
+
+    line.setAttribute(
+        "d",
+        `M ${freeLineData.x1} ${freeLineData.y1} ` +
+        `L ${freeLineData.x2} ${freeLineData.y2}`
+    );
+
+    line.setAttribute("fill", "none");
+    line.setAttribute("stroke", "#111827");
+    line.setAttribute("stroke-width", "3");
+    
+    line.style.pointerEvents = "stroke";
+line.style.cursor = "pointer";
+
+makeFreeLineDraggable(
+    line,
+    savedFreeLine
+);
+
+line.addEventListener("click", function (event) {
+    event.stopPropagation();
+
+   if (selectedConnection === line) {
+    line.setAttribute("stroke-width", "3");
+    selectedConnection = null;
+
+    removeLineHandles();
+
+    return;
+}
+
+    if (selectedConnection) {
+        selectedConnection.setAttribute("stroke-width", "3");
+    }
+
+    selectedConnection = line;
+
+selectedConnectionData = connections.find(function (item) {
+    return item.line === line;
+});
+
+line.setAttribute("stroke-width", "5");
+    removeLineHandles();
+
+startHandle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle"
+);
+
+startHandle.setAttribute("cx", savedFreeLine.x1);
+startHandle.setAttribute("cy", savedFreeLine.y1);
+startHandle.setAttribute("r", "10");
+setEndpointLinkColour(
+    startHandle,
+    savedFreeLine.shape1Id != null
+);
+
+endHandle = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "circle"
+);
+
+endHandle.setAttribute("cx", savedFreeLine.x2);
+endHandle.setAttribute("cy", savedFreeLine.y2);
+endHandle.setAttribute("r", "10");
+setEndpointLinkColour(
+    endHandle,
+    savedFreeLine.shape2Id != null
+);
+startHandle.style.pointerEvents = "all";
+startHandle.style.cursor = "grab";
+startHandle.style.touchAction = "none";
+startHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "start") {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (endHandle) {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "start";
+
+    startHandle.setAttribute("stroke", "#2563eb");
+    startHandle.setAttribute("stroke-width", "4");
+});
+
+startHandle.addEventListener("pointerdown", function (event) {
+    event.stopPropagation();
+    canvas.classList.add(
+    "endpoint-dragging"
+);
+
+    function moveStartHandle(event) {
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+        const snap = findNearestSnapPort(newX, newY);
+
+if (snap && snap.distance <= getSnapThreshold()) {
+    savedFreeLine.x1 = snap.port.x;
+    savedFreeLine.y1 = snap.port.y;
+    savedFreeLine.shape1Id = snap.shape.savedData.id;
+    savedFreeLine.point1Index = snap.portIndex;
+} else {
+    savedFreeLine.x1 = newX;
+    savedFreeLine.y1 = newY;
+    savedFreeLine.shape1Id = null;
+    savedFreeLine.point1Index = null;
+}
+setEndpointLinkColour(
+    startHandle,
+    savedFreeLine.shape1Id != null
+);
+      startHandle.setAttribute("cx", savedFreeLine.x1);
+startHandle.setAttribute("cy", savedFreeLine.y1);
+
+extendWorkspaceForPoint(
+    savedFreeLine.x1,
+    savedFreeLine.y1
+);
+
+updateConnections();
+    }
+
+    function stopMovingStartHandle() {
+        canvas.classList.remove(
+    "endpoint-dragging"
+);
+    document.removeEventListener("pointermove", moveStartHandle);
+    document.removeEventListener("pointerup", stopMovingStartHandle);
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveStartHandle);
+document.addEventListener("pointerup", stopMovingStartHandle);
+});
+endHandle.style.pointerEvents = "all";
+endHandle.style.cursor = "grab";
+endHandle.style.touchAction = "none";
+endHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "end") {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (startHandle) {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "end";
+
+    endHandle.setAttribute("stroke", "#2563eb");
+    endHandle.setAttribute("stroke-width", "4");
+});
+endHandle.addEventListener("pointerdown", function (event) {
+    event.stopPropagation();
+
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
+    function moveEndHandle(event) {
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const newX =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const newY =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+        const snap = findNearestSnapPort(newX, newY);
+
+if (snap && snap.distance <= getSnapThreshold()) {
+    savedFreeLine.x2 = snap.port.x;
+    savedFreeLine.y2 = snap.port.y;
+    savedFreeLine.shape2Id = snap.shape.savedData.id;
+    savedFreeLine.point2Index = snap.portIndex;
+} else {
+    savedFreeLine.x2 = newX;
+    savedFreeLine.y2 = newY;
+    savedFreeLine.shape2Id = null;
+    savedFreeLine.point2Index = null;
+}
+setEndpointLinkColour(
+    endHandle,
+    savedFreeLine.shape2Id != null
+);
+
+        endHandle.setAttribute("cx", savedFreeLine.x2);
+endHandle.setAttribute("cy", savedFreeLine.y2);
+
+extendWorkspaceForPoint(
+    savedFreeLine.x2,
+    savedFreeLine.y2
+);
+
+updateConnections();
+    }
+
+    function stopMovingEndHandle() {
+        canvas.classList.remove(
+    "endpoint-dragging"
+);
+    document.removeEventListener("pointermove", moveEndHandle);
+    document.removeEventListener("pointerup", stopMovingEndHandle);
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    recalculateOverflowWorkspace();
+}
+
+document.addEventListener("pointermove", moveEndHandle);
+document.addEventListener("pointerup", stopMovingEndHandle);
+});
+connectionLayer.appendChild(startHandle);
+connectionLayer.appendChild(endHandle);
+showFreeLineControlHandles(
+    line,
+    savedFreeLine
+);
+    
+
+
+});
+line.addEventListener("dblclick", function (event) {
+
+    event.stopPropagation();
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+    savedFreeLine.controlPoints.push({
+        x: x,
+        y: y
+    });
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+
+    updateConnections();
+
+    showFreeLineControlHandles(
+        line,
+        savedFreeLine
+    );
+});
+    connectionLayer.appendChild(line);
+
+addWideLineHitArea(line);
+
+connections.push({
+    type: "freeLine",
+    line: line,
+    savedData: savedFreeLine,
+    controlPoints: savedFreeLine.controlPoints
+});
+    if (!savedConnections[currentTopic]) {
+        savedConnections[currentTopic] = [];
+    }
+
+    
+
+savedConnections[currentTopic].push(savedFreeLine);
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+    line.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+});
+
+function drawConnection(
+    shape1,
+    shape2,
+    shouldSave = true,
+    savedConnection = null
+) {
+
+    const connectionLayer = document.getElementById("connectionLayer");
+
+const line = document.createElementNS(
+    "http://www.w3.org/2000/svg",
+    "path"
+);
+
+line.setAttribute("fill", "none");
+line.setAttribute("stroke", "#111827");
+line.setAttribute("stroke-width", "3");
+
+if (savedConnection && savedConnection.arrowStart) {
+    line.setAttribute("marker-start", "url(#arrowhead)");
+}
+if (savedConnection && savedConnection.arrowEnd) {
+    line.setAttribute("marker-end", "url(#arrowhead)");
+}
+line.style.pointerEvents = "stroke";
+line.style.cursor = "pointer";
+line.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+   if (selectedConnection === line) {
+
+    line.setAttribute("stroke-width", "3");
+
+    selectedConnection = null;
+    selectedConnectionData = null;
+
+    if (connectionHandle) {
+        connectionHandle.remove();
+        connectionHandle = null;
+    }
+
+    connectionHandles.forEach(function (handle) {
+        handle.remove();
+    });
+
+    connectionHandles = [];
+
+    if (startHandle) {
+        startHandle.remove();
+        startHandle = null;
+    }
+
+    if (endHandle) {
+        endHandle.remove();
+        endHandle = null;
+    }
+
+    selectedEndpoint = null;
+    selectedControlPointIndex = null;
+    selectedControlPointHandle = null;
+
+    return;
+}
+
+if (selectedConnection) {
+    selectedConnection.setAttribute("stroke-width", "3");
+}
+
+    selectedConnection = line;
+    selectedConnectionData = connections.find(function (item) {
+    return item.line === line;
+});
+if (
+    selectedConnectionData &&
+    selectedConnectionData.controlPoints.length === 0
+) {
+    const totalLength = line.getTotalLength();
+
+    const middlePoint =
+        line.getPointAtLength(totalLength / 2);
+
+    selectedConnectionData.controlPoints.push({
+    x: middlePoint.x,
+    y: middlePoint.y,
+    offsetX: 0,
+    offsetY: 0,
+    followsLine: true
+});
+
+    if (selectedConnectionData.savedData) {
+        selectedConnectionData.savedData.controlPoints =
+            selectedConnectionData.controlPoints.map(function (point) {
+                return { ...point };
+            });
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+    }
+}
+    line.setAttribute("stroke-width", "5");
+    showConnectionHandle(line);
+
+});
+
+
+line.addEventListener(
+    "touchend",
+    function (event) {
+
+        const now = Date.now();
+
+        if (now - lastLineTapTime < 400) {
+
+            const touch =
+                event.changedTouches[0];
+
+            line.dispatchEvent(
+                new MouseEvent(
+                    "dblclick",
+                    {
+                        bubbles: true,
+                        cancelable: true,
+                        clientX: touch.clientX,
+                        clientY: touch.clientY
+                    }
+                )
+            );
+
+            lastLineTapTime = 0;
+            return;
+        }
+
+        lastLineTapTime = now;
+    },
+    { passive: true }
+);
+line.addEventListener("dblclick", function (event) {
+
+    event.stopPropagation();
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+    const connection = connections.find(function (item) {
+        return item.line === line;
+    });
+
+    if (!connection) {
+        return;
+    }
+
+    const totalLength = line.getTotalLength();
+
+function findPositionOnLine(pointX, pointY) {
+
+    let closestLength = 0;
+    let closestDistance = Infinity;
+
+    for (let i = 0; i <= 100; i++) {
+
+        const length =
+            totalLength * (i / 100);
+
+        const point =
+            line.getPointAtLength(length);
+
+        const distance = Math.hypot(
+            point.x - pointX,
+            point.y - pointY
+        );
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestLength = length;
+        }
+    }
+
+    return closestLength;
+}
+
+const newPointPosition =
+    findPositionOnLine(x, y);
+
+let insertIndex =
+    connection.controlPoints.length;
+
+connection.controlPoints.forEach(
+    function (point, index) {
+
+        const existingPosition =
+            findPositionOnLine(point.x, point.y);
+
+        if (
+            newPointPosition < existingPosition &&
+            insertIndex === connection.controlPoints.length
+        ) {
+            insertIndex = index;
+        }
+    }
+);
+const positionRatio =
+    totalLength === 0
+        ? 0.5
+        : newPointPosition / totalLength;
+connection.controlPoints.splice(
+    insertIndex,
+    0,
+    {
+    x: x,
+    y: y,
+    offsetX: 0,
+    offsetY: 0,
+    followsConnection: true,
+    positionRatio: positionRatio
+}
+);
+if (connection.savedData) {
+    connection.savedData.controlPoints =
+        connection.controlPoints.map(function (point) {
+            return { ...point };
+        });
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+}
+    showConnectionHandle(line);
+    updateConnections();
+});
+  const bestPoints = getBestConnectionPoints(
+    shape1,
+    shape2
+);
+
+const ports1 = getConnectionPorts(shape1);
+const ports2 = getConnectionPorts(shape2);
+
+const point1 =
+    savedConnection &&
+    typeof savedConnection.point1Index === "number"
+        ? ports1[savedConnection.point1Index]
+        : bestPoints.point1;
+
+const point2 =
+    savedConnection &&
+    typeof savedConnection.point2Index === "number"
+        ? ports2[savedConnection.point2Index]
+        : bestPoints.point2;
+
+const x1 = point1.x;
+const y1 = point1.y;
+
+const x2 = point2.x;
+const y2 = point2.y;
+
+   const pathData = getSmartPath(
+    shape1,
+    shape2,
+    x1,
+    y1,
+    x2,
+    y2
+);
+
+line.setAttribute("d", pathData);
+connectionLayer.appendChild(line);
+
+addWideLineHitArea(line);
+
+const runtimeConnection = {
+    line: line,
+    shape1: shape1,
+    shape2: shape2,
+    point1: point1,
+    point2: point2,
+    point1Index: getConnectionPorts(shape1).findIndex(
+        port => port.x === point1.x && port.y === point1.y
+    ),
+    point2Index: getConnectionPorts(shape2).findIndex(
+        port => port.x === point2.x && port.y === point2.y
+    ),
+    controlPoints:
+    savedConnection && Array.isArray(savedConnection.controlPoints)
+        ? savedConnection.controlPoints.map(function (point) {
+            return { ...point };
+        })
+        : savedConnection && savedConnection.controlPoint
+            ? [{ ...savedConnection.controlPoint }]
+            : [],
+
+controlPoint:
+    savedConnection && savedConnection.controlPoint
+        ? { ...savedConnection.controlPoint }
+        : null,
+    savedData: savedConnection,
+    type: "adjustable"
+};
+
+connections.push(runtimeConnection);
+updateConnections();
+if (shouldSave) {
+if (!savedConnections[currentTopic]) {
+    savedConnections[currentTopic] = [];
+}
+
+const newSavedConnection = {
+    shape1Id: shape1.savedData.id,
+    shape2Id: shape2.savedData.id,
+    point1Index: runtimeConnection.point1Index,
+    point2Index: runtimeConnection.point2Index
+};
+
+savedConnections[currentTopic].push(newSavedConnection);
+
+runtimeConnection.savedData = newSavedConnection;
+
+localStorage.setItem("connections", JSON.stringify(savedConnections));
+}
+}
+function getConnectionPoint(shape, otherShape) {
+
+    const shapeCentreX =
+        shape.offsetLeft + shape.offsetWidth / 2;
+
+    const shapeCentreY =
+        shape.offsetTop + shape.offsetHeight / 2;
+
+    const otherCentreX =
+        otherShape.offsetLeft + otherShape.offsetWidth / 2;
+
+    const otherCentreY =
+        otherShape.offsetTop + otherShape.offsetHeight / 2;
+
+    const dx = otherCentreX - shapeCentreX;
+    const dy = otherCentreY - shapeCentreY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+
+        if (dx > 0) {
+            return {
+                x: shape.offsetLeft + shape.offsetWidth,
+                y: shapeCentreY
+            };
+        } else {
+            return {
+                x: shape.offsetLeft,
+                y: shapeCentreY
+            };
+        }
+
+    } else {
+
+        if (dy > 0) {
+            return {
+                x: shapeCentreX,
+                y: shape.offsetTop + shape.offsetHeight
+            };
+        } else {
+            return {
+                x: shapeCentreX,
+                y: shape.offsetTop
+            };
+        }
+
+    }
+}
+function getConnectionPorts(shape) {
+
+    const left = shape.offsetLeft;
+    const top = shape.offsetTop;
+    const width = shape.offsetWidth;
+    const height = shape.offsetHeight;
+if (shape.classList.contains("diamond")) {
+    return [
+        {
+            x: left + width / 2,
+            y: top,
+            side: "top"
+        },
+        {
+            x: left + width,
+            y: top + height / 2,
+            side: "right"
+        },
+        {
+            x: left + width / 2,
+            y: top + height,
+            side: "bottom"
+        },
+        {
+            x: left,
+            y: top + height / 2,
+            side: "left"
+        }
+    ];
+}
+    return [
+        // Top edge
+        {
+            x: left + width * 0.25,
+            y: top,
+            side: "top"
+        },
+        {
+            x: left + width * 0.5,
+            y: top,
+            side: "top"
+        },
+        {
+            x: left + width * 0.75,
+            y: top,
+            side: "top"
+        },
+
+        // Right edge
+        {
+            x: left + width,
+            y: top + height * 0.25,
+            side: "right"
+        },
+        {
+            x: left + width,
+            y: top + height * 0.5,
+            side: "right"
+        },
+        {
+            x: left + width,
+            y: top + height * 0.75,
+            side: "right"
+        },
+
+        // Bottom edge
+        {
+            x: left + width * 0.25,
+            y: top + height,
+            side: "bottom"
+        },
+        {
+            x: left + width * 0.5,
+            y: top + height,
+            side: "bottom"
+        },
+        {
+            x: left + width * 0.75,
+            y: top + height,
+            side: "bottom"
+        },
+
+        // Left edge
+        {
+            x: left,
+            y: top + height * 0.25,
+            side: "left"
+        },
+        {
+            x: left,
+            y: top + height * 0.5,
+            side: "left"
+        },
+        {
+            x: left,
+            y: top + height * 0.75,
+            side: "left"
+        }
+    ];
+}
+function getBestConnectionPoints(shape1, shape2) {
+
+    const ports1 = getConnectionPorts(shape1);
+    const ports2 = getConnectionPorts(shape2);
+
+    let bestPair = null;
+    let bestDistance = Infinity;
+    const usedPorts1 = connections
+    .map(function (connection) {
+
+        if (connection.shape1 === shape1) {
+            return connection.point1;
+        }
+
+        if (connection.shape2 === shape1) {
+            return connection.point2;
+        }
+
+        return null;
+    })
+    .filter(Boolean);
+
+const usedPorts2 = connections
+    .map(function (connection) {
+
+        if (connection.shape1 === shape2) {
+            return connection.point1;
+        }
+
+        if (connection.shape2 === shape2) {
+            return connection.point2;
+        }
+
+        return null;
+    })
+    .filter(Boolean);
+
+const availablePorts1 = ports1.filter(function (port) {
+    return !usedPorts1.some(function (usedPort) {
+        return (
+            usedPort.x === port.x &&
+            usedPort.y === port.y
+        );
+    });
+});
+
+const availablePorts2 = ports2.filter(function (port) {
+    return !usedPorts2.some(function (usedPort) {
+        return (
+            usedPort.x === port.x &&
+            usedPort.y === port.y
+        );
+    });
+});
+
+const candidatePorts1 =
+    availablePorts1.length > 0 ? availablePorts1 : ports1;
+
+const candidatePorts2 =
+    availablePorts2.length > 0 ? availablePorts2 : ports2;
+
+    candidatePorts1.forEach(function (port1) {
+
+        candidatePorts2.forEach(function (port2) {
+
+            const distance = Math.hypot(
+                port2.x - port1.x,
+                port2.y - port1.y
+            );
+            const port1Used = usedPorts1.some(function (usedPort) {
+    return (
+        usedPort.x === port1.x &&
+        usedPort.y === port1.y
+    );
+});
+
+const port2Used = usedPorts2.some(function (usedPort) {
+    return (
+        usedPort.x === port2.x &&
+        usedPort.y === port2.y
+    );
+});
+
+const overlapPenalty =
+    (port1Used ? 500 : 0) +
+    (port2Used ? 500 : 0);
+
+const score = distance + overlapPenalty;
+
+           if (score < bestDistance) {
+    bestDistance = score;
+
+                bestPair = {
+                    point1: port1,
+                    point2: port2
+                };
+            }
+        });
+    });
+
+    return bestPair;
+}
+function isShapeBlocking(shape1, shape2, possibleBlocker) {
+    if (possibleBlocker === shape1 || possibleBlocker === shape2) {
+        return false;
+    }
+
+    const x1 = shape1.offsetLeft + shape1.offsetWidth / 2;
+    const y1 = shape1.offsetTop + shape1.offsetHeight / 2;
+
+    const x2 = shape2.offsetLeft + shape2.offsetWidth / 2;
+    const y2 = shape2.offsetTop + shape2.offsetHeight / 2;
+
+    const left = possibleBlocker.offsetLeft - 20;
+    const right =
+        possibleBlocker.offsetLeft +
+        possibleBlocker.offsetWidth +
+        20;
+
+    const top = possibleBlocker.offsetTop - 20;
+    const bottom =
+        possibleBlocker.offsetTop +
+        possibleBlocker.offsetHeight +
+        20;
+
+    const steps = 40;
+
+    for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+
+        const x = x1 + (x2 - x1) * t;
+        const y = y1 + (y2 - y1) * t;
+
+        if (
+            x >= left &&
+            x <= right &&
+            y >= top &&
+            y <= bottom
+        ) {
+            return true;
+        }
+    }
+
+    return false;
+}
+function doesSegmentCrossConnections(x1, y1, x2, y2, ignoredConnection = null) {
+
+    function linesIntersect(
+        ax1, ay1, ax2, ay2,
+        bx1, by1, bx2, by2
+    ) {
+
+        const denominator =
+            (ax1 - ax2) * (by1 - by2) -
+            (ay1 - ay2) * (bx1 - bx2);
+
+        if (denominator === 0) {
+            return false;
+        }
+
+        const t =
+            ((ax1 - bx1) * (by1 - by2) -
+            (ay1 - by1) * (bx1 - bx2)) /
+            denominator;
+
+        const u =
+            -(
+                (ax1 - ax2) * (ay1 - by1) -
+                (ay1 - ay2) * (ax1 - bx1)
+            ) /
+            denominator;
+
+        return t > 0 && t < 1 && u > 0 && u < 1;
+    }
+
+    for (const connection of connections) {
+        if (connection === ignoredConnection) {
+    continue;
+}
+
+        const path = connection.line;
+
+        if (!path) {
+            continue;
+        }
+
+        const totalLength = path.getTotalLength();
+        const steps = 30;
+
+        let previousPoint = path.getPointAtLength(0);
+
+        for (let i = 1; i <= steps; i++) {
+
+            const currentPoint = path.getPointAtLength(
+                totalLength * (i / steps)
+            );
+
+            if (
+                linesIntersect(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    previousPoint.x,
+                    previousPoint.y,
+                    currentPoint.x,
+                    currentPoint.y
+                )
+            ) {
+                return true;
+            }
+
+            previousPoint = currentPoint;
+        }
+    }
+
+    return false;
+}
+function isPathClear(points, shape1, shape2) {
+
+    const allShapes = Array.from(
+        canvas.querySelectorAll(".shape")
+    );
+
+    function segmentHitsRectangle(
+        x1,
+        y1,
+        x2,
+        y2,
+        left,
+        top,
+        right,
+        bottom
+    ) {
+
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+
+        let t0 = 0;
+        let t1 = 1;
+
+        const checks = [
+            [-dx, x1 - left],
+            [dx, right - x1],
+            [-dy, y1 - top],
+            [dy, bottom - y1]
+        ];
+
+        for (const check of checks) {
+
+            const p = check[0];
+            const q = check[1];
+
+            if (p === 0) {
+
+                if (q < 0) {
+                    return false;
+                }
+
+            } else {
+
+                const r = q / p;
+
+                if (p < 0) {
+
+                    if (r > t1) {
+                        return false;
+                    }
+
+                    if (r > t0) {
+                        t0 = r;
+                    }
+
+                } else {
+
+                    if (r < t0) {
+                        return false;
+                    }
+
+                    if (r < t1) {
+                        t1 = r;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    for (let i = 0; i < points.length - 1; i++) {
+
+        const start = points[i];
+        const end = points[i + 1];
+
+        for (const shape of allShapes) {
+
+            if (
+                shape === shape1 ||
+                shape === shape2
+            ) {
+                continue;
+            }
+
+            const padding = 20;
+
+            const left =
+                shape.offsetLeft - padding;
+
+            const right =
+                shape.offsetLeft +
+                shape.offsetWidth +
+                padding;
+
+            const top =
+                shape.offsetTop - padding;
+
+            const bottom =
+                shape.offsetTop +
+                shape.offsetHeight +
+                padding;
+
+            if (
+                segmentHitsRectangle(
+                    start.x,
+                    start.y,
+                    end.x,
+                    end.y,
+                    left,
+                    top,
+                    right,
+                    bottom
+                )
+            ) {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+function getSmartPath(
+    shape1,
+    shape2,
+    x1,
+    y1,
+    x2,
+    y2,
+    currentConnection = null
+) {
+    return `M ${x1} ${y1} L ${x2} ${y2}`;
+
+    const start = { x: x1, y: y1 };
+    const end = { x: x2, y: y2 };
+
+    // If the direct connection is clear, use it.
+    if (isPathClear([start, end], shape1, shape2)) {
+        return `M ${x1} ${y1} L ${x2} ${y2}`;
+    }
+
+    const otherShapes = Array.from(
+        canvas.querySelectorAll(".shape")
+    ).filter(function (shape) {
+        return shape !== shape1 && shape !== shape2;
+    });
+
+    const clearance = 30;
+
+    const xValues = [x1, x2];
+    const yValues = [y1, y2];
+
+    otherShapes.forEach(function (shape) {
+
+        xValues.push(
+            shape.offsetLeft - clearance
+        );
+
+        xValues.push(
+            shape.offsetLeft +
+            shape.offsetWidth +
+            clearance
+        );
+
+        yValues.push(
+            shape.offsetTop - clearance
+        );
+
+        yValues.push(
+            shape.offsetTop +
+            shape.offsetHeight +
+            clearance
+        );
+    });
+
+    const uniqueX = [...new Set(xValues)];
+    const uniqueY = [...new Set(yValues)];
+
+    const nodes = [];
+
+    function pointInsideObstacle(x, y) {
+
+        return otherShapes.some(function (shape) {
+
+            const left =
+                shape.offsetLeft - 20;
+
+            const right =
+                shape.offsetLeft +
+                shape.offsetWidth +
+                20;
+
+            const top =
+                shape.offsetTop - 20;
+
+            const bottom =
+                shape.offsetTop +
+                shape.offsetHeight +
+                20;
+
+            return (
+                x > left &&
+                x < right &&
+                y > top &&
+                y < bottom
+            );
+        });
+    }
+
+    uniqueX.forEach(function (x) {
+
+        uniqueY.forEach(function (y) {
+
+            if (!pointInsideObstacle(x, y)) {
+                nodes.push({
+                    x: x,
+                    y: y,
+                    neighbours: []
+                });
+            }
+        });
+    });
+
+    function findNode(x, y) {
+
+        return nodes.find(function (node) {
+            return node.x === x && node.y === y;
+        });
+    }
+
+    const startNode = findNode(x1, y1);
+    const endNode = findNode(x2, y2);
+
+    if (!startNode || !endNode) {
+        return "";
+    }
+
+    // Join neighbouring points horizontally.
+    uniqueY.forEach(function (y) {
+
+        const row = nodes
+            .filter(function (node) {
+                return node.y === y;
+            })
+            .sort(function (a, b) {
+                return a.x - b.x;
+            });
+
+        for (let i = 0; i < row.length - 1; i++) {
+
+            const a = row[i];
+            const b = row[i + 1];
+
+            if (isPathClear([a, b], shape1, shape2)) {
+
+                const distance =
+                    Math.abs(b.x - a.x);
+
+                a.neighbours.push({
+                    node: b,
+                    distance: distance
+                });
+
+                b.neighbours.push({
+                    node: a,
+                    distance: distance
+                });
+            }
+        }
+    });
+
+    // Join neighbouring points vertically.
+    uniqueX.forEach(function (x) {
+
+        const column = nodes
+            .filter(function (node) {
+                return node.x === x;
+            })
+            .sort(function (a, b) {
+                return a.y - b.y;
+            });
+
+        for (let i = 0; i < column.length - 1; i++) {
+
+            const a = column[i];
+            const b = column[i + 1];
+
+           if (isPathClear([a, b], shape1, shape2)) {
+
+                const distance =
+                    Math.abs(b.y - a.y);
+
+                a.neighbours.push({
+                    node: b,
+                    distance: distance
+                });
+
+                b.neighbours.push({
+                    node: a,
+                    distance: distance
+                });
+            }
+        }
+    });
+
+    // Find the shortest clear route.
+    const distances = new Map();
+    const previous = new Map();
+    const unvisited = new Set(nodes);
+
+    nodes.forEach(function (node) {
+        distances.set(node, Infinity);
+    });
+
+    distances.set(startNode, 0);
+
+    while (unvisited.size > 0) {
+
+        let current = null;
+        let smallestDistance = Infinity;
+
+        unvisited.forEach(function (node) {
+
+            const distance =
+                distances.get(node);
+
+            if (distance < smallestDistance) {
+                smallestDistance = distance;
+                current = node;
+            }
+        });
+
+        if (!current) {
+            break;
+        }
+
+        if (current === endNode) {
+            break;
+        }
+
+        unvisited.delete(current);
+
+        current.neighbours.forEach(function (connection) {
+
+            if (!unvisited.has(connection.node)) {
+                return;
+            }
+
+            const newDistance =
+                distances.get(current) +
+                connection.distance +
+                0.1;
+
+            if (
+                newDistance <
+                distances.get(connection.node)
+            ) {
+                distances.set(
+                    connection.node,
+                    newDistance
+                );
+
+                previous.set(
+                    connection.node,
+                    current
+                );
+            }
+        });
+    }
+
+    if (
+        distances.get(endNode) === Infinity
+    ) {
+        return "";
+    }
+
+    const route = [];
+
+    let current = endNode;
+
+    while (current) {
+
+        route.unshift({
+            x: current.x,
+            y: current.y
+        });
+
+        current = previous.get(current);
+    }
+
+    // Remove unnecessary points on straight sections.
+    const simplified = [];
+
+    route.forEach(function (point, index) {
+
+        if (
+            index === 0 ||
+            index === route.length - 1
+        ) {
+            simplified.push(point);
+            return;
+        }
+
+        const previousPoint =
+            route[index - 1];
+
+        const nextPoint =
+            route[index + 1];
+
+        const sameHorizontal =
+            previousPoint.y === point.y &&
+            point.y === nextPoint.y;
+
+        const sameVertical =
+            previousPoint.x === point.x &&
+            point.x === nextPoint.x;
+
+        if (!sameHorizontal && !sameVertical) {
+            simplified.push(point);
+        }
+    });
+
+    // Create rounded corners.
+    const curve = 20;
+
+    let path =
+        `M ${simplified[0].x} ${simplified[0].y}`;
+
+    for (
+        let i = 1;
+        i < simplified.length - 1;
+        i++
+    ) {
+
+        const previousPoint =
+            simplified[i - 1];
+
+        const currentPoint =
+            simplified[i];
+
+        const nextPoint =
+            simplified[i + 1];
+
+        const incomingX =
+            currentPoint.x -
+            previousPoint.x;
+
+        const incomingY =
+            currentPoint.y -
+            previousPoint.y;
+
+        const outgoingX =
+            nextPoint.x -
+            currentPoint.x;
+
+        const outgoingY =
+            nextPoint.y -
+            currentPoint.y;
+
+        const incomingLength =
+            Math.abs(incomingX) +
+            Math.abs(incomingY);
+
+        const outgoingLength =
+            Math.abs(outgoingX) +
+            Math.abs(outgoingY);
+
+        const cornerSize = Math.min(
+            curve,
+            incomingLength / 2,
+            outgoingLength / 2
+        );
+
+        const beforeX =
+            currentPoint.x -
+            Math.sign(incomingX) *
+            cornerSize;
+
+        const beforeY =
+            currentPoint.y -
+            Math.sign(incomingY) *
+            cornerSize;
+
+        const afterX =
+            currentPoint.x +
+            Math.sign(outgoingX) *
+            cornerSize;
+
+        const afterY =
+            currentPoint.y +
+            Math.sign(outgoingY) *
+            cornerSize;
+
+        path +=
+            ` L ${beforeX} ${beforeY}`;
+
+        path +=
+            ` Q ${currentPoint.x} ${currentPoint.y}` +
+            ` ${afterX} ${afterY}`;
+    }
+
+    const last =
+        simplified[simplified.length - 1];
+
+    path +=
+        ` L ${last.x} ${last.y}`;
+
+    return path;
+}
+function buildCurvePath(startX, startY, endX, endY, controlPoints) {
+
+    const points = [
+        { x: startX, y: startY },
+        ...controlPoints,
+        { x: endX, y: endY }
+    ];
+
+    if (points.length === 2) {
+        return `M ${startX} ${startY} L ${endX} ${endY}`;
+    }
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+
+    for (let i = 0; i < points.length - 1; i++) {
+
+        const p0 = points[i - 1] || points[i];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[i + 2] || p2;
+
+        const control1X =
+            p1.x + (p2.x - p0.x) / 6;
+
+        const control1Y =
+            p1.y + (p2.y - p0.y) / 6;
+
+        const control2X =
+            p2.x - (p3.x - p1.x) / 6;
+
+        const control2Y =
+            p2.y - (p3.y - p1.y) / 6;
+
+        path +=
+            ` C ${control1X} ${control1Y}` +
+            ` ${control2X} ${control2Y}` +
+            ` ${p2.x} ${p2.y}`;
+    }
+
+    return path;
+}
+function updateConnections() {
+
+    connections.forEach(function (connection) {
+        if (connection.type === "freeLine") {
+
+    const saved = connection.savedData;
+
+    if (saved.shape1Id != null) {
+        const shape1 = Array.from(
+            canvas.querySelectorAll(".shape")
+        ).find(function (shape) {
+            return shape.savedData.id === saved.shape1Id;
+        });
+
+        if (shape1) {
+            const ports = getConnectionPorts(shape1);
+            const point = ports[saved.point1Index];
+
+            if (point) {
+                saved.x1 = point.x;
+                saved.y1 = point.y;
+            }
+        }
+    }
+
+    if (saved.shape2Id != null) {
+        const shape2 = Array.from(
+            canvas.querySelectorAll(".shape")
+        ).find(function (shape) {
+            return shape.savedData.id === saved.shape2Id;
+        });
+
+        if (shape2) {
+            const ports = getConnectionPorts(shape2);
+            const point = ports[saved.point2Index];
+
+            if (point) {
+                saved.x2 = point.x;
+                saved.y2 = point.y;
+            }
+        }
+    }
+
+    const controlPoints =
+    Array.isArray(saved.controlPoints)
+        ? saved.controlPoints
+        : [];
+
+connection.controlPoints = controlPoints;
+
+connection.line.setAttribute(
+    "d",
+    buildCurvePath(
+        saved.x1,
+        saved.y1,
+        saved.x2,
+        saved.y2,
+        controlPoints
+    )
+);
+if (selectedConnection === connection.line) {
+
+    if (startHandle) {
+        startHandle.setAttribute("cx", saved.x1);
+        startHandle.setAttribute("cy", saved.y1);
+
+        setEndpointLinkColour(
+            startHandle,
+            saved.shape1Id != null
+        );
+    }
+
+    if (endHandle) {
+        endHandle.setAttribute("cx", saved.x2);
+        endHandle.setAttribute("cy", saved.y2);
+
+        setEndpointLinkColour(
+            endHandle,
+            saved.shape2Id != null
+        );
+    }
+}
+    return;
+}
+
+        const shape1 = connection.shape1;
+        const shape2 = connection.shape2;
+        const line = connection.line;
+
+       const ports1 = getConnectionPorts(shape1);
+const ports2 = getConnectionPorts(shape2);
+
+const point1 = ports1[connection.point1Index];
+const point2 = ports2[connection.point2Index];
+connection.point1 = point1;
+connection.point2 = point2;
+
+const x1 = point1.x;
+const y1 = point1.y;
+
+const x2 = point2.x;
+const y2 = point2.y;
+connection.controlPoints.forEach(function (point) {
+
+    if (point.followsLine) {
+
+        point.x = (x1 + x2) / 2 + point.offsetX;
+        point.y = (y1 + y2) / 2 + point.offsetY;
+    }
+});
+connection.controlPoints.forEach(function (point) {
+
+    if (
+        point.followsConnection &&
+        point.positionRatio !== undefined
+    ) {
+
+        point.x =
+            x1 + (x2 - x1) * point.positionRatio + point.offsetX;
+
+        point.y =
+            y1 + (y2 - y1) * point.positionRatio + point.offsetY;
+    }
+});
+
+        let pathData;
+if (
+    connection.controlPoint &&
+    connection.controlPoint.offsetX !== undefined
+) {
+
+    const middleX =
+        (connection.point1.x + connection.point2.x) / 2;
+
+    const middleY =
+        (connection.point1.y + connection.point2.y) / 2;
+
+    connection.controlPoint.x =
+        middleX + connection.controlPoint.offsetX;
+
+    connection.controlPoint.y =
+        middleY + connection.controlPoint.offsetY;
+}
+pathData = buildCurvePath(
+    x1,
+    y1,
+    x2,
+    y2,
+    connection.controlPoints
+);
+line.setAttribute("d", pathData);
+if (selectedConnection === line) {
+
+    if (connectionHandle) {
+
+    if (connection.controlPoints.length > 0) {
+
+    connectionHandle.setAttribute(
+        "cx",
+        connection.controlPoints[0].x
+    );
+
+    connectionHandle.setAttribute(
+        "cy",
+        connection.controlPoints[0].y
+    );
+
+} else {
+
+    const totalLength = line.getTotalLength();
+    const middlePoint =
+        line.getPointAtLength(totalLength / 2);
+
+    connectionHandle.setAttribute(
+        "cx",
+        middlePoint.x
+    );
+
+    connectionHandle.setAttribute(
+        "cy",
+        middlePoint.y
+    );
+}
+}
+
+    if (startHandle) {
+        startHandle.setAttribute("cx", connection.point1.x);
+        startHandle.setAttribute("cy", connection.point1.y);
+    }
+
+    if (endHandle) {
+        endHandle.setAttribute("cx", connection.point2.x);
+        endHandle.setAttribute("cy", connection.point2.y);
+    }
+   
+}
+    });
+     if (
+    selectedShape &&
+    selectedShape.classList.contains("diamond") &&
+    shapeSelectionOutline
+) {
+    const gap = 4;
+
+    const left = selectedShape.offsetLeft - gap;
+    const top = selectedShape.offsetTop - gap;
+    const width = selectedShape.offsetWidth + gap * 2;
+    const height = selectedShape.offsetHeight + gap * 2;
+
+    shapeSelectionOutline.setAttribute(
+        "points",
+        `${left + width / 2},${top} ` +
+        `${left + width},${top + height / 2} ` +
+        `${left + width / 2},${top + height} ` +
+        `${left},${top + height / 2}`
+    );
+}
+}
+/*
+ * Chapter / jump-marker navigation
+ */
+
+const chapterBtn =
+    document.createElement("button");
+
+chapterBtn.type = "button";
+chapterBtn.id = "chapterBtn";
+chapterBtn.textContent = "📍 Chapter";
+
+chapterBtn.title =
+    "Add, rename or remove a chapter";
+
+topicPage.appendChild(
+    chapterBtn
+);
+
+
+/*
+ * Right-side chapter navigator
+ */
+const chapterRail =
+    document.createElement("div");
+
+chapterRail.id = "chapterRail";
+chapterRail.style.display = "none";
+
+chapterRail.innerHTML = `
+    <div id="chapterRailTitle">
+        Chapters
+    </div>
+
+    <div id="chapterRailList"></div>
+`;
+
+topicPage.appendChild(chapterRail);
+
+const chapterRailList =
+    document.getElementById(
+        "chapterRailList"
+    );
+
+
+function getTopicChapters() {
+
+    if (!currentTopic) {
+        return [];
+    }
+
+    return (
+        shapes[currentTopic] || []
+    )
+        .filter(function (item) {
+
+            return (
+                item &&
+                item.id &&
+                item.chapterTitle
+            );
+        })
+        .slice()
+        .sort(function (a, b) {
+
+            const aOrder =
+                typeof a.chapterOrder ===
+                "number"
+                    ? a.chapterOrder
+                    : 999999;
+
+            const bOrder =
+                typeof b.chapterOrder ===
+                "number"
+                    ? b.chapterOrder
+                    : 999999;
+
+            return aOrder - bOrder;
+        });
+}
+
+
+/*
+ * Put the little numbered marker
+ * onto chapter shapes.
+ */
+function syncChapterMarkers(
+    chapters
+) {
+
+    canvas
+        .querySelectorAll(
+            ".chapter-marker-badge"
+        )
+        .forEach(function (badge) {
+            badge.remove();
+        });
+
+    canvas
+        .querySelectorAll(
+            ".chapter-shape"
+        )
+        .forEach(function (shape) {
+            shape.classList.remove(
+                "chapter-shape"
+            );
+        });
+
+    chapters.forEach(
+        function (savedShape, index) {
+
+            const shape =
+                Array.from(
+                    canvas.querySelectorAll(
+                        ".shape"
+                    )
+                ).find(
+                    function (item) {
+
+                        return (
+                            item.savedData &&
+                            item.savedData.id ===
+                                savedShape.id
+                        );
+                    }
+                );
+
+            if (!shape) {
+                return;
+            }
+
+            shape.classList.add(
+                "chapter-shape"
+            );
+
+            const badge =
+                document.createElement(
+                    "div"
+                );
+
+            badge.classList.add(
+                "chapter-marker-badge"
+            );
+
+            badge.textContent =
+                index + 1;
+
+            badge.title =
+                savedShape.chapterTitle;
+
+            shape.appendChild(badge);
+        }
+    );
+}
+
+
+/*
+ * Jump to a chapter shape.
+ */
+function jumpToChapter(shapeId) {
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (!viewport) {
+        return;
+    }
+
+    const targetShape =
+        Array.from(
+            canvas.querySelectorAll(
+                ".shape"
+            )
+        ).find(
+            function (shape) {
+
+                return (
+                    shape.savedData &&
+                    shape.savedData.id ===
+                        shapeId
+                );
+            }
+        );
+
+    if (!targetShape) {
+        return;
+    }
+
+    const zoom =
+        canvasZoom || 1;
+
+    /*
+     * Horizontal centre.
+     */
+    const shapeCentreX =
+        (
+            targetShape.offsetLeft +
+            targetShape.offsetWidth / 2
+        ) * zoom;
+
+    const wantedScrollLeft =
+        shapeCentreX -
+        viewport.clientWidth / 2;
+
+    const maxScrollLeft =
+        Math.max(
+            0,
+            viewport.scrollWidth -
+            viewport.clientWidth
+        );
+
+    viewport.scrollTo({
+        left: Math.max(
+            0,
+            Math.min(
+                maxScrollLeft,
+                wantedScrollLeft
+            )
+        ),
+        behavior: "smooth"
+    });
+
+
+    /*
+     * Vertical centre.
+     */
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const canvasDocumentTop =
+        window.scrollY +
+        canvasRect.top;
+
+    const shapeCentreY =
+        canvasDocumentTop +
+        (
+            targetShape.offsetTop +
+            targetShape.offsetHeight / 2
+        ) * zoom;
+
+    const wantedScrollTop =
+        Math.max(
+            0,
+            shapeCentreY -
+            window.innerHeight / 2
+        );
+
+    window.scrollTo({
+        top: wantedScrollTop,
+        behavior: "smooth"
+    });
+
+
+    /*
+     * Briefly highlight the destination.
+     */
+    targetShape.classList.remove(
+        "chapter-jump-highlight"
+    );
+
+    void targetShape.offsetWidth;
+
+    targetShape.classList.add(
+        "chapter-jump-highlight"
+    );
+
+    setTimeout(
+        function () {
+
+            targetShape.classList.remove(
+                "chapter-jump-highlight"
+            );
+        },
+        1300
+    );
+}
+
+
+/*
+ * Rebuild the right-hand chapter list.
+ */
+function renderChapterRail() {
+
+    if (
+        !chapterRail ||
+        !chapterRailList
+    ) {
+        return;
+    }
+
+    const chapters =
+        getTopicChapters();
+
+    chapterRailList.innerHTML = "";
+
+    syncChapterMarkers(
+        chapters
+    );
+
+    if (
+        !currentTopic ||
+        chapters.length === 0
+    ) {
+
+        chapterRail.style.display =
+            "none";
+
+        return;
+    }
+
+    chapterRail.style.display =
+        "block";
+
+    chapters.forEach(
+    function (savedShape, index) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.classList.add(
+            "chapter-row"
+        );
+
+
+        /*
+         * Main chapter jump button
+         */
+        const jumpButton =
+            document.createElement(
+                "button"
+            );
+
+        jumpButton.type = "button";
+
+        jumpButton.classList.add(
+            "chapter-jump-btn"
+        );
+
+        jumpButton.textContent =
+            (index + 1) +
+            ". " +
+            savedShape.chapterTitle;
+
+        jumpButton.title =
+            savedShape.chapterTitle;
+
+        jumpButton.addEventListener(
+            "click",
+            function () {
+
+                jumpToChapter(
+                    savedShape.id
+                );
+            }
+        );
+
+
+        /*
+         * Rename chapter
+         */
+        const editButton =
+            document.createElement(
+                "button"
+            );
+
+        editButton.type = "button";
+
+        editButton.classList.add(
+            "chapter-edit-btn"
+        );
+
+        editButton.textContent = "✎";
+        editButton.title =
+            "Rename chapter";
+
+        editButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                const newTitle =
+                    prompt(
+                        "Rename chapter:",
+                        savedShape.chapterTitle
+                    );
+
+                if (newTitle === null) {
+                    return;
+                }
+
+                const cleanTitle =
+                    newTitle.trim();
+
+                if (!cleanTitle) {
+
+                    alert(
+                        "Chapter name cannot be blank."
+                    );
+
+                    return;
+                }
+
+                savedShape.chapterTitle =
+                    cleanTitle;
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
+                );
+
+                renderChapterRail();
+                scheduleCloudSave();
+            }
+        );
+
+
+        /*
+         * Delete chapter marker
+         */
+        const deleteButton =
+            document.createElement(
+                "button"
+            );
+
+        deleteButton.type = "button";
+
+        deleteButton.classList.add(
+            "chapter-delete-btn"
+        );
+
+        deleteButton.textContent = "×";
+        deleteButton.title =
+            "Delete chapter";
+
+        deleteButton.addEventListener(
+            "click",
+            function (event) {
+
+                event.stopPropagation();
+
+                const confirmed =
+                    confirm(
+                        'Delete chapter "' +
+                        savedShape.chapterTitle +
+                        '"?\n\n' +
+                        "The shape itself will not be deleted."
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                delete savedShape.chapterTitle;
+                delete savedShape.chapterOrder;
+
+                localStorage.setItem(
+                    "shapes",
+                    JSON.stringify(shapes)
+                );
+
+                renderChapterRail();
+                scheduleCloudSave();
+            }
+        );
+
+
+        row.appendChild(
+            jumpButton
+        );
+
+        row.appendChild(
+            editButton
+        );
+
+        row.appendChild(
+            deleteButton
+        );
+
+        chapterRailList.appendChild(
+            row
+        );
+    }
+);
+}
+
+
+/*
+ * Add / rename / remove chapter
+ * from the currently selected shape.
+ */
+chapterBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            !selectedShape.savedData
+        ) {
+
+            alert(
+                "Select a shape first."
+            );
+
+            return;
+        }
+
+        const savedShape =
+            selectedShape.savedData;
+
+        const textEditor =
+            selectedShape.querySelector(
+                ".shape-text"
+            );
+
+        const shapeText =
+            (
+                savedShape.text ||
+                (
+                    textEditor
+                        ? textEditor.innerText
+                        : ""
+                )
+            )
+                .replace(
+                    /\s+/g,
+                    " "
+                )
+                .trim();
+
+        const existingTitle =
+            savedShape.chapterTitle || "";
+
+        const suggestedTitle =
+            existingTitle ||
+            shapeText ||
+            "Chapter";
+
+        const newTitle =
+            prompt(
+                existingTitle
+                    ? "Edit chapter name. Leave blank to remove:"
+                    : "Chapter name:",
+                suggestedTitle
+            );
+
+        if (newTitle === null) {
+            return;
+        }
+
+        const cleanTitle =
+            newTitle.trim();
+
+        /*
+         * Blank = remove existing chapter.
+         */
+        if (!cleanTitle) {
+
+            if (
+                existingTitle &&
+                !confirm(
+                    "Remove this chapter marker?"
+                )
+            ) {
+                return;
+            }
+
+            delete savedShape.chapterTitle;
+            delete savedShape.chapterOrder;
+
+        } else {
+
+            savedShape.chapterTitle =
+                cleanTitle;
+
+            /*
+             * New chapters go at the end.
+             */
+            if (
+                typeof savedShape.chapterOrder !==
+                "number"
+            ) {
+
+                const existingOrders =
+                    (
+                        shapes[currentTopic] ||
+                        []
+                    )
+                        .map(
+                            function (item) {
+
+                                return (
+                                    typeof item.chapterOrder ===
+                                    "number"
+                                )
+                                    ? item.chapterOrder
+                                    : 0;
+                            }
+                        );
+
+                savedShape.chapterOrder =
+                    (
+                        existingOrders.length
+                            ? Math.max(
+                                ...existingOrders
+                            )
+                            : 0
+                    ) + 1;
+            }
+        }
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        renderChapterRail();
+
+        scheduleCloudSave();
+    }
+);
+displayTopics();
+if (currentTopic) {
+    openTopic(currentTopic);
+}
+
+function findNearestSnapPort(x, y) {
+
+    let nearest = null;
+    let nearestDistance = Infinity;
+
+    const allShapes = Array.from(
+    canvas.querySelectorAll(
+        ".shape"
+    )
+).filter(function (shape) {
+
+    return isLineConnectableShape(
+        shape
+    );
+});
+
+
+    allShapes.forEach(function (shape) {
+
+        const ports = getConnectionPorts(shape);
+
+        ports.forEach(function (port, index) {
+
+            const distance = Math.hypot(
+                x - port.x,
+                y - port.y
+            );
+
+            if (distance < nearestDistance) {
+
+                nearestDistance = distance;
+
+                nearest = {
+                    shape: shape,
+                    port: port,
+                    portIndex: index,
+                    distance: distance
+                };
+            }
+        });
+    });
+
+    if (
+        canvas.classList.contains(
+            "endpoint-dragging"
+        )
+    ) {
+        updateSnapPortIndicator(
+            nearest
+        );
+    }
+
+    return nearest;
+}
+function showConnectionHandle(line) {
+
+    if (connectionHandle) {
+        connectionHandle.remove();
+    }
+connectionHandles.forEach(function (handle) {
+    handle.remove();
+});
+
+connectionHandles = [];
+    if (startHandle) {
+        startHandle.remove();
+    }
+
+    if (endHandle) {
+        endHandle.remove();
+    }
+
+    const connection = connections.find(function (item) {
+        return item.line === line;
+    });
+
+    if (!connection) {
+        return;
+    }
+
+    const connectionLayer =
+        document.getElementById("connectionLayer");
+
+    // BLUE CONTROL HANDLE
+    connectionHandle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle"
+    );
+
+    let controlX;
+    let controlY;
+
+    if (connection.controlPoints.length > 0) {
+    controlX = connection.controlPoints[0].x;
+    controlY = connection.controlPoints[0].y;
+    } else {
+        const totalLength = line.getTotalLength();
+        const middlePoint =
+            line.getPointAtLength(totalLength / 2);
+
+        controlX = middlePoint.x;
+        controlY = middlePoint.y;
+    }
+
+    connectionHandle.setAttribute("cx", controlX);
+    connectionHandle.setAttribute("cy", controlY);
+    connectionHandle.setAttribute("r", "8");
+    connectionHandle.setAttribute("fill", "#2563eb");
+
+    connectionHandle.style.pointerEvents = "all";
+    connectionHandle.style.cursor = "move";
+    connectionHandle.style.touchAction = "none";
+    connectionHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedControlPointHandle === connectionHandle) {
+        connectionHandle.removeAttribute("stroke");
+        connectionHandle.removeAttribute("stroke-width");
+
+        selectedControlPointHandle = null;
+        selectedControlPointIndex = null;
+
+        return;
+    }
+
+    if (selectedControlPointHandle) {
+        selectedControlPointHandle.removeAttribute("stroke");
+        selectedControlPointHandle.removeAttribute("stroke-width");
+    }
+
+    selectedConnectionData = connection;
+    selectedControlPointIndex = 0;
+    selectedControlPointHandle = connectionHandle;
+
+    connectionHandle.setAttribute("stroke", "#111827");
+    connectionHandle.setAttribute("stroke-width", "3");
+});
+
+    connectionLayer.appendChild(connectionHandle);
+    connectionHandles.push(connectionHandle);
+   connection.controlPoints.forEach(function (point, index) {
+
+    if (index === 0) {
+        return;
+    }
+
+    const extraHandle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle"
+    );
+
+    extraHandle.setAttribute("cx", point.x);
+    extraHandle.setAttribute("cy", point.y);
+    extraHandle.setAttribute("r", 8);
+    extraHandle.setAttribute("fill", "#2563eb");
+    extraHandle.style.pointerEvents = "all";
+extraHandle.style.cursor = "move";
+extraHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedControlPointHandle === extraHandle) {
+        extraHandle.removeAttribute("stroke");
+        extraHandle.removeAttribute("stroke-width");
+
+        selectedControlPointHandle = null;
+        selectedControlPointIndex = null;
+
+        return;
+    }
+
+    if (selectedControlPointHandle) {
+        selectedControlPointHandle.removeAttribute("stroke");
+        selectedControlPointHandle.removeAttribute("stroke-width");
+    }
+
+    selectedConnectionData = connection;
+    selectedControlPointIndex = index;
+    selectedControlPointHandle = extraHandle;
+
+    extraHandle.setAttribute("stroke", "#111827");
+    extraHandle.setAttribute("stroke-width", "3");
+});
+
+    connectionLayer.appendChild(extraHandle);
+    connectionHandles.push(extraHandle);
+    extraHandle.addEventListener("pointerdown", function (event) {
+
+    event.stopPropagation();
+
+    extraHandle.setPointerCapture(event.pointerId);
+
+    function moveExtraHandle(event) {
+
+        const canvasRect = canvas.getBoundingClientRect();
+
+        const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+        connection.controlPoints[index].x = x;
+        connection.controlPoints[index].y = y;
+        const point = connection.controlPoints[index];
+
+const baseX =
+    connection.point1.x +
+    (connection.point2.x - connection.point1.x) *
+    point.positionRatio;
+
+const baseY =
+    connection.point1.y +
+    (connection.point2.y - connection.point1.y) *
+    point.positionRatio;
+
+point.offsetX = x - baseX;
+point.offsetY = y - baseY;
+
+        extraHandle.setAttribute("cx", x);
+        extraHandle.setAttribute("cy", y);
+
+        updateConnections();
+    }
+
+    function stopExtraHandle(event) {
+
+        if (connection.savedData) {
+            connection.savedData.controlPoints =
+                connection.controlPoints.map(function (point) {
+                    return { ...point };
+                });
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+        }
+
+        extraHandle.releasePointerCapture(event.pointerId);
+
+        extraHandle.removeEventListener(
+            "pointermove",
+            moveExtraHandle
+        );
+
+        extraHandle.removeEventListener(
+            "pointerup",
+            stopExtraHandle
+        );
+    }
+
+    extraHandle.addEventListener(
+        "pointermove",
+        moveExtraHandle
+    );
+
+    extraHandle.addEventListener(
+        "pointerup",
+        stopExtraHandle
+    );
+});
+});
+
+    // START BLACK HANDLE
+    startHandle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle"
+    );
+
+    startHandle.setAttribute(
+        "cx",
+        connection.point1.x
+    );
+
+    startHandle.setAttribute(
+        "cy",
+        connection.point1.y
+    );
+
+    startHandle.setAttribute("r", "10");
+    setEndpointLinkColour(
+    startHandle,
+    connection.savedData &&
+    connection.savedData.shape1Id != null
+);
+    startHandle.style.pointerEvents = "all";
+    startHandle.style.cursor = "move";
+
+    connectionLayer.appendChild(startHandle);
+    startHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "start") {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (endHandle) {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "start";
+
+    startHandle.setAttribute("stroke", "#2563eb");
+    startHandle.setAttribute("stroke-width", "4");
+});
+
+    // END BLACK HANDLE
+    endHandle = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "circle"
+    );
+
+    endHandle.setAttribute(
+        "cx",
+        connection.point2.x
+    );
+
+    endHandle.setAttribute(
+        "cy",
+        connection.point2.y
+    );
+
+    endHandle.setAttribute("r", "10");
+    setEndpointLinkColour(
+    endHandle,
+    connection.savedData &&
+    connection.savedData.shape2Id != null
+);
+    endHandle.style.pointerEvents = "all";
+    endHandle.style.cursor = "move";
+
+    connectionLayer.appendChild(endHandle);
+    endHandle.addEventListener("click", function (event) {
+
+    event.stopPropagation();
+
+    if (selectedEndpoint === "end") {
+        endHandle.removeAttribute("stroke");
+        endHandle.removeAttribute("stroke-width");
+        selectedEndpoint = null;
+        return;
+    }
+
+    if (startHandle) {
+        startHandle.removeAttribute("stroke");
+        startHandle.removeAttribute("stroke-width");
+    }
+
+    selectedEndpoint = "end";
+
+    endHandle.setAttribute("stroke", "#2563eb");
+    endHandle.setAttribute("stroke-width", "4");
+});
+
+    function redrawPreview(startX, startY, endX, endY) {
+
+    const pathData = buildCurvePath(
+        startX,
+        startY,
+        endX,
+        endY,
+        connection.controlPoints
+    );
+
+    line.setAttribute("d", pathData);
+}
+
+    
+// BLUE HANDLE DRAG
+
+let blueBendSaveTimer = null;
+
+function saveBlueBend() {
+
+    if (!connection.savedData) {
+        return;
+    }
+
+    connection.savedData.controlPoint = {
+        ...connection.controlPoint
+    };
+
+    connection.savedData.controlPoints =
+        connection.controlPoints.map(function (point) {
+            return { ...point };
+        });
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+}
+
+function moveBlueHandle(clientX, clientY) {
+
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const x =
+        (clientX - canvasRect.left) / canvasZoom;
+
+    const y =
+        (clientY - canvasRect.top) / canvasZoom;
+
+    const middleX =
+        (connection.point1.x + connection.point2.x) / 2;
+
+    const middleY =
+        (connection.point1.y + connection.point2.y) / 2;
+
+    connection.controlPoint = {
+        x: x,
+        y: y,
+        offsetX: x - middleX,
+        offsetY: y - middleY
+    };
+
+    connection.controlPoints[0] = {
+        x: x,
+        y: y,
+        offsetX: x - middleX,
+        offsetY: y - middleY,
+        followsLine: true
+    };
+
+    connectionHandle.setAttribute("cx", x);
+    connectionHandle.setAttribute("cy", y);
+
+    redrawPreview(
+        connection.point1.x,
+        connection.point1.y,
+        connection.point2.x,
+        connection.point2.y
+    );
+
+    /*
+       Save shortly after movement stops.
+       This also protects us if Safari loses the release event.
+    */
+    clearTimeout(blueBendSaveTimer);
+
+    blueBendSaveTimer =
+        setTimeout(saveBlueBend, 100);
+}
+
+let blueMoveFrame = null;
+let blueMoveX = 0;
+let blueMoveY = 0;
+
+function queueBlueHandleMove(clientX, clientY) {
+
+    blueMoveX = clientX;
+    blueMoveY = clientY;
+
+    if (blueMoveFrame !== null) {
+        return;
+    }
+
+    blueMoveFrame =
+        requestAnimationFrame(function () {
+
+            blueMoveFrame = null;
+
+            moveBlueHandle(
+
+                blueMoveX,
+                blueMoveY
+            );
+        });
+}
+/* Desktop / Safari simulator */
+connectionHandle.addEventListener(
+    "mousedown",
+    function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+        canvasPanning = false;
+
+const bendViewport =
+    document.getElementById("canvasViewport");
+    
+    const lockedScrollLeft =
+    bendViewport.scrollLeft;
+
+const lockedScrollTop =
+    bendViewport.scrollTop;
+
+const oldOverflow =
+    bendViewport.style.overflow;
+
+const oldBodyOverflow =
+    document.body.style.overflow;
+
+bendViewport.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+        function mouseMove(event) {
+
+    event.preventDefault();
+
+    bendViewport.scrollLeft =
+        lockedScrollLeft;
+
+    bendViewport.scrollTop =
+        lockedScrollTop;
+
+    queueBlueHandleMove(
+        event.clientX,
+        event.clientY
+    );
+}
+
+        function mouseUp() {
+bendViewport.style.overflow =
+    oldOverflow;
+
+document.body.style.overflow =
+    oldBodyOverflow;
+            clearTimeout(blueBendSaveTimer);
+            saveBlueBend();
+
+            window.removeEventListener(
+                "mousemove",
+                mouseMove
+            );
+
+            window.removeEventListener(
+                "mouseup",
+                mouseUp
+            );
+        }
+
+        window.addEventListener(
+            "mousemove",
+            mouseMove
+        );
+
+        window.addEventListener(
+            "mouseup",
+            mouseUp
+        );
+    }
+);
+
+
+/* Real iPhone / iPad */
+connectionHandle.addEventListener(
+    "touchstart",
+    function (event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+        canvasPanning = false;
+
+const bendViewport =
+    document.getElementById("canvasViewport");
+    const lockedScrollLeft =
+    bendViewport.scrollLeft;
+
+const lockedScrollTop =
+    bendViewport.scrollTop;
+
+const oldOverflow =
+    bendViewport.style.overflow;
+
+const oldBodyOverflow =
+    document.body.style.overflow;
+
+bendViewport.style.overflow = "hidden";
+document.body.style.overflow = "hidden";
+
+        function touchMove(event) {
+
+    event.preventDefault();
+
+    bendViewport.scrollLeft =
+        lockedScrollLeft;
+
+    bendViewport.scrollTop =
+        lockedScrollTop;
+
+    const touch = event.touches[0];
+
+    queueBlueHandleMove(
+        touch.clientX,
+        touch.clientY
+    );
+}
+
+        function touchEnd() {
+            bendViewport.style.overflow =
+    oldOverflow;
+
+document.body.style.overflow =
+    oldBodyOverflow;
+
+            clearTimeout(blueBendSaveTimer);
+            saveBlueBend();
+
+            window.removeEventListener(
+                "touchmove",
+                touchMove
+            );
+
+            window.removeEventListener(
+                "touchend",
+                touchEnd
+            );
+
+            window.removeEventListener(
+                "touchcancel",
+                touchEnd
+            );
+        }
+
+        window.addEventListener(
+            "touchmove",
+            touchMove,
+            { passive: false }
+        );
+
+        window.addEventListener(
+            "touchend",
+            touchEnd
+        );
+
+        window.addEventListener(
+            "touchcancel",
+            touchEnd
+        );
+    },
+    { passive: false }
+);
+    // END HANDLE DRAG
+    endHandle.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            event.stopPropagation();
+                    canvas.classList.add(
+            "endpoint-dragging"
+        );
+
+            endHandle.setPointerCapture(
+                event.pointerId
+            );
+
+            function moveEnd(event) {
+
+                const canvasRect =
+                    canvas.getBoundingClientRect();
+
+              const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+                const nearest =
+                    findNearestSnapPort(x, y);
+                    setEndpointLinkColour(
+    endHandle,
+    nearest &&
+    nearest.distance <= getSnapThreshold()
+);
+
+                let endX = x;
+                let endY = y;
+
+                if (
+                    nearest &&
+                    nearest.distance <= getSnapThreshold()
+                ) {
+                    endX = nearest.port.x;
+                    endY = nearest.port.y;
+                }
+
+                endHandle.setAttribute("cx", endX);
+                endHandle.setAttribute("cy", endY);
+
+                redrawPreview(
+                    connection.point1.x,
+                    connection.point1.y,
+                    endX,
+                    endY
+                );
+            }
+
+            function stopEnd(event) {
+                canvas.classList.remove(
+    "endpoint-dragging"
+);
+
+                const endX =
+                    Number(
+                        endHandle.getAttribute("cx")
+                    );
+
+                const endY =
+                    Number(
+                        endHandle.getAttribute("cy")
+                    );
+
+                const nearest =
+                    findNearestSnapPort(
+                        endX,
+                        endY
+                    );
+
+                if (
+                    nearest &&
+                    nearest.distance <= getSnapThreshold()
+                ) {
+const oldShape2Id =
+    connection.shape2.savedData.id;
+                    connection.shape2 =
+                        nearest.shape;
+
+                    connection.point2Index =
+                        nearest.portIndex;
+
+                    connection.point2 =
+                        nearest.port;
+                        const savedConnection =
+    connection.savedData;
+
+if (savedConnection) {
+    savedConnection.shape2Id =
+        connection.shape2.savedData.id;
+
+    savedConnection.point2Index =
+        connection.point2Index;
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+}
+                }
+
+                updateConnections();
+                setEndpointLinkColour(
+    endHandle,
+    connection.savedData &&
+    connection.savedData.shape2Id != null
+);
+
+                endHandle.releasePointerCapture(
+                    event.pointerId
+                );
+
+                endHandle.removeEventListener(
+                    "pointermove",
+                    moveEnd
+                );
+
+                endHandle.removeEventListener(
+                    "pointerup",
+                    stopEnd
+                );
+            }
+
+            endHandle.addEventListener(
+                "pointermove",
+                moveEnd
+            );
+
+            endHandle.addEventListener(
+                "pointerup",
+                stopEnd
+            );
+        }
+    );
+
+    // START HANDLE DRAG
+    startHandle.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            event.stopPropagation();
+                    canvas.classList.add(
+            "endpoint-dragging"
+        );
+
+            startHandle.setPointerCapture(
+                event.pointerId
+            );
+
+            function moveStart(event) {
+
+                const canvasRect =
+                    canvas.getBoundingClientRect();
+
+                const x =
+    (event.clientX - canvasRect.left) / canvasZoom;
+
+const y =
+    (event.clientY - canvasRect.top) / canvasZoom;
+
+                               const nearest =
+                    findNearestSnapPort(x, y);
+
+                setEndpointLinkColour(
+                    startHandle,
+                    nearest &&
+                    nearest.distance <= getSnapThreshold()
+                );
+
+                let startX = x;
+                let startY = y;
+
+                if (
+                    nearest &&
+                    nearest.distance <= getSnapThreshold()
+                ) {
+                    startX = nearest.port.x;
+                    startY = nearest.port.y;
+                }
+
+                startHandle.setAttribute(
+                    "cx",
+                    startX
+                );
+
+                startHandle.setAttribute(
+                    "cy",
+                    startY
+                );
+
+                redrawPreview(
+                    startX,
+                    startY,
+                    connection.point2.x,
+                    connection.point2.y
+                );
+            }
+
+                        function stopStart(event) {
+
+                canvas.classList.remove(
+                    "endpoint-dragging"
+                );
+
+                const startX =
+                    Number(
+                        startHandle.getAttribute("cx")
+                    );
+
+                const startY =
+                    Number(
+                        startHandle.getAttribute("cy")
+                    );
+
+                const nearest =
+                    findNearestSnapPort(
+                        startX,
+                        startY
+                    );
+
+                if (
+                    nearest &&
+                    nearest.distance <= getSnapThreshold()
+                ) {
+
+                    connection.shape1 =
+                        nearest.shape;
+
+                    connection.point1Index =
+                        nearest.portIndex;
+
+                    connection.point1 =
+                        nearest.port;
+                        const savedConnection =
+    connection.savedData;
+
+if (savedConnection) {
+
+    savedConnection.shape1Id =
+        connection.shape1.savedData.id;
+
+    savedConnection.point1Index =
+        connection.point1Index;
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+}
+                }
+
+                                updateConnections();
+
+                setEndpointLinkColour(
+                    startHandle,
+                    connection.savedData &&
+                    connection.savedData.shape1Id != null
+                );
+
+                startHandle.releasePointerCapture(
+                    event.pointerId
+                );
+
+                startHandle.removeEventListener(
+                    "pointermove",
+                    moveStart
+                );
+
+                startHandle.removeEventListener(
+                    "pointerup",
+                    stopStart
+                );
+            }
+
+            startHandle.addEventListener(
+                "pointermove",
+                moveStart
+            );
+
+            startHandle.addEventListener(
+                "pointerup",
+                stopStart
+            );
+        }
+    );
+}
+document.addEventListener("keydown", function (event) {
+        const textEditor =
+        event.target.closest
+            ? event.target.closest(".shape-text")
+            : null;
+
+    if (textEditor) {
+        return;
+    }
+
+
+        if (
+        (event.key === "Delete" || event.key === "Backspace") &&
+        selectedConnectionData &&
+        selectedControlPointIndex !== null
+    ) {
+        event.preventDefault();
+
+        selectedConnectionData.controlPoints.splice(
+            selectedControlPointIndex,
+            1
+        );
+
+        if (selectedConnectionData.savedData) {
+            selectedConnectionData.savedData.controlPoints =
+                selectedConnectionData.controlPoints.map(function (point) {
+                    return { ...point };
+                });
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+        }
+
+        selectedControlPointIndex = null;
+
+        updateConnections();
+        showConnectionHandle(selectedConnectionData.line);
+
+        return;
+    }
+
+    if (
+        (event.key === "Delete" || event.key === "Backspace") &&
+        selectedConnectionData
+    ) {
+        event.preventDefault();
+
+        const savedConnection = selectedConnectionData.savedData;
+
+        if (savedConnection && savedConnections[currentTopic]) {
+            savedConnections[currentTopic] =
+                savedConnections[currentTopic].filter(function (item) {
+                    return item !== savedConnection;
+                });
+
+            localStorage.setItem(
+                "connections",
+                JSON.stringify(savedConnections)
+            );
+        }
+
+        selectedConnectionData.line.remove();
+
+        connections = connections.filter(function (item) {
+            return item !== selectedConnectionData;
+        });
+
+        connectionHandles.forEach(function (handle) {
+            handle.remove();
+        });
+
+        connectionHandles = [];
+
+        if (startHandle) {
+            startHandle.remove();
+            startHandle = null;
+        }
+
+        if (endHandle) {
+            endHandle.remove();
+            endHandle = null;
+        }
+
+        selectedConnection = null;
+        selectedConnectionData = null;
+    }
+});
+arrowEndBtn.addEventListener("click", function () {
+
+    if (!selectedConnection || !selectedConnectionData) {
+        alert("Select a connection first.");
+        return;
+    }
+
+    if (!selectedEndpoint) {
+        alert("Select one of the black endpoint dots first.");
+        return;
+    }
+
+    if (selectedEndpoint === "start") {
+
+        const hasArrow =
+            selectedConnection.getAttribute("marker-start") ===
+            "url(#arrowhead)";
+
+        if (hasArrow) {
+            selectedConnection.removeAttribute("marker-start");
+        } else {
+            selectedConnection.setAttribute(
+                "marker-start",
+                "url(#arrowhead)"
+            );
+        }
+        if (selectedConnectionData.savedData) {
+    selectedConnectionData.savedData.arrowStart = !hasArrow;
+
+    localStorage.setItem(
+        "connections",
+        JSON.stringify(savedConnections)
+    );
+}
+    }
+
+   if (selectedEndpoint === "end") {
+
+    const hasArrow =
+        selectedConnection.getAttribute("marker-end") ===
+        "url(#arrowhead)";
+
+    if (hasArrow) {
+        selectedConnection.removeAttribute("marker-end");
+    } else {
+        selectedConnection.setAttribute(
+            "marker-end",
+            "url(#arrowhead)"
+        );
+    }
+
+    if (selectedConnectionData.savedData) {
+        selectedConnectionData.savedData.arrowEnd = !hasArrow;
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+    }
+}
+});
+canvasSizeSelect.addEventListener("change", function () {
+    localStorage.setItem(
+    "canvasSizeMode",
+    canvasSizeSelect.value
+);
+
+    if (canvasSizeSelect.value === "a4-portrait") {
+        canvas.style.width = "794px";
+        canvas.style.height = "1123px";
+        localStorage.setItem("canvasWidth", "794");
+localStorage.setItem("canvasHeight", "1123");
+    }
+
+    if (canvasSizeSelect.value === "a4-landscape") {
+        canvas.style.width = "1123px";
+        canvas.style.height = "794px";
+
+         localStorage.setItem("canvasWidth", "1123");
+    localStorage.setItem("canvasHeight", "794");
+    }
+
+});
+canvas.addEventListener("pointerdown", function (event) {
+
+    const resizeHandle = event.target.closest("#canvasResizeHandle");
+
+    if (!resizeHandle) {
+        return;
+    }
+
+    event.preventDefault();
+    if (resizeHandle.setPointerCapture) {
+    resizeHandle.setPointerCapture(
+        event.pointerId
+    );
+}
+
+    const canvasSizeLabel =
+        resizeHandle.querySelector("#canvasSizeLabel");
+
+    const startX = event.clientX;
+    const startY = event.clientY;
+
+    const startWidth = canvas.offsetWidth;
+const startHeight = canvas.offsetHeight;
+
+
+/*
+ * Remember where every shape was when
+ * this canvas resize started.
+ */
+const resizeShapeStartData =
+    Array.from(
+        canvas.querySelectorAll(".shape")
+    ).map(function (shape) {
+
+        return {
+            shape: shape,
+            left: shape.offsetLeft,
+            top: shape.offsetTop
+        };
+    });
+
+
+/*
+ * Remember saved line positions too.
+ *
+ * Free lines use absolute x/y coordinates.
+ * Normal connection bends can also contain
+ * absolute positions and offsets.
+ */
+const resizeSavedConnectionStartData =
+    (
+        savedConnections[currentTopic] || []
+    ).map(function (savedConnection) {
+
+        return {
+            savedConnection: savedConnection,
+
+            x1: savedConnection.x1,
+            y1: savedConnection.y1,
+            x2: savedConnection.x2,
+            y2: savedConnection.y2,
+
+            controlPoints:
+                Array.isArray(
+                    savedConnection.controlPoints
+                )
+                    ? savedConnection.controlPoints.map(
+                        function (point) {
+                            return { ...point };
+                        }
+                    )
+                    : [],
+
+            controlPoint:
+                savedConnection.controlPoint
+                    ? {
+                        ...savedConnection.controlPoint
+                    }
+                    : null
+        };
+    });
+
+
+/*
+ * Normal shape-to-shape connections keep
+ * their own runtime copy of bend points.
+ */
+const resizeRuntimeConnectionStartData =
+    connections
+        .filter(function (connection) {
+            return connection.type !== "freeLine";
+        })
+        .map(function (connection) {
+
+            return {
+                connection: connection,
+
+                controlPoints:
+                    Array.isArray(
+                        connection.controlPoints
+                    )
+                        ? connection.controlPoints.map(
+                            function (point) {
+                                return { ...point };
+                            }
+                        )
+                        : [],
+
+                controlPoint:
+                    connection.controlPoint
+                        ? {
+                            ...connection.controlPoint
+                        }
+                        : null
+            };
+        });
+
+
+const canvasViewport =
+    document.getElementById("canvasViewport");
+
+const startScrollLeft =
+    canvasViewport ? canvasViewport.scrollLeft : 0;
+    const startScrollY =
+    window.scrollY;
+let lastResizeX = startX;
+let lastResizeY = startY;
+
+let horizontalResizeDirection = 0;
+let horizontalAutoOffset = 0;
+
+
+let edgeScrollFrame = null;
+let resizeHasMoved = false;
+let resizeActive = true;
+function applyCanvasResize() {
+
+    
+
+    const verticalScrollDifference =
+        window.scrollY -
+        startScrollY;
+
+   const zoom =
+    canvasZoom || 1;
+
+const newWidth = Math.max(
+    300,
+    startWidth +
+    (
+        (lastResizeX - startX) +
+        horizontalAutoOffset
+    ) / zoom
+);
+
+const newHeight = Math.max(
+    300,
+    startHeight +
+    (
+        (lastResizeY - startY) +
+        verticalScrollDifference
+    ) / zoom
+);
+
+    canvas.style.width =
+    newWidth + "px";
+
+canvas.style.height =
+    newHeight + "px";
+
+
+/*
+ * Spread the existing layout across
+ * the newly resized canvas.
+ *
+ * Shape WIDTH/HEIGHT stay unchanged.
+ * Only their positions move.
+ */
+/*
+ * Never compress the existing map when
+ * the canvas becomes smaller in one axis.
+ *
+ * Increasing the canvas can spread items,
+ * but reducing one dimension must not
+ * squash them together.
+ */
+const widthScale = 1;
+const heightScale = 1;
+
+
+resizeShapeStartData.forEach(
+    function (item) {
+
+        const newLeft =
+            Math.max(
+                0,
+                item.left * widthScale
+            );
+
+        const newTop =
+            Math.max(
+                0,
+                item.top * heightScale
+            );
+
+        item.shape.style.left =
+            newLeft + "px";
+
+        item.shape.style.top =
+            newTop + "px";
+
+        if (item.shape.savedData) {
+
+            item.shape.savedData.left =
+                newLeft;
+
+            item.shape.savedData.top =
+                newTop;
+        }
+    }
+);
+
+
+/*
+ * Scale saved line coordinates.
+ */
+resizeSavedConnectionStartData.forEach(
+    function (item) {
+
+        const saved =
+            item.savedConnection;
+
+
+        if (saved.type === "freeLine") {
+
+            if (Number.isFinite(item.x1)) {
+                saved.x1 =
+                    item.x1 * widthScale;
+            }
+
+            if (Number.isFinite(item.y1)) {
+                saved.y1 =
+                    item.y1 * heightScale;
+            }
+
+            if (Number.isFinite(item.x2)) {
+                saved.x2 =
+                    item.x2 * widthScale;
+            }
+
+            if (Number.isFinite(item.y2)) {
+                saved.y2 =
+                    item.y2 * heightScale;
+            }
+        }
+
+
+        if (
+            Array.isArray(
+                saved.controlPoints
+            )
+        ) {
+
+            saved.controlPoints.forEach(
+                function (point, index) {
+
+                    const startPoint =
+                        item.controlPoints[index];
+
+                    if (!startPoint) {
+                        return;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.x
+                        )
+                    ) {
+                        point.x =
+                            startPoint.x *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.y
+                        )
+                    ) {
+                        point.y =
+                            startPoint.y *
+                            heightScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetX
+                        )
+                    ) {
+                        point.offsetX =
+                            startPoint.offsetX *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetY
+                        )
+                    ) {
+                        point.offsetY =
+                            startPoint.offsetY *
+                            heightScale;
+                    }
+                }
+            );
+        }
+
+
+        if (
+            saved.controlPoint &&
+            item.controlPoint
+        ) {
+
+            saved.controlPoint.x =
+                item.controlPoint.x *
+                widthScale;
+
+            saved.controlPoint.y =
+                item.controlPoint.y *
+                heightScale;
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetX
+                )
+            ) {
+                saved.controlPoint.offsetX =
+                    item.controlPoint.offsetX *
+                    widthScale;
+            }
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetY
+                )
+            ) {
+                saved.controlPoint.offsetY =
+                    item.controlPoint.offsetY *
+                    heightScale;
+            }
+        }
+    }
+);
+
+
+/*
+ * Scale the live copies used by
+ * normal connected lines.
+ */
+resizeRuntimeConnectionStartData.forEach(
+    function (item) {
+
+        const connection =
+            item.connection;
+
+        if (
+            Array.isArray(
+                connection.controlPoints
+            )
+        ) {
+
+            connection.controlPoints.forEach(
+                function (point, index) {
+
+                    const startPoint =
+                        item.controlPoints[index];
+
+                    if (!startPoint) {
+                        return;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.x
+                        )
+                    ) {
+                        point.x =
+                            startPoint.x *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.y
+                        )
+                    ) {
+                        point.y =
+                            startPoint.y *
+                            heightScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetX
+                        )
+                    ) {
+                        point.offsetX =
+                            startPoint.offsetX *
+                            widthScale;
+                    }
+
+                    if (
+                        Number.isFinite(
+                            startPoint.offsetY
+                        )
+                    ) {
+                        point.offsetY =
+                            startPoint.offsetY *
+                            heightScale;
+                    }
+                }
+            );
+        }
+
+
+        if (
+            connection.controlPoint &&
+            item.controlPoint
+        ) {
+
+            connection.controlPoint.x =
+                item.controlPoint.x *
+                widthScale;
+
+            connection.controlPoint.y =
+                item.controlPoint.y *
+                heightScale;
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetX
+                )
+            ) {
+                connection.controlPoint.offsetX =
+                    item.controlPoint.offsetX *
+                    widthScale;
+            }
+
+            if (
+                Number.isFinite(
+                    item.controlPoint.offsetY
+                )
+            ) {
+                connection.controlPoint.offsetY =
+                    item.controlPoint.offsetY *
+                    heightScale;
+            }
+        }
+    }
+);
+
+
+if (canvasSizeLabel) {
+
+        canvasSizeLabel.textContent =
+            Math.round(newWidth) +
+            " × " +
+            Math.round(newHeight) +
+            " px";
+
+        canvasSizeLabel.style.display =
+            "block";
+    }
+
+    updateConnections();
+}
+function resizeCanvas(moveEvent) {
+    resizeHasMoved = true;
+
+    if (!edgeScrollFrame) {
+        edgeScrollFrame =
+            requestAnimationFrame(
+                edgeScrollCanvas
+            );
+    }
+
+    const horizontalMovement =
+    moveEvent.clientX -
+    lastResizeX;
+
+if (Math.abs(horizontalMovement) > 0.5) {
+
+    horizontalResizeDirection =
+        horizontalMovement > 0
+            ? 1
+            : -1;
+}
+
+lastResizeX =
+    moveEvent.clientX;
+
+lastResizeY =
+    moveEvent.clientY;
+
+    canvasSizeSelect.value =
+        "custom";
+
+    localStorage.setItem(
+        "canvasSizeMode",
+        "custom"
+    );
+
+    applyCanvasResize();
+}
+
+
+function edgeScrollCanvas() {
+
+    if (!resizeActive || !resizeHasMoved) {
+        return;
+    }
+
+    const viewportRect =
+        canvasViewport.getBoundingClientRect();
+        const visibleRight =
+    Math.min(
+        viewportRect.right,
+        window.innerWidth
+    );
+
+const visibleLeft =
+    Math.max(
+        viewportRect.left,
+        0
+    );
+
+    /*
+     * Give the horizontal viewport some temporary
+     * space so Safari CAN scroll beyond the current canvas edge.
+     */
+    let resizeSpacer =
+        document.getElementById(
+            "canvasResizeSpacer"
+        );
+
+    if (!resizeSpacer) {
+
+        resizeSpacer =
+            document.createElement("div");
+
+        resizeSpacer.id =
+            "canvasResizeSpacer";
+
+        resizeSpacer.style.height =
+            "0px";
+
+        resizeSpacer.style.pointerEvents =
+            "none";
+
+        canvasViewport.appendChild(
+            resizeSpacer
+        );
+    }
+
+    resizeSpacer.style.width =
+    Math.max(
+        startWidth + 2000,
+        canvas.offsetWidth + 500
+    ) + "px";
+
+    /* RIGHT EDGE */
+    if (
+    horizontalResizeDirection > 0 &&
+    lastResizeX >
+    visibleRight - 70
+) {
+
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        lastResizeX -
+(visibleRight - 70)
+                    ) * 0.25
+                )
+            );
+horizontalAutoOffset +=
+    speed;
+
+applyCanvasResize();
+
+/*
+ * Keep the real resize handle visible
+ * as the canvas grows beyond the screen.
+ */
+const handleRect =
+    resizeHandle.getBoundingClientRect();
+
+const rightOverflow =
+    handleRect.right -
+    (visibleRight - 8);
+
+if (rightOverflow > 0) {
+    canvasViewport.scrollLeft +=
+        rightOverflow;
+}
+    }
+
+
+    /* LEFT EDGE */
+   if (
+    horizontalResizeDirection < 0 &&
+    lastResizeX <
+    visibleLeft + 70 &&
+    canvasViewport.scrollLeft > 0
+) {
+
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        visibleLeft +
+70 -
+lastResizeX
+                    ) * 0.25
+                )
+            );
+
+       horizontalAutoOffset -=
+    speed;
+
+applyCanvasResize();
+
+/*
+ * Keep the real resize handle visible
+ * as the canvas shrinks back to the left.
+ */
+const handleRect =
+    resizeHandle.getBoundingClientRect();
+
+const leftOverflow =
+    (visibleLeft + 8) -
+    handleRect.left;
+
+if (leftOverflow > 0) {
+    canvasViewport.scrollLeft =
+        Math.max(
+            0,
+            canvasViewport.scrollLeft -
+            leftOverflow
+        );
+}
+    }
+
+
+    /* BOTTOM — leave the working vertical behaviour */
+    if (
+        lastResizeY >
+        window.innerHeight - 70
+    ) {
+
+        const speed =
+            Math.min(
+                16,
+                Math.max(
+                    5,
+                    (
+                        lastResizeY -
+                        (window.innerHeight - 70)
+                    ) * 0.25
+                )
+            );
+
+        window.scrollBy(
+            0,
+            speed
+        );
+
+        applyCanvasResize();
+    }
+
+
+    edgeScrollFrame =
+        requestAnimationFrame(
+            edgeScrollCanvas
+        );
+}
+function stopResize() {
+    resizeActive = false;
+    const resizeSpacer =
+    document.getElementById(
+        "canvasResizeSpacer"
+    );
+
+if (resizeSpacer) {
+    resizeSpacer.remove();
+}
+    if (edgeScrollFrame) {
+        cancelAnimationFrame(edgeScrollFrame);
+        edgeScrollFrame = null;
+    }
+
+    if (canvasSizeLabel) {
+        canvasSizeLabel.style.display = "none";
+    }
+
+    localStorage.setItem(
+    "canvasWidth",
+    canvas.offsetWidth
+);
+
+localStorage.setItem(
+    "canvasHeight",
+    canvas.offsetHeight
+);
+
+
+/*
+ * Save the newly spread-out shape
+ * and line positions.
+ */
+localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+
+localStorage.setItem(
+    "connections",
+    JSON.stringify(
+        savedConnections
+    )
+);
+
+recalculateOverflowWorkspace();
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
+
+
+window.removeEventListener(
+    "pointermove",
+    resizeCanvas
+);
+window.removeEventListener(
+    "pointerup",
+    stopResize
+);
+
+window.removeEventListener(
+    "pointercancel",
+    stopResize
+);
+}
+
+window.addEventListener(
+    "pointermove",
+    resizeCanvas
+);
+
+window.addEventListener(
+    "pointerup",
+    stopResize
+);
+window.addEventListener(
+    "pointercancel",
+    stopResize
+);
+
+});
+const canvasToolbar = document.getElementById("canvasToolbar");
+const canvasWorkspace = document.getElementById("canvasWorkspace");
+/*
+ * Floating show/hide menu button
+ */
+const menuToggleBtn =
+    document.createElement("button");
+
+menuToggleBtn.type = "button";
+menuToggleBtn.id = "menuToggleBtn";
+menuToggleBtn.textContent = "Hide menu";
+
+topicPage.appendChild(menuToggleBtn);
+
+menuToggleBtn.addEventListener(
+    "click",
+    function () {
+
+        const menuIsHidden =
+            topicPage.classList.toggle(
+                "menu-hidden"
+            );
+
+        menuToggleBtn.textContent =
+            menuIsHidden
+                ? "☰ Show menu"
+                : "Hide menu";
+
+        menuToggleBtn.setAttribute(
+            "aria-expanded",
+            menuIsHidden
+                ? "false"
+                : "true"
+        );
+
+        updateToolbarPosition();
+    }
+);
+/*
+ * Edit / Navigate mode
+ */
+let navigationMode = false;
+
+const navigationModeBtn =
+    document.createElement("button");
+
+navigationModeBtn.type = "button";
+navigationModeBtn.id =
+    "navigationModeBtn";
+
+navigationModeBtn.textContent =
+    "✋ Navigate";
+
+navigationModeBtn.setAttribute(
+    "aria-pressed",
+    "false"
+);
+
+topicPage.appendChild(
+    navigationModeBtn
+);
+
+function setNavigationMode(enabled) {
+
+    navigationMode = enabled;
+
+    topicPage.classList.toggle(
+        "navigation-mode",
+        navigationMode
+    );
+
+    navigationModeBtn.textContent =
+        navigationMode
+            ? "✎ Edit"
+            : "✋ Navigate";
+
+    navigationModeBtn.setAttribute(
+        "aria-pressed",
+        navigationMode
+            ? "true"
+            : "false"
+    );
+
+    /*
+     * Entering Navigate mode:
+     * clear editing selections.
+     */
+    if (navigationMode) {
+
+        clearStaleShapeSelections();
+
+        selectedShape = null;
+
+        if (shapeSelectionOutline) {
+            shapeSelectionOutline.remove();
+            shapeSelectionOutline = null;
+        }
+
+        if (selectedConnection) {
+
+            selectedConnection.setAttribute(
+                "stroke-width",
+                "3"
+            );
+
+            selectedConnection = null;
+            selectedConnectionData = null;
+
+            removeLineHandles();
+        }
+
+        showHoverTools(false);
+        showNormalShapeTools(true);
+        setSidebarMode("default");
+    }
+}
+
+navigationModeBtn.addEventListener(
+    "click",
+    function () {
+
+        setNavigationMode(
+            !navigationMode
+        );
+    }
+);
+/*
+ * Draggable floating control buttons
+ */
+
+function makeFloatingControlDraggable(
+    button,
+    storageKey
+) {
+
+    if (!button) {
+        return;
+    }
+
+    const savedPosition =
+        JSON.parse(
+            localStorage.getItem(
+                storageKey
+            ) || "null"
+        );
+
+    if (
+        savedPosition &&
+        Number.isFinite(savedPosition.left) &&
+        Number.isFinite(savedPosition.top)
+    ) {
+
+        button.style.left =
+            savedPosition.left + "px";
+
+        button.style.top =
+            savedPosition.top + "px";
+
+        button.style.right = "auto";
+        button.style.bottom = "auto";
+    }
+
+    let activePointerId = null;
+
+    let startX = 0;
+    let startY = 0;
+
+    let startLeft = 0;
+    let startTop = 0;
+
+    let dragged = false;
+
+    button.addEventListener(
+        "pointerdown",
+        function (event) {
+
+            if (
+                event.pointerType === "mouse" &&
+                event.button !== 0
+            ) {
+                return;
+            }
+
+            const rect =
+                button.getBoundingClientRect();
+
+            activePointerId =
+                event.pointerId;
+
+            startX = event.clientX;
+            startY = event.clientY;
+
+            startLeft = rect.left;
+            startTop = rect.top;
+
+            dragged = false;
+
+            if (button.setPointerCapture) {
+                button.setPointerCapture(
+                    event.pointerId
+                );
+            }
+        }
+    );
+
+    button.addEventListener(
+        "pointermove",
+        function (event) {
+
+            if (
+                event.pointerId !==
+                activePointerId
+            ) {
+                return;
+            }
+
+            const dx =
+                event.clientX - startX;
+
+            const dy =
+                event.clientY - startY;
+
+            if (
+                !dragged &&
+                Math.hypot(dx, dy) < 8
+            ) {
+                return;
+            }
+
+            dragged = true;
+
+            button.classList.add(
+                "floating-control-dragging"
+            );
+
+            event.preventDefault();
+
+            const maxLeft =
+                Math.max(
+                    6,
+                    window.innerWidth -
+                    button.offsetWidth -
+                    6
+                );
+
+            const maxTop =
+                Math.max(
+                    6,
+                    window.innerHeight -
+                    button.offsetHeight -
+                    6
+                );
+
+            const newLeft =
+                Math.max(
+                    6,
+                    Math.min(
+                        maxLeft,
+                        startLeft + dx
+                    )
+                );
+
+            const newTop =
+                Math.max(
+                    6,
+                    Math.min(
+                        maxTop,
+                        startTop + dy
+                    )
+                );
+
+            button.style.left =
+                newLeft + "px";
+
+            button.style.top =
+                newTop + "px";
+
+            button.style.right = "auto";
+            button.style.bottom = "auto";
+        }
+    );
+
+    function finishFloatingDrag(event) {
+
+        if (
+            event.pointerId !==
+                activePointerId
+        ) {
+            return;
+        }
+
+        if (dragged) {
+
+            const rect =
+                button.getBoundingClientRect();
+
+            localStorage.setItem(
+                storageKey,
+                JSON.stringify({
+                    left: rect.left,
+                    top: rect.top
+                })
+            );
+
+            button._ignoreFloatingClickUntil =
+                Date.now() + 300;
+        }
+
+        button.classList.remove(
+            "floating-control-dragging"
+        );
+
+        activePointerId = null;
+    }
+
+    button.addEventListener(
+        "pointerup",
+        finishFloatingDrag
+    );
+
+    button.addEventListener(
+        "pointercancel",
+        finishFloatingDrag
+    );
+
+    button.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                button._ignoreFloatingClickUntil &&
+                Date.now() <
+                    button._ignoreFloatingClickUntil
+            ) {
+
+                event.preventDefault();
+                event.stopImmediatePropagation();
+            }
+        },
+        true
+    );
+}
+
+
+makeFloatingControlDraggable(
+    navigationModeBtn,
+    "navigationButtonPosition"
+);
+
+makeFloatingControlDraggable(
+    chapterBtn,
+    "chapterButtonPosition"
+);
+
+makeFloatingControlDraggable(
+    menuToggleBtn,
+    "menuButtonPosition"
+);
+function updateToolbarPosition() {
+
+    if (!canvasToolbar || !canvasWorkspace) {
+        return;
+    }
+
+    const topicIsVisible =
+        window.getComputedStyle(topicPage).display !== "none";
+
+    if (!topicIsVisible) {
+        canvasToolbar.classList.remove("toolbar-fixed");
+        return;
+    }
+
+    const workspaceTop =
+        canvasWorkspace.getBoundingClientRect().top;
+
+    if (workspaceTop <= 12) {
+        canvasToolbar.classList.add("toolbar-fixed");
+    } else {
+        canvasToolbar.classList.remove("toolbar-fixed");
+    }
+}
+
+window.addEventListener("scroll", updateToolbarPosition, {
+    passive: true
+});
+
+window.addEventListener("resize", updateToolbarPosition);
+console.log("Supabase connected:", supabaseClient);
+const loginBtn = document.getElementById("loginBtn");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const logoutBtn = document.getElementById("logoutBtn");
+const loginStatus = document.getElementById("loginStatus");
+let isApplyingCloudData = false;
+
+function applyCloudData(cloudData) {
+
+    if (!cloudData) {
+        return;
+    }
+
+    isApplyingCloudData = true;
+
+    try {
+
+        topics =
+            cloudData.topics || [];
+
+        folders =
+            cloudData.folders || [];
+
+        topicFolders =
+            cloudData.topicFolders || {};
+
+        libraryCategories =
+            cloudData.libraryCategories || [];
+
+        folderCategories =
+            cloudData.folderCategories || {};
+
+        shapes =
+            cloudData.shapes || {};
+
+        savedConnections =
+            cloudData.connections || {};
+
+        currentTopic =
+            cloudData.currentTopic || null;
+
+        localStorage.setItem(
+            "topics",
+            JSON.stringify(topics)
+        );
+
+        localStorage.setItem(
+            "folders",
+            JSON.stringify(folders)
+        );
+
+        localStorage.setItem(
+            "topicFolders",
+            JSON.stringify(topicFolders)
+        );
+
+        localStorage.setItem(
+            "libraryCategories",
+            JSON.stringify(libraryCategories)
+        );
+
+        localStorage.setItem(
+            "folderCategories",
+            JSON.stringify(folderCategories)
+        );
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        localStorage.setItem(
+            "connections",
+            JSON.stringify(savedConnections)
+        );
+
+        if (cloudData.canvasWidth) {
+
+            localStorage.setItem(
+                "canvasWidth",
+                cloudData.canvasWidth
+            );
+
+            canvas.style.width =
+                cloudData.canvasWidth + "px";
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasWidth"
+            );
+        }
+
+        if (cloudData.canvasHeight) {
+
+            localStorage.setItem(
+                "canvasHeight",
+                cloudData.canvasHeight
+            );
+
+            canvas.style.height =
+                cloudData.canvasHeight + "px";
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasHeight"
+            );
+        }
+
+        if (cloudData.canvasSizeMode) {
+
+            localStorage.setItem(
+                "canvasSizeMode",
+                cloudData.canvasSizeMode
+            );
+
+            canvasSizeSelect.value =
+                cloudData.canvasSizeMode;
+
+        } else {
+
+            localStorage.removeItem(
+                "canvasSizeMode"
+            );
+        }
+
+        if (currentTopic) {
+
+            localStorage.setItem(
+                "currentTopic",
+                currentTopic
+            );
+
+        } else {
+
+            localStorage.removeItem(
+                "currentTopic"
+            );
+        }
+
+        displayTopics();
+
+        if (currentTopic) {
+            openTopic(currentTopic);
+        }
+
+    } finally {
+
+        isApplyingCloudData = false;
+    }
+}
+
+
+async function syncLatestFromCloud() {
+
+    const cloudData =
+        await loadUserDataFromCloud();
+
+    if (!cloudData) {
+        return;
+    }
+
+    applyCloudData(cloudData);
+
+    console.log(
+        "Latest library loaded from cloud"
+    );
+}
+
+
+async function updateLoginStatus() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+
+        loginStatus.textContent =
+            "Not signed in";
+
+        return;
+    }
+
+    loginStatus.textContent =
+        "Signed in as: " + user.email;
+
+    /*
+     * Supabase is the master copy.
+     * Whenever the app starts signed in,
+     * load the latest cloud version.
+     */
+    await syncLatestFromCloud();
+}
+
+updateLoginStatus();
+async function saveUserDataToCloud() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+    return false;
+}
+const saveVersion =
+    localChangeVersion;
+    const appData = {
+        topics: topics,
+        folders: folders,
+topicFolders: topicFolders,
+libraryCategories: libraryCategories,
+folderCategories: folderCategories,
+        shapes: shapes,
+        connections: savedConnections,
+        currentTopic: currentTopic,
+        canvasWidth: localStorage.getItem("canvasWidth"),
+        canvasHeight: localStorage.getItem("canvasHeight"),
+        canvasSizeMode: localStorage.getItem("canvasSizeMode")
+    };
+
+    const { error } = await supabaseClient
+        .from("user_mind_map_data")
+        .upsert({
+            user_id: user.id,
+            data: appData,
+            updated_at: new Date().toISOString()
+        });
+
+    if (error) {
+    console.error("Cloud save failed:", error);
+    return false;
+}
+
+if (
+    localChangeVersion ===
+    saveVersion
+) {
+    hasUnsavedLocalChanges = false;
+}
+
+console.log("Cloud save successful");
+
+return true;
+}
+let cloudSaveTimer;
+let hasUnsavedLocalChanges = false;
+let localChangeVersion = 0;
+
+function scheduleCloudSave() {
+
+    hasUnsavedLocalChanges = true;
+localChangeVersion += 1;
+
+
+    clearTimeout(cloudSaveTimer);
+
+    cloudSaveTimer = setTimeout(function () {
+        saveUserDataToCloud();
+    }, 800);
+}
+function flushCloudSave() {
+
+    clearTimeout(cloudSaveTimer);
+
+    if (!hasUnsavedLocalChanges) {
+        return;
+    }
+
+    return saveUserDataToCloud();
+}
+
+/*
+ * Save immediately when the iPhone app
+ * goes into the background.
+ */
+document.addEventListener(
+    "visibilitychange",
+    async function () {
+
+        if (
+            document.visibilityState ===
+            "hidden"
+        ) {
+            flushCloudSave();
+            return;
+        }
+
+        if (
+    document.visibilityState ===
+    "visible"
+) {
+
+    if (hasUnsavedLocalChanges) {
+
+        await flushCloudSave();
+
+        if (hasUnsavedLocalChanges) {
+            return;
+        }
+    }
+
+    await syncLatestFromCloud();
+}
+    }
+);
+
+/*
+ * Extra Safari / Home Screen fallback.
+ */
+window.addEventListener(
+    "pagehide",
+    function () {
+        flushCloudSave();
+    }
+);
+const cloudSaveKeys = [
+    "topics",
+    "folders",
+    "topicFolders",
+    "libraryCategories",
+"folderCategories",
+    "shapes",
+    "connections",
+    "currentTopic",
+    "canvasWidth",
+    "canvasHeight",
+    "canvasSizeMode"
+];
+
+const originalSetItem =
+    Storage.prototype.setItem;
+
+Storage.prototype.setItem = function (key, value) {
+
+    originalSetItem.call(this, key, value);
+
+    if (
+        this === localStorage &&
+        cloudSaveKeys.includes(key) &&
+        !isApplyingCloudData
+    ) {
+        scheduleCloudSave();
+    }
+};
+async function loadUserDataFromCloud() {
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        return null;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("user_mind_map_data")
+        .select("data")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("Cloud load failed:", error);
+        return null;
+    }
+
+    if (!data) {
+        return null;
+    }
+
+    return data.data;
+}
+loginBtn.addEventListener("click", async function () {
+
+    const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: loginEmail.value,
+            password: loginPassword.value
+        });
+
+    if (error) {
+        alert(
+            "Sign in failed: " +
+            error.message
+        );
+        return;
+    }
+
+    loginStatus.textContent =
+        "Signed in as: " +
+        data.user.email;
+
+    /*
+     * Always load the latest cloud copy
+     * after signing in.
+     */
+    await syncLatestFromCloud();
+
+    alert("Signed in successfully");
+
+    console.log(
+        "Signed in user:",
+        data.user
+    );
+});
+logoutBtn.addEventListener("click", async function () {
+
+    const { error } =
+        await supabaseClient.auth.signOut();
+
+    if (error) {
+        alert("Sign out failed: " + error.message);
+        return;
+    }
+
+    alert("Signed out successfully");
+    loginStatus.textContent = "Not signed in";
+    topics = [];
+folders = [];
+topicFolders = {};
+libraryCategories = [];
+folderCategories = {};
+shapes = {};
+savedConnections = {};
+currentTopic = null;
+
+localStorage.removeItem("topics");
+localStorage.removeItem("folders");
+localStorage.removeItem("topicFolders");
+localStorage.removeItem("libraryCategories");
+localStorage.removeItem("folderCategories");
+localStorage.removeItem("shapes");
+localStorage.removeItem("connections");
+localStorage.removeItem("currentTopic");
+
+topicPage.style.display = "none";
+createTopicBtn.style.display = "inline-block";
+topicList.style.display = "block";
+
+displayTopics();
+window.location.reload();
+});
+const attachFileBtn = document.getElementById("attachFileBtn");
+const attachmentFileInput = document.getElementById("attachmentFileInput");
+
+attachFileBtn.addEventListener("click", function () {
+    attachmentFileInput.click();
+});
+attachmentFileInput.addEventListener("change", async function () {
+
+    const file = attachmentFileInput.files[0];
+        if (!selectedShape) {
+        alert("Select a shape first.");
+        attachmentFileInput.value = "";
+        return;
+    }
+
+    if (!file) {
+        return;
+    }
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        alert("Please sign in first.");
+        return;
+    }
+
+    const filePath =
+        user.id + "/" + Date.now() + "-" + file.name;
+
+    const { data, error } = await supabaseClient.storage
+        .from("mind-map-files")
+        .upload(filePath, file);
+
+    if (error) {
+        alert("Upload failed: " + error.message);
+        return;
+    }
+if (!selectedShape.savedData.attachments) {
+    selectedShape.savedData.attachments = [];
+}
+
+selectedShape.savedData.attachments.push({
+    name: file.name,
+    path: filePath,
+    type: file.type,
+    size: file.size
+});
+
+localStorage.setItem(
+    "shapes",
+    JSON.stringify(shapes)
+);
+let attachmentBadge =
+    selectedShape.querySelector(".attachment-badge");
+
+if (!attachmentBadge) {
+    attachmentBadge = document.createElement("div");
+    attachmentBadge.classList.add("attachment-badge");
+    selectedShape.appendChild(attachmentBadge);
+}
+
+attachmentBadge.textContent =
+    "📎 " + selectedShape.savedData.attachments.length;
+   attachmentBadge.addEventListener("mousedown", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+});
+
+attachmentBadge.addEventListener("click", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    showAttachmentPanel(selectedShape);
+});
+    alert("File uploaded successfully");
+
+    console.log("Uploaded file:", data);
+});
+const deleteAttachmentBtn =
+    document.getElementById("deleteAttachmentBtn");
+    deleteAttachmentBtn.addEventListener("click", async function () {
+
+    if (!selectedShape) {
+        alert("Select a shape first.");
+        return;
+    }
+
+    const attachments =
+        selectedShape.savedData.attachments || [];
+
+    if (attachments.length === 0) {
+        alert("This shape has no attachments.");
+        return;
+    }
+
+    const attachment = attachments[attachments.length - 1];
+
+    const confirmed = confirm(
+        "Delete attachment: " + attachment.name + "?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { error } = await supabaseClient.storage
+        .from("mind-map-files")
+        .remove([attachment.path]);
+
+    if (error) {
+        alert("Delete failed: " + error.message);
+        return;
+    }
+
+    attachments.pop();
+
+    selectedShape.savedData.attachments = attachments;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    alert("Attachment deleted successfully");
+});
+const attachmentPanel =
+    document.getElementById("attachmentPanel");
+
+const attachmentList =
+    document.getElementById("attachmentList");
+    function showAttachmentPanel(shape) {
+
+    const attachments =
+        shape.savedData.attachments || [];
+
+    attachmentList.innerHTML = "";
+
+    attachments.forEach(function (attachment) {
+
+    const row = document.createElement("div");
+
+    const fileName = document.createElement("span");
+    fileName.textContent = attachment.name;
+
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.textContent = "Open";
+    openBtn.addEventListener("click", async function () {
+
+    const { data, error } = await supabaseClient.storage
+        .from("mind-map-files")
+        .createSignedUrl(
+            attachment.path,
+            60 * 60
+        );
+
+    if (error) {
+        alert("Could not open file: " + error.message);
+        return;
+    }
+
+    window.open(data.signedUrl, "_blank");
+});
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Delete";
+    deleteBtn.addEventListener("click", async function () {
+
+    const confirmed = confirm(
+        "Delete attachment: " + attachment.name + "?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { error } = await supabaseClient.storage
+        .from("mind-map-files")
+        .remove([attachment.path]);
+
+    if (error) {
+        alert("Delete failed: " + error.message);
+        return;
+    }
+
+    const index =
+        shape.savedData.attachments.indexOf(attachment);
+
+    if (index !== -1) {
+        shape.savedData.attachments.splice(index, 1);
+    }
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    const badge =
+        shape.querySelector(".attachment-badge");
+
+    if (badge) {
+        if (shape.savedData.attachments.length === 0) {
+            badge.remove();
+        } else {
+            badge.textContent =
+                "📎 " + shape.savedData.attachments.length;
+        }
+    }
+
+    showAttachmentPanel(shape);
+
+    alert("Attachment deleted successfully");
+});
+
+    row.appendChild(fileName);
+    row.appendChild(openBtn);
+    row.appendChild(deleteBtn);
+
+    attachmentList.appendChild(row);
+});
+
+    const shapeRect = shape.getBoundingClientRect();
+
+attachmentPanel.style.left =
+    window.scrollX + shapeRect.right + 10 + "px";
+
+attachmentPanel.style.top =
+    window.scrollY + shapeRect.top + "px";
+
+attachmentPanel.style.display = "block";
+}
+const closeAttachmentPanelBtn =
+    document.getElementById("closeAttachmentPanelBtn");
+
+closeAttachmentPanelBtn.addEventListener("click", function () {
+    attachmentPanel.style.display = "none";
+});
+document.addEventListener("click", function (event) {
+
+    if (
+        attachmentPanel.style.display === "block" &&
+        !attachmentPanel.contains(event.target) &&
+        !event.target.closest(".attachment-badge")
+    ) {
+        attachmentPanel.style.display = "none";
+    }
+});
+const editHoverBtn =
+    document.getElementById("editHoverBtn");
+
+/*
+ * Rich hover-text editor
+ */
+const hoverEditorOverlay =
+    document.createElement("div");
+
+hoverEditorOverlay.id =
+    "hoverEditorOverlay";
+
+hoverEditorOverlay.style.display =
+    "none";
+
+hoverEditorOverlay.innerHTML = `
+    <div id="hoverEditorPanel">
+
+        <div id="hoverEditorTitle">
+            Edit hover text
+        </div>
+
+        <div id="hoverEditorToolbar">
+
+            <button type="button"
+                id="hoverBoldBtn">
+                <strong>B</strong>
+            </button>
+
+            <button type="button"
+                id="hoverUnderlineBtn">
+                <u>U</u>
+            </button>
+
+            <button type="button"
+                id="hoverBulletBtn">
+                • List
+            </button>
+
+            <button type="button"
+                id="hoverFontDownBtn">
+                A−
+            </button>
+
+            <button type="button"
+                id="hoverFontUpBtn">
+                A+
+            </button>
+
+            <label>
+                Spacing
+                <select id="hoverEditorSpacing">
+                    <option value="1.2">1.2</option>
+                    <option value="1.4">1.4</option>
+                    <option value="1.6">1.6</option>
+                    <option value="1.8">1.8</option>
+                    <option value="2">2.0</option>
+                </select>
+            </label>
+
+        </div>
+
+        <div
+            id="hoverRichEditor"
+            contenteditable="true"
+            spellcheck="true"
+        ></div>
+
+        <div id="hoverEditorActions">
+
+            <button type="button"
+                id="saveHoverEditorBtn">
+                Save
+            </button>
+
+            <button type="button"
+                id="cancelHoverEditorBtn">
+                Cancel
+            </button>
+
+        </div>
+
+    </div>
+`;
+
+document.body.appendChild(
+    hoverEditorOverlay
+);
+
+const hoverRichEditor =
+    document.getElementById(
+        "hoverRichEditor"
+    );
+
+const hoverEditorSpacing =
+    document.getElementById(
+        "hoverEditorSpacing"
+    );
+
+let hoverEditorTargetShape = null;
+
+function closeHoverEditor() {
+
+    hoverEditorOverlay.style.display =
+        "none";
+
+    hoverEditorTargetShape = null;
+}
+
+/*
+ * Formatting buttons.
+ * pointerdown preserves the selected text
+ * on iPad when the toolbar is tapped.
+ */
+function addHoverFormatButton(
+    buttonId,
+    command
+) {
+
+    document
+        .getElementById(buttonId)
+        .addEventListener(
+            "pointerdown",
+            function (event) {
+
+                event.preventDefault();
+
+                document.execCommand(
+                    command,
+                    false,
+                    null
+                );
+            }
+        );
+}
+
+addHoverFormatButton(
+    "hoverBoldBtn",
+    "bold"
+);
+
+addHoverFormatButton(
+    "hoverUnderlineBtn",
+    "underline"
+);
+
+addHoverFormatButton(
+    "hoverBulletBtn",
+    "insertUnorderedList"
+);
+
+/*
+ * Overall hover text size.
+ */
+document
+    .getElementById("hoverFontDownBtn")
+    .addEventListener(
+        "click",
+        function () {
+
+            let size =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            size = Math.max(
+                10,
+                size - 1
+            );
+
+            hoverRichEditor.style.fontSize =
+                size + "px";
+        }
+    );
+
+document
+    .getElementById("hoverFontUpBtn")
+    .addEventListener(
+        "click",
+        function () {
+
+            let size =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            size = Math.min(
+                28,
+                size + 1
+            );
+
+            hoverRichEditor.style.fontSize =
+                size + "px";
+        }
+    );
+
+/*
+ * Overall line spacing.
+ */
+hoverEditorSpacing.addEventListener(
+    "change",
+    function () {
+
+        hoverRichEditor.style.lineHeight =
+            hoverEditorSpacing.value;
+    }
+);
+
+document
+    .getElementById(
+        "cancelHoverEditorBtn"
+    )
+    .addEventListener(
+        "click",
+        closeHoverEditor
+    );
+
+document
+    .getElementById(
+        "saveHoverEditorBtn"
+    )
+    .addEventListener(
+        "click",
+        function () {
+
+            if (!hoverEditorTargetShape) {
+                closeHoverEditor();
+                return;
+            }
+
+            const plainText =
+                hoverRichEditor.innerText
+                    .replace(/\u00a0/g, " ")
+                    .trim();
+
+            hoverEditorTargetShape.savedData
+                .hoverText =
+                plainText;
+
+            hoverEditorTargetShape.savedData
+                .hoverHtml =
+                plainText
+                    ? hoverRichEditor.innerHTML
+                    : "";
+
+            hoverEditorTargetShape.savedData
+                .hoverFontSize =
+                parseFloat(
+                    hoverRichEditor.style.fontSize
+                ) || 14;
+
+            hoverEditorTargetShape.savedData
+                .hoverLineHeight =
+                hoverEditorSpacing.value;
+
+            localStorage.setItem(
+                "shapes",
+                JSON.stringify(shapes)
+            );
+
+            closeHoverEditor();
+        }
+    );
+
+editHoverBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !==
+                "hover"
+        ) {
+            alert(
+                "Select a hover symbol first."
+            );
+            return;
+        }
+
+        hoverEditorTargetShape =
+            selectedShape;
+
+        const savedData =
+            selectedShape.savedData;
+
+        if (savedData.hoverHtml) {
+
+            hoverRichEditor.innerHTML =
+                savedData.hoverHtml;
+
+        } else {
+
+            hoverRichEditor.textContent =
+                savedData.hoverText || "";
+        }
+
+        const fontSize =
+            savedData.hoverFontSize || 14;
+
+        const lineHeight =
+            savedData.hoverLineHeight ||
+            "1.4";
+
+        hoverRichEditor.style.fontSize =
+            fontSize + "px";
+
+        hoverRichEditor.style.lineHeight =
+            lineHeight;
+
+        hoverEditorSpacing.value =
+            lineHeight;
+
+        hoverEditorOverlay.style.display =
+            "flex";
+
+        setTimeout(function () {
+            hoverRichEditor.focus();
+        }, 0);
+    }
+);
+const deleteHoverBtn =
+    document.getElementById("deleteHoverBtn");
+
+deleteHoverBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        !selectedShape.savedData ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select an info symbol first.");
+        return;
+    }
+
+    const shapeToDelete = selectedShape;
+    const savedDataToDelete = selectedShape.savedData;
+
+    shapes[currentTopic] =
+        (shapes[currentTopic] || []).filter(function (item) {
+            return item !== savedDataToDelete;
+        });
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    shapeToDelete.remove();
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    selectedShape = null;
+
+    if (hoverPopup) {
+        hoverPopup.style.display = "none";
+    }
+
+    showHoverTools(false);
+    showNormalShapeTools(true);
+    setSidebarMode("default");
+
+ updateConnections();
+renderChapterRail();
+});
+const hoverPopup =
+    document.getElementById("hoverPopup");
+
+/* Mobile/tablet: tap hover symbol to show its content */
+canvas.addEventListener("click", function (event) {
+
+    const hoverShape =
+        event.target.closest(".hover-symbol");
+
+   if (
+    !hoverShape ||
+    !hoverShape.savedData
+) {
+    return;
+}
+
+/* A drag is not a tap */
+if (
+    hoverShape.hoverIgnoreClickUntil &&
+    Date.now() <
+        hoverShape.hoverIgnoreClickUntil
+) {
+    return;
+}
+
+showHoverContent(
+    hoverShape,
+    hoverShape.savedData
+);
+});
+let activeHoverShape = null;
+
+let hoverHideTimer;
+function positionHoverPopup(shape) {
+
+    if (
+        !shape ||
+        hoverPopup.style.display !== "block"
+    ) {
+        return;
+    }
+
+    const rect =
+        shape.getBoundingClientRect();
+
+    const popupRect =
+        hoverPopup.getBoundingClientRect();
+
+    let left =
+    rect.right + 30;
+
+    let top =
+        rect.top;
+
+    if (
+        left + popupRect.width >
+        window.innerWidth - 10
+    ) {
+        left =
+    rect.left -
+    popupRect.width -
+    30;
+    }
+
+    if (
+        top + popupRect.height >
+        window.innerHeight - 10
+    ) {
+        top =
+            window.innerHeight -
+            popupRect.height -
+            10;
+    }
+
+    if (left < 10) {
+        left = 10;
+    }
+
+    if (top < 10) {
+        top = 10;
+    }
+
+    hoverPopup.style.left =
+        window.scrollX + left + "px";
+
+    hoverPopup.style.top =
+        window.scrollY + top + "px";
+}
+document
+    .getElementById("canvasViewport")
+    .addEventListener(
+        "scroll",
+        function () {
+
+            if (activeHoverShape) {
+                positionHoverPopup(
+                    activeHoverShape
+                );
+            }
+        }
+    );
+function scheduleHoverPopupHide() {
+    clearTimeout(hoverHideTimer);
+
+    hoverHideTimer = setTimeout(function () {
+        hoverPopup.style.display = "none";
+    }, 250);
+}
+
+function keepHoverPopupOpen() {
+    clearTimeout(hoverHideTimer);
+}
+
+hoverPopup.addEventListener("mouseenter", function () {
+    keepHoverPopupOpen();
+});
+
+hoverPopup.addEventListener("mouseleave", function () {
+    scheduleHoverPopupHide();
+});
+canvas.addEventListener("click", function (event) {
+
+    if (event.target !== canvas) {
+        return;
+    }
+
+    /*
+     * Preserve the exact current view.
+     * The iPad toolbar changes layout when
+     * switching back to default mode.
+     */
+    const savedScrollY = window.scrollY;
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    const savedScrollLeft =
+        viewport
+            ? viewport.scrollLeft
+            : 0;
+
+    if (selectedShape) {
+
+        clearStaleShapeSelections();
+
+        selectedShape = null;
+
+        showHoverTools(false);
+        showNormalShapeTools(true);
+        setSidebarMode("default");
+    }
+
+    if (shapeSelectionOutline) {
+        shapeSelectionOutline.remove();
+        shapeSelectionOutline = null;
+    }
+
+    if (selectedConnection) {
+
+        selectedConnection.setAttribute(
+            "stroke-width",
+            "3"
+        );
+
+        selectedConnection = null;
+        selectedConnectionData = null;
+
+        removeLineHandles();
+    }
+
+    /*
+     * Restore position after Safari
+     * has processed the toolbar reflow.
+     */
+    requestAnimationFrame(
+        function () {
+
+            window.scrollTo(
+                window.scrollX,
+                savedScrollY
+            );
+
+            if (viewport) {
+                viewport.scrollLeft =
+                    savedScrollLeft;
+            }
+        }
+    );
+});
+function clearStuckHoverDrag() {
+    document
+        .querySelectorAll(".dragging-hover")
+        .forEach(function (shape) {
+            shape.classList.remove("dragging-hover");
+        });
+}
+
+window.addEventListener("blur", clearStuckHoverDrag);
+
+document.addEventListener("mousemove", function (event) {
+    if (event.buttons === 0) {
+        clearStuckHoverDrag();
+    }
+});
+const addHoverFileBtn =
+    document.getElementById("addHoverFileBtn");
+
+const hoverFileInput =
+    document.getElementById("hoverFileInput");
+
+addHoverFileBtn.addEventListener(
+    "click",
+    function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            return;
+        }
+
+        hoverFileInput.click();
+    }
+);
+hoverFileInput.addEventListener(
+    "change",
+    async function () {
+
+        const file =
+            hoverFileInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            hoverFileInput.value = "";
+            return;
+        }
+
+        const {
+            data: { user },
+            error: userError
+        } =
+            await supabaseClient.auth.getUser();
+
+        if (userError || !user) {
+            alert("Please sign in first.");
+            hoverFileInput.value = "";
+            return;
+        }
+
+        const filePath =
+            user.id +
+            "/hover-files/" +
+            Date.now() +
+            "-" +
+            file.name;
+
+        const fileData =
+            await file.arrayBuffer();
+
+        const { error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .upload(
+                    filePath,
+                    fileData,
+                    {
+                        contentType:
+                            file.type ||
+                            "application/octet-stream"
+                    }
+                );
+
+        if (error) {
+            alert(
+                "File upload failed: " +
+                error.message
+            );
+            return;
+        }
+
+        if (
+            !selectedShape.savedData.hoverFiles
+        ) {
+            selectedShape.savedData.hoverFiles =
+                [];
+        }
+
+        selectedShape.savedData.hoverFiles.push({
+            name: file.name,
+            path: filePath,
+            type: file.type,
+            size: file.size
+        });
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        hoverFileInput.value = "";
+
+        alert("File uploaded successfully");
+    }
+);
+const removeHoverFileBtn =
+    document.getElementById("removeHoverFileBtn");
+
+removeHoverFileBtn.addEventListener(
+    "click",
+    async function () {
+
+        if (
+            !selectedShape ||
+            selectedShape.savedData.type !== "hover"
+        ) {
+            alert("Select a hover symbol first.");
+            return;
+        }
+
+        const files =
+            selectedShape.savedData.hoverFiles || [];
+
+        if (files.length === 0) {
+            alert("This hover symbol has no files.");
+            return;
+        }
+
+        let message =
+            "Which file do you want to remove?\n\n";
+
+        files.forEach(function (file, index) {
+            message +=
+                (index + 1) +
+                ". " +
+                file.name +
+                "\n";
+        });
+
+        const choice = prompt(message);
+
+        if (choice === null) {
+            return;
+        }
+
+        const index =
+            parseInt(choice, 10) - 1;
+
+        if (
+            isNaN(index) ||
+            index < 0 ||
+            index >= files.length
+        ) {
+            alert("Please enter a valid file number.");
+            return;
+        }
+
+        const file =
+            files[index];
+
+        const confirmed = confirm(
+            "Remove " + file.name + "?"
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        const { error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .remove([file.path]);
+
+        if (error) {
+            alert(
+                "Could not remove file: " +
+                error.message
+            );
+            return;
+        }
+
+        files.splice(index, 1);
+
+        localStorage.setItem(
+            "shapes",
+            JSON.stringify(shapes)
+        );
+
+        hoverPopup.style.display = "none";
+
+        alert("File removed");
+    }
+);
+const addHoverImageBtn =
+    document.getElementById("addHoverImageBtn");
+
+const hoverImageFileInput =
+    document.getElementById("hoverImageFileInput");
+
+addHoverImageBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        return;
+    }
+
+    hoverImageFileInput.click();
+});
+hoverImageFileInput.addEventListener("change", async function () {
+
+    const file = hoverImageFileInput.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        hoverImageFileInput.value = "";
+        return;
+    }
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabaseClient.auth.getUser();
+
+    if (userError || !user) {
+        alert("Please sign in first.");
+        return;
+    }
+
+    const filePath =
+        user.id +
+        "/hover-images/" +
+        Date.now() +
+        "-" +
+        file.name;
+
+  const imageData = await file.arrayBuffer();
+
+const { error } = await supabaseClient.storage
+    .from("mind-map-files")
+    .upload(filePath, imageData, {
+        contentType: file.type
+    });
+
+    if (error) {
+        alert("Image upload failed: " + error.message);
+        return;
+    }
+
+    selectedShape.savedData.hoverImage = {
+        name: file.name,
+        path: filePath,
+        type: file.type
+    };
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    hoverImageFileInput.value = "";
+
+    alert("Hover image uploaded successfully");
+});
+async function showHoverContent(shape, savedData) {
+    activeHoverShape = shape;
+
+    if (
+    !savedData.hoverText &&
+    !savedData.hoverImage &&
+    (
+        !savedData.hoverLinks ||
+        savedData.hoverLinks.length === 0
+    ) &&
+    (
+        !savedData.hoverFiles ||
+        savedData.hoverFiles.length === 0
+    )
+) {
+    return;
+}
+
+    hoverPopup.innerHTML = "";
+
+  if (
+    savedData.hoverHtml ||
+    savedData.hoverText
+) {
+
+    const text =
+        document.createElement("div");
+
+    text.classList.add(
+        "hover-rich-text"
+    );
+
+    if (savedData.hoverHtml) {
+
+        text.innerHTML =
+            savedData.hoverHtml;
+
+    } else {
+
+        text.textContent =
+            savedData.hoverText;
+    }
+
+    text.style.fontSize =
+        (savedData.hoverFontSize || 14) +
+        "px";
+
+    text.style.lineHeight =
+        savedData.hoverLineHeight ||
+        "1.4";
+
+    hoverPopup.appendChild(text);
+}
+if (
+    savedData.hoverLinks &&
+    savedData.hoverLinks.length > 0
+) {
+
+    savedData.hoverLinks.forEach(function (hoverLink) {
+
+        const link = document.createElement("a");
+
+        link.textContent =
+    "📄 " +
+    (hoverLink.label || "Open document");
+
+link.classList.add(
+    "hover-resource-link"
+);
+
+        link.href =
+            hoverLink.url;
+
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+
+        link.style.display = "block";
+        link.style.marginTop = "8px";
+
+        hoverPopup.appendChild(link);
+    });
+}
+if (
+    savedData.hoverFiles &&
+    savedData.hoverFiles.length > 0
+) {
+
+    for (const hoverFile of savedData.hoverFiles) {
+
+        const { data, error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .createSignedUrl(
+                    hoverFile.path,
+                    60 * 60
+                );
+
+        if (error) {
+            continue;
+        }
+
+        const fileLink =
+            document.createElement("a");
+
+        fileLink.textContent =
+            "📄 " + hoverFile.name;
+
+        fileLink.href = data.signedUrl;
+        fileLink.target = "_blank";
+        fileLink.rel = "noopener noreferrer";
+
+        fileLink.classList.add(
+            "hover-resource-link"
+        );
+
+        hoverPopup.appendChild(
+            fileLink
+        );
+    }
+}
+    if (savedData.hoverImage) {
+
+        const { data, error } =
+            await supabaseClient.storage
+                .from("mind-map-files")
+                .createSignedUrl(
+                    savedData.hoverImage.path,
+                    60 * 60
+                );
+
+        if (!error) {
+
+            const image = document.createElement("img");
+
+            image.src = data.signedUrl;
+
+            image.style.maxWidth = "300px";
+            image.style.display = "block";
+            image.style.marginTop = "10px";
+            image.style.borderRadius = "6px";
+            image.style.cursor = "zoom-in";
+
+image.addEventListener("click", function () {
+    window.open(
+        data.signedUrl,
+        "_blank",
+        "noopener,noreferrer"
+    );
+});
+
+            hoverPopup.appendChild(image);
+            try {
+    await image.decode();
+} catch (error) {
+    // Continue even if the browser cannot decode early
+}
+        }
+    }
+
+    hoverPopup.style.display = "block";
+
+positionHoverPopup(shape);
+}
+const removeHoverImageBtn =
+    document.getElementById("removeHoverImageBtn");
+
+removeHoverImageBtn.addEventListener("click", async function () {
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        return;
+    }
+
+    const hoverImage =
+        selectedShape.savedData.hoverImage;
+
+    if (!hoverImage) {
+        alert("This hover symbol has no image.");
+        return;
+    }
+
+    const confirmed = confirm(
+        "Remove this hover image?"
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const { error } = await supabaseClient.storage
+        .from("mind-map-files")
+        .remove([hoverImage.path]);
+
+    if (error) {
+        alert("Could not remove image: " + error.message);
+        return;
+    }
+
+    delete selectedShape.savedData.hoverImage;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    hoverPopup.style.display = "none";
+
+    alert("Hover image removed");
+});
+const addHoverLinkBtn =
+    document.getElementById("addHoverLinkBtn");
+
+addHoverLinkBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        return;
+    }
+
+    const label = prompt(
+        "Link text:",
+        selectedShape.savedData.hoverLink?.label || ""
+    );
+
+    if (label === null) {
+        return;
+    }
+
+  let url = prompt(
+    "Website or app link:",
+    selectedShape.savedData.hoverLink?.url || "https://"
+);
+
+if (url === null) {
+    return;
+}
+
+url = url.trim();
+
+if (!url) {
+    return;
+}
+
+if (
+    /^(javascript|data|vbscript):/i.test(url)
+) {
+    alert("That link type is not allowed.");
+    return;
+}
+
+if (
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)
+) {
+    url = "https://" + url;
+}
+
+    if (!selectedShape.savedData.hoverLinks) {
+    selectedShape.savedData.hoverLinks = [];
+
+    if (selectedShape.savedData.hoverLink) {
+        selectedShape.savedData.hoverLinks.push(
+            selectedShape.savedData.hoverLink
+        );
+
+        delete selectedShape.savedData.hoverLink;
+    }
+}
+
+selectedShape.savedData.hoverLinks.push({
+    label: label,
+    url: url
+});
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    alert("Hover link saved");
+});
+const removeHoverLinkBtn =
+    document.getElementById("removeHoverLinkBtn");
+
+removeHoverLinkBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        return;
+    }
+
+    const links =
+        selectedShape.savedData.hoverLinks || [];
+
+    if (links.length === 0) {
+        alert("This hover symbol has no links.");
+        return;
+    }
+
+    let message = "Which link do you want to remove?\n\n";
+
+    links.forEach(function (link, index) {
+        message +=
+            (index + 1) +
+            ". " +
+            (link.label || "Open link") +
+            "\n";
+    });
+
+    const choice = prompt(message);
+
+    if (choice === null) {
+        return;
+    }
+
+    const index =
+        parseInt(choice, 10) - 1;
+
+    if (
+        isNaN(index) ||
+        index < 0 ||
+        index >= links.length
+    ) {
+        alert("Please enter a valid link number.");
+        return;
+    }
+
+    links.splice(index, 1);
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    hoverPopup.style.display = "none";
+
+    alert("Hover link removed");
+});
+const editHoverLinkBtn =
+    document.getElementById("editHoverLinkBtn");
+
+editHoverLinkBtn.addEventListener("click", function () {
+
+    if (
+        !selectedShape ||
+        selectedShape.savedData.type !== "hover"
+    ) {
+        alert("Select a hover symbol first.");
+        return;
+    }
+
+    const links =
+        selectedShape.savedData.hoverLinks || [];
+
+    if (links.length === 0) {
+        alert("This hover symbol has no links.");
+        return;
+    }
+
+    let message = "Which link do you want to edit?\n\n";
+
+    links.forEach(function (link, index) {
+        message +=
+            (index + 1) +
+            ". " +
+            (link.label || "Open link") +
+            "\n";
+    });
+
+    const choice = prompt(message);
+
+    if (choice === null) {
+        return;
+    }
+
+    const index =
+        parseInt(choice, 10) - 1;
+
+    if (
+        isNaN(index) ||
+        index < 0 ||
+        index >= links.length
+    ) {
+        alert("Please enter a valid link number.");
+        return;
+    }
+
+    const link = links[index];
+
+    const newLabel = prompt(
+        "Link text:",
+        link.label || ""
+    );
+
+    if (newLabel === null) {
+        return;
+    }
+
+    let newUrl = prompt(
+    "Website or app link:",
+    link.url || "https://"
+);
+
+if (newUrl === null) {
+    return;
+}
+
+newUrl = newUrl.trim();
+
+if (!newUrl) {
+    return;
+}
+
+if (
+    /^(javascript|data|vbscript):/i.test(newUrl)
+) {
+    alert("That link type is not allowed.");
+    return;
+}
+
+if (
+    !/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(newUrl)
+) {
+    newUrl = "https://" + newUrl;
+}
+
+link.label = newLabel;
+link.url = newUrl;
+
+    localStorage.setItem(
+        "shapes",
+        JSON.stringify(shapes)
+    );
+
+    hoverPopup.style.display = "none";
+
+    alert("Hover link updated");
+});
+function showHoverTools(show) {
+
+    const group =
+        document.getElementById("hoverToolsGroup");
+
+    if (group) {
+        group.style.display =
+            show ? "flex" : "none";
+    }
+
+    document
+        .querySelectorAll(".hover-tool")
+        .forEach(function (button) {
+
+            button.style.display =
+                show ? "inline-block" : "none";
+        });
+}
+function showNormalShapeTools(show) {
+
+    const toolIds = [
+        "colourPicker",
+        "borderColourPicker",
+        "boldBtn",
+        "underlineBtn",
+        "fontDecreaseBtn",
+        "fontIncreaseBtn",
+        "fontColourPicker"
+    ];
+
+    toolIds.forEach(function (id) {
+
+        const tool = document.getElementById(id);
+
+        if (tool) {
+            tool.style.display =
+                show ? "" : "none";
+        }
+    });
+}
+function setSidebarMode(mode) {
+
+    const shapeGroup =
+        document.getElementById("shapeToolsGroup");
+
+    const textGroup =
+        document.getElementById("textToolsGroup");
+
+    const lineGroup =
+        document.getElementById("lineToolsGroup");
+
+    const canvasGroup =
+        document.getElementById("canvasToolsGroup");
+
+    const infoGroup =
+        document.getElementById("hoverToolsGroup");
+
+    shapeGroup.style.display =
+        mode === "default" || mode === "shape"
+            ? "flex"
+            : "none";
+
+    textGroup.style.display =
+        mode === "shape"
+            ? "flex"
+            : "none";
+
+    lineGroup.style.display = "flex";
+
+    infoGroup.style.display =
+        mode === "hover"
+            ? "flex"
+            : "none";
+
+    canvasGroup.style.display = "flex";
+}
+setSidebarMode("default");
+let canvasZoom = 1;
+
+function applyCanvasZoom() {
+
+    canvasZoom = Math.max(
+        0.1,
+        Math.min(2, canvasZoom)
+    );
+
+    const useTransformZoom =
+    window.matchMedia(
+        "(min-width: 701px) and (max-width: 1366px) and (any-pointer: coarse)"
+    ).matches;
+
+if (useTransformZoom) {
+
+    /*
+     * iPad: scale the entire canvas as one object
+     * so text and shapes always stay proportional.
+     */
+    canvas.style.zoom = "1";
+    canvas.style.transformOrigin = "top left";
+    canvas.style.transform =
+        "scale(" + canvasZoom + ")";
+
+    /*
+     * CSS transform changes the visible size,
+     * but not the page layout height.
+     * Give the viewport the scaled height so
+     * the map can still be panned vertically.
+     */
+    const iPadViewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (iPadViewport) {
+        iPadViewport.style.height =
+            Math.ceil(
+                canvas.offsetHeight *
+                canvasZoom
+            ) + "px";
+    }
+
+} else {
+
+    canvas.style.transform = "";
+    canvas.style.transformOrigin = "";
+    canvas.style.zoom = canvasZoom;
+
+    const normalViewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (normalViewport) {
+        normalViewport.style.height = "";
+    }
+}
+
+    const canvasResizeHandle =
+        document.getElementById(
+            "canvasResizeHandle"
+        );
+
+    if (canvasResizeHandle) {
+
+        const hitSize =
+            44 / canvasZoom;
+
+        canvasResizeHandle.style.setProperty(
+            "--canvas-resize-hit-size",
+            hitSize + "px"
+        );
+    }
+
+    canvas.classList.toggle(
+        "very-zoomed-out",
+        canvasZoom <= 0.5
+    );
+
+ zoomLevel.textContent =
+    Math.round(canvasZoom * 100) + "%";
+
+requestAnimationFrame(
+    keepCanvasResizeHandleVisible
+);
+}
+
+zoomOutBtn.addEventListener("click", function () {
+    canvasZoom -= 0.1;
+    applyCanvasZoom();
+});
+
+zoomInBtn.addEventListener("click", function () {
+    canvasZoom += 0.1;
+    applyCanvasZoom();
+});
+
+zoomFitBtn.addEventListener("click", function () {
+
+    const canvasViewport =
+        document.getElementById("canvasViewport");
+
+    if (!canvasViewport) {
+        return;
+    }
+
+    const availableWidth =
+    canvasViewport.clientWidth - 20;
+
+const viewportRect =
+    canvasViewport.getBoundingClientRect();
+
+const availableHeight =
+    Math.max(
+        100,
+        window.innerHeight -
+        viewportRect.top -
+        20
+    );
+
+const widthZoom =
+    availableWidth /
+    canvas.offsetWidth;
+
+const heightZoom =
+    availableHeight /
+    canvas.offsetHeight;
+
+canvasZoom =
+    Math.min(
+        widthZoom,
+        heightZoom,
+        1
+    );
+
+canvasZoom = Math.max(
+    0.1,
+    canvasZoom
+);
+
+    applyCanvasZoom();
+
+    canvasViewport.scrollLeft = 0;
+});
+const canvasViewport =
+    document.getElementById("canvasViewport");
+
+
+function keepCanvasResizeHandleVisible() {
+
+    const resizeHandle =
+        document.getElementById(
+            "canvasResizeHandle"
+        );
+
+    const viewport =
+        document.getElementById(
+            "canvasViewport"
+        );
+
+    if (!resizeHandle || !viewport) {
+        return;
+    }
+
+    const canvasRect =
+        canvas.getBoundingClientRect();
+
+    const viewportRect =
+        viewport.getBoundingClientRect();
+
+    /*
+     * Right-most part of the canvas
+     * that is currently visible.
+     */
+    const visibleRight =
+        Math.min(
+            viewportRect.right,
+            window.innerWidth,
+            canvasRect.right
+        ) - 8;
+
+    const zoom =
+    canvasZoom || 1;
+
+    /*
+     * Move the real resize handle inward
+     * so it remains at the visible
+     * right-hand edge of the canvas.
+     */
+    const rightDistance =
+        Math.max(
+            4,
+            (
+                canvasRect.right -
+                visibleRight
+            ) / zoom
+        );
+
+    resizeHandle.style.right =
+        rightDistance + "px";
+}
+
+
+canvasViewport.addEventListener(
+    "scroll",
+    keepCanvasResizeHandleVisible,
+    {
+        passive: true
+    }
+);
+
+window.addEventListener(
+    "resize",
+    keepCanvasResizeHandleVisible
+);
+
+
+let canvasPanning = false;
+let panStartX = 0;
+let panStartY = 0;
+let panStartScrollLeft = 0;
+let panStartScrollTop = 0;
+
+canvasViewport.addEventListener("pointerdown", function (event) {
+    
+    if (event.pointerType === "touch") {
+        return;
+    }
+    if (
+    !navigationMode &&
+    event.target !== canvas &&
+    event.target !== canvasViewport
+) {
+    return;
+}
+
+    if (!canvasViewport) {
+        return;
+    }
+
+    canvasPanning = true;
+
+    panStartX = event.clientX;
+panStartY = event.clientY;
+
+panStartScrollLeft = canvasViewport.scrollLeft;
+panStartScrollTop = window.scrollY;
+
+    canvas.style.cursor = "grabbing";
+});
+
+window.addEventListener("pointermove", function (event) {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    const distanceMovedX =
+    event.clientX - panStartX;
+
+const distanceMovedY =
+    event.clientY - panStartY;
+
+if (
+    Math.abs(distanceMovedX) >
+    Math.abs(distanceMovedY)
+) {
+
+    /* Horizontal drag = move mind map */
+    canvasViewport.scrollLeft =
+        panStartScrollLeft -
+        distanceMovedX;
+
+} else {
+
+    /* Vertical drag = move whole page */
+    window.scrollTo(
+        window.scrollX,
+        panStartScrollTop -
+        distanceMovedY
+    );
+}
+});
+
+window.addEventListener("pointerup", function () {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    canvasPanning = false;
+    canvas.style.cursor = "";
+});
+window.addEventListener("pointercancel", function () {
+
+    if (!canvasPanning) {
+        return;
+    }
+
+    canvasPanning = false;
+    canvas.style.cursor = "";
+});
+let touchCanvasPanning = false;
+let touchCanvasStartX = 0;
+let touchCanvasStartY = 0;
+let touchCanvasStartScrollLeft = 0;
+let touchCanvasStartScrollY = 0;
+let touchCanvasDirection = null;
+let horizontalPanVelocity = 0;
+let lastHorizontalTouchX = 0;
+let lastHorizontalTouchTime = 0;
+let horizontalMomentumFrame = null;
+
+function stopHorizontalMomentum() {
+
+    if (horizontalMomentumFrame !== null) {
+        cancelAnimationFrame(
+            horizontalMomentumFrame
+        );
+
+        horizontalMomentumFrame = null;
+    }
+
+    horizontalPanVelocity = 0;
+}
+
+function startHorizontalMomentum() {
+
+    if (Math.abs(horizontalPanVelocity) < 0.05) {
+        return;
+    }
+
+    let previousTime = performance.now();
+
+    function glide(now) {
+
+        const elapsed =
+            Math.min(
+                32,
+                now - previousTime
+            );
+
+        previousTime = now;
+
+        const maxScrollLeft =
+            Math.max(
+                0,
+                canvasViewport.scrollWidth -
+                canvasViewport.clientWidth
+            );
+
+        const nextScrollLeft =
+            canvasViewport.scrollLeft +
+            horizontalPanVelocity * elapsed;
+
+        const safeScrollLeft =
+            Math.max(
+                0,
+                Math.min(
+                    maxScrollLeft,
+                    nextScrollLeft
+                )
+            );
+
+        canvasViewport.scrollLeft =
+            safeScrollLeft;
+
+        /* Stop at either edge */
+        if (
+            safeScrollLeft === 0 ||
+            safeScrollLeft === maxScrollLeft
+        ) {
+            horizontalPanVelocity = 0;
+            horizontalMomentumFrame = null;
+            return;
+        }
+
+        /* Gradually slow the glide */
+        horizontalPanVelocity *=
+            Math.pow(
+                0.95,
+                elapsed / 16.67
+            );
+
+        if (
+            Math.abs(horizontalPanVelocity) <
+            0.02
+        ) {
+            horizontalPanVelocity = 0;
+            horizontalMomentumFrame = null;
+            return;
+        }
+
+        horizontalMomentumFrame =
+            requestAnimationFrame(glide);
+    }
+
+    horizontalMomentumFrame =
+        requestAnimationFrame(glide);
+}
+
+let pinchZooming = false;
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let pinchContentX = 0;
+let pinchContentY = 0;
+
+let twoFingerGestureActive = false;
+let suppressShapeClickUntil = 0;
+
+function beginTwoFingerGesture() {
+
+    twoFingerGestureActive = true;
+
+    suppressShapeClickUntil =
+        Date.now() + 700;
+
+    /*
+     * Do not blur editable shape text
+     * or clear the selection here.
+     *
+     * On iPhone Safari this can cause
+     * a visible jump when the first
+     * finger lands on a shape.
+     */
+}
+
+function endTwoFingerGesture() {
+
+    twoFingerGestureActive = false;
+
+    /*
+     * Prevent the pinch ending
+     * from turning into a shape click.
+     */
+    suppressShapeClickUntil =
+        Date.now() + 500;
+}
+canvas.addEventListener(
+    "click",
+    function (event) {
+
+        /*
+         * Navigate mode is for moving
+         * around, not editing/selecting.
+         */
+        if (navigationMode) {
+
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            return;
+        }
+
+        if (
+            Date.now() <
+                suppressShapeClickUntil &&
+            event.target.closest(".shape")
+        ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    },
+    true
+);
+
+const TOUCH_PAN_THRESHOLD = 18;
+
+
+/* Distance between two fingers */
+function getPinchDistance(touch1, touch2) {
+
+    const x = touch2.clientX - touch1.clientX;
+    const y = touch2.clientY - touch1.clientY;
+
+    return Math.sqrt(
+        (x * x) + (y * y)
+    );
+}
+
+
+/* Horizontal centre point between two fingers */
+function getPinchMidpointX(touch1, touch2) {
+
+    return (
+        touch1.clientX +
+        touch2.clientX
+    ) / 2;
+}
+function getPinchMidpointY(touch1, touch2) {
+
+    return (
+        touch1.clientY +
+        touch2.clientY
+    ) / 2;
+}
+
+canvasViewport.addEventListener(
+    "touchstart",
+    function (event) {
+
+        /*
+         * TWO FINGERS = PINCH ZOOM
+         */
+        if (event.touches.length === 2) {
+
+    stopHorizontalMomentum();
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+    beginTwoFingerGesture();
+
+    pinchZooming = true;
+            touchCanvasPanning = false;
+            touchCanvasDirection = null;
+
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            pinchStartDistance =
+                getPinchDistance(
+                    touch1,
+                    touch2
+                );
+
+            pinchStartZoom = canvasZoom;
+
+            /*
+             * Remember which part of the
+             * mind map is underneath the
+             * centre of the fingers.
+             */
+            const viewportRect =
+                canvasViewport.getBoundingClientRect();
+
+            const midpointX =
+    getPinchMidpointX(
+        touch1,
+        touch2
+    ) - viewportRect.left;
+
+const midpointY =
+    getPinchMidpointY(
+        touch1,
+        touch2
+    );
+
+pinchContentX =
+    (
+        canvasViewport.scrollLeft +
+        midpointX
+    ) / canvasZoom;
+
+const canvasRect =
+    canvas.getBoundingClientRect();
+
+pinchContentY =
+    (
+        midpointY -
+        canvasRect.top
+    ) / canvasZoom;
+
+return;
+        }
+
+
+        /*
+         * ONE FINGER = PAN / PAGE SCROLL
+         */
+        if (event.touches.length !== 1) {
+            return;
+        }
+
+        const isCanvasPanArea =
+    navigationMode ||
+    event.target === canvas ||
+    event.target === canvasViewport ||
+    event.target.id ===
+        "canvasOverflowSpacer";
+
+if (!isCanvasPanArea) {
+    return;
+}
+
+       const touch = event.touches[0];
+
+stopHorizontalMomentum();
+
+lastHorizontalTouchX = touch.clientX;
+lastHorizontalTouchTime = performance.now();
+
+touchCanvasPanning = true;
+touchCanvasDirection = null;
+
+        touchCanvasStartX = touch.clientX;
+        touchCanvasStartY = touch.clientY;
+
+        touchCanvasStartScrollLeft =
+            Math.max(
+                0,
+                canvasViewport.scrollLeft
+            );
+            touchCanvasStartScrollY = window.scrollY;
+        },
+    {
+        passive: false,
+        capture: true
+    }
+);
+
+
+canvasViewport.addEventListener(
+    "touchmove",
+    function (event) {
+
+        /*
+         * PINCH ZOOM
+         */
+        if (
+            pinchZooming &&
+            event.touches.length === 2
+        ) {
+
+            event.preventDefault();
+
+            const touch1 = event.touches[0];
+            const touch2 = event.touches[1];
+
+            const currentDistance =
+                getPinchDistance(
+                    touch1,
+                    touch2
+                );
+
+            if (pinchStartDistance === 0) {
+                return;
+            }
+
+            const zoomRatio =
+                currentDistance /
+                pinchStartDistance;
+
+            canvasZoom =
+                pinchStartZoom *
+                zoomRatio;
+
+            applyCanvasZoom();
+
+
+            /*
+             * Keep roughly the same part of
+             * the map between your fingers.
+             */
+            const viewportRect =
+                canvasViewport.getBoundingClientRect();
+
+            const midpointX =
+                getPinchMidpointX(
+                    touch1,
+                    touch2
+                ) - viewportRect.left;
+
+            const wantedScrollLeft =
+                (
+                    pinchContentX *
+                    canvasZoom
+                ) - midpointX;
+
+            const maxScrollLeft =
+                Math.max(
+                    0,
+                    canvasViewport.scrollWidth -
+                    canvasViewport.clientWidth
+                );
+
+            canvasViewport.scrollLeft =
+    Math.max(
+        0,
+        Math.min(
+            maxScrollLeft,
+            wantedScrollLeft
+        )
+    );
+
+/*
+ * Keep the same vertical point
+ * underneath the fingers too.
+ */
+const midpointY =
+    getPinchMidpointY(
+        touch1,
+        touch2
+    );
+
+const canvasRectAfterZoom =
+    canvas.getBoundingClientRect();
+
+const canvasDocumentTop =
+    window.scrollY +
+    canvasRectAfterZoom.top;
+
+const wantedScrollY =
+    canvasDocumentTop +
+    (
+        pinchContentY *
+        canvasZoom
+    ) -
+    midpointY;
+
+window.scrollTo(
+    window.scrollX,
+    Math.max(
+        0,
+        wantedScrollY
+    )
+);
+
+return;
+        }
+
+
+        /*
+         * ONE-FINGER PAN
+         */
+        if (
+            !touchCanvasPanning ||
+            event.touches.length !== 1
+        ) {
+            return;
+        }
+
+        const touch = event.touches[0];
+
+        const distanceX =
+            touch.clientX -
+            touchCanvasStartX;
+
+        const distanceY =
+            touch.clientY -
+            touchCanvasStartY;
+
+        const absX = Math.abs(distanceX);
+        const absY = Math.abs(distanceY);
+
+
+        /*
+         * Decide once whether this gesture
+         * is horizontal or vertical.
+         */
+        if (touchCanvasDirection === null) {
+
+            if (
+                absX < TOUCH_PAN_THRESHOLD &&
+                absY < TOUCH_PAN_THRESHOLD
+            ) {
+                return;
+            }
+
+            touchCanvasDirection =
+                absX > absY
+                    ? "horizontal"
+                    : "vertical";
+        }
+
+
+  /*
+ * Blank canvas = freely pan the mind map
+ * left, right, up, down or diagonally.
+ */
+event.preventDefault();
+
+/*
+ * Keep horizontal momentum when the
+ * main movement is sideways.
+ */
+if (
+    touchCanvasDirection ===
+    "horizontal"
+) {
+
+    const now =
+        performance.now();
+
+    const elapsed =
+        Math.max(
+            1,
+            now - lastHorizontalTouchTime
+        );
+
+    const fingerMovement =
+        touch.clientX -
+        lastHorizontalTouchX;
+
+    const instantVelocity =
+        -fingerMovement / elapsed;
+
+    horizontalPanVelocity =
+        horizontalPanVelocity * 0.65 +
+        instantVelocity * 0.35;
+
+    lastHorizontalTouchX =
+        touch.clientX;
+
+    lastHorizontalTouchTime =
+        now;
+}
+
+/*
+ * Horizontal movement.
+ */
+const maxScrollLeft =
+    Math.max(
+        0,
+        canvasViewport.scrollWidth -
+        canvasViewport.clientWidth
+    );
+
+const newScrollLeft =
+    touchCanvasStartScrollLeft -
+    distanceX;
+
+canvasViewport.scrollLeft =
+    Math.max(
+        0,
+        Math.min(
+            maxScrollLeft,
+            newScrollLeft
+        )
+    );
+
+/*
+ * Vertical movement.
+ */
+window.scrollTo(
+    window.scrollX,
+    Math.max(
+        0,
+        touchCanvasStartScrollY -
+        distanceY
+    )
+);      
+        /*
+         * Vertical gestures are left alone,
+         * allowing normal page scrolling.
+         */
+    },
+    { passive: false }
+);
+
+
+canvasViewport.addEventListener(
+    "touchend",
+    function (event) {
+
+        /*
+         * Once fewer than two fingers remain,
+         * finish the pinch.
+         */
+        if (
+    twoFingerGestureActive &&
+    event.touches.length < 2
+) {
+
+    pinchZooming = false;
+
+    endTwoFingerGesture();
+}
+
+
+        /*
+         * Require a fresh touch after a pinch
+         * before starting another pan.
+         */
+        if (event.touches.length === 0) {
+
+    const finishedDirection =
+        touchCanvasDirection;
+
+    touchCanvasPanning = false;
+    touchCanvasDirection = null;
+
+    if (
+        finishedDirection ===
+        "horizontal"
+    ) {
+        startHorizontalMomentum();
+    }
+}
+    }
+);
+
+
+canvasViewport.addEventListener(
+    "touchcancel",
+    function () {
+
+        pinchZooming = false;
+        touchCanvasPanning = false;
+        touchCanvasDirection = null;
+
+        if (twoFingerGestureActive) {
+            endTwoFingerGesture();
+        }
+    }
+);
+/*
+ * Prevent iPhone Safari from pinch-zooming
+ * the whole webpage while a mind map is open.
+ *
+ * The app's own canvas pinch handler still
+ * receives the gesture.
+ */
+function preventNativeMindMapPageZoom(event) {
+
+    if (
+        !topicPage ||
+        topicPage.style.display !== "block"
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+}
+
+document.addEventListener(
+    "gesturestart",
+    preventNativeMindMapPageZoom,
+    {
+        passive: false,
+        capture: true
+    }
+);
+
+document.addEventListener(
+    "gesturechange",
+    preventNativeMindMapPageZoom,
+    {
+        passive: false,
+        capture: true
+    }
+);
+
+document.addEventListener(
+    "touchmove",
+    function (event) {
+
+        if (
+            topicPage &&
+            topicPage.style.display === "block" &&
+            event.touches.length > 1
+        ) {
+            event.preventDefault();
+        }
+    },
+    {
+        passive: false,
+        capture: true
+    }
+);
+/* Safari / iPhone pinch zoom fallback */
+
+let safariGestureStartZoom = canvasZoom;
+let safariPinchContentX = 0;
+let safariPinchContentY = 0;
+let safariGestureHandling = false;
+
+canvasViewport.addEventListener(
+    "gesturestart",
+    function (event) {
+
+        event.preventDefault();
+
+        /*
+         * Normal touch pinch is already
+         * controlling this gesture.
+         * Do not let Safari control it too.
+         */
+        if (pinchZooming) {
+            safariGestureHandling = false;
+            return;
+        }
+
+        safariGestureHandling = true;
+
+        stopHorizontalMomentum();
+
+        beginTwoFingerGesture();
+
+        touchCanvasPanning = false;
+        touchCanvasDirection = null;
+
+        safariGestureStartZoom =
+            canvasZoom;
+
+        const viewportRect =
+            canvasViewport.getBoundingClientRect();
+
+        const canvasRect =
+            canvas.getBoundingClientRect();
+
+        const gestureX =
+            Number.isFinite(event.clientX)
+                ? event.clientX
+                : (
+                    viewportRect.left +
+                    viewportRect.width / 2
+                );
+
+        const gestureY =
+            Number.isFinite(event.clientY)
+                ? event.clientY
+                : window.innerHeight / 2;
+
+        safariPinchContentX =
+            (
+                canvasViewport.scrollLeft +
+                (
+                    gestureX -
+                    viewportRect.left
+                )
+            ) / canvasZoom;
+
+        safariPinchContentY =
+            (
+                gestureY -
+                canvasRect.top
+            ) / canvasZoom;
+    },
+    { passive: false }
+);
+
+canvasViewport.addEventListener(
+    "gesturechange",
+    function (event) {
+
+        event.preventDefault();
+
+        /*
+         * Ignore Safari's duplicate gesture
+         * if the normal touch pinch owns it.
+         */
+        if (!safariGestureHandling) {
+            return;
+        }
+
+        const viewportRect =
+            canvasViewport.getBoundingClientRect();
+
+        const gestureX =
+            Number.isFinite(event.clientX)
+                ? event.clientX
+                : (
+                    viewportRect.left +
+                    viewportRect.width / 2
+                );
+
+        const gestureY =
+            Number.isFinite(event.clientY)
+                ? event.clientY
+                : window.innerHeight / 2;
+
+        canvasZoom =
+            safariGestureStartZoom *
+            event.scale;
+
+        applyCanvasZoom();
+
+        /*
+         * Keep horizontal position
+         * underneath the pinch.
+         */
+        const wantedScrollLeft =
+            (
+                safariPinchContentX *
+                canvasZoom
+            ) -
+            (
+                gestureX -
+                viewportRect.left
+            );
+
+        const maxScrollLeft =
+            Math.max(
+                0,
+                canvasViewport.scrollWidth -
+                canvasViewport.clientWidth
+            );
+
+        canvasViewport.scrollLeft =
+            Math.max(
+                0,
+                Math.min(
+                    maxScrollLeft,
+                    wantedScrollLeft
+                )
+            );
+
+        /*
+         * Keep vertical position
+         * underneath the pinch.
+         */
+        const canvasRectAfterZoom =
+            canvas.getBoundingClientRect();
+
+        const canvasDocumentTop =
+            window.scrollY +
+            canvasRectAfterZoom.top;
+
+        const wantedScrollY =
+            canvasDocumentTop +
+            (
+                safariPinchContentY *
+                canvasZoom
+            ) -
+            gestureY;
+
+        window.scrollTo(
+            window.scrollX,
+            Math.max(
+                0,
+                wantedScrollY
+            )
+        );
+    },
+    { passive: false }
+);
+
+canvasViewport.addEventListener(
+    "gestureend",
+    function (event) {
+
+        event.preventDefault();
+
+        if (!safariGestureHandling) {
+            return;
+        }
+
+        safariGestureHandling = false;
+
+        pinchZooming = false;
+        touchCanvasPanning = false;
+        touchCanvasDirection = null;
+
+        if (twoFingerGestureActive) {
+            endTwoFingerGesture();
+        }
+    },
+    { passive: false }
+);

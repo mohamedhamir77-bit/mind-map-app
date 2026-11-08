@@ -1,280 +1,290 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-    <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Learning Library</title>
-    <link rel="stylesheet" href="style.css?v=91">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Learning Library</title>
+    <link rel="stylesheet" href="style.css?v=91" />
+  </head>
 
-<body>
-
+  <body>
     <h1>My Learning Library</h1>
     <div id="authBox">
-    <input type="email" id="loginEmail" placeholder="Email">
-    <input type="password" id="loginPassword" placeholder="Password">
-    <button type="button" id="loginBtn">Sign In</button>
-    <button type="button" id="logoutBtn">Sign Out</button>
-    <div id="loginStatus">Not signed in</div>
-</div>
-
-    <div id="libraryToolbar">
-    <button type="button" id="createTopicBtn">+ Create Topic</button>
-    <button type="button" id="createFolderBtn">+ Create Folder</button>
-    <button type="button" id="createCategoryBtn">+ Create Category</button>
-</div>
-<div id="categoryCreator" style="display:none;">
-
-    <div class="category-creator-box">
-
-        <h3>Create Category</h3>
-
-        <input
-            type="text"
-            id="categoryNameInput"
-            placeholder="Category name"
-        >
-
-        <div class="category-colour-swatches">
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#dbeafe"
-        title="Blue"
-        aria-label="Blue"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#dcfce7"
-        title="Green"
-        aria-label="Green"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#f3e8ff"
-        title="Purple"
-        aria-label="Purple"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#fef3c7"
-        title="Amber"
-        aria-label="Amber"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#fee2e2"
-        title="Red"
-        aria-label="Red"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#e5e7eb"
-        title="Grey"
-        aria-label="Grey"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#ccfbf1"
-        title="Teal"
-        aria-label="Teal"
-    ></button>
-
-    <button
-        type="button"
-        class="category-colour-swatch"
-        data-colour="#fce7f3"
-        title="Pink"
-        aria-label="Pink"
-    ></button>
-
-    <label class="category-custom-colour">
-        <span>Custom</span>
-
-        <input
-            type="color"
-            id="categoryCustomColour"
-            value="#60a5fa"
-            title="Choose a custom colour"
-        >
-    </label>
-
-</div>
-
-        <button type="button" id="saveCategoryBtn">
-            Create
-        </button>
-
-        <button type="button" id="cancelCategoryBtn">
-            Cancel
-        </button>
-
+      <input type="email" id="loginEmail" placeholder="Email" />
+      <input type="password" id="loginPassword" placeholder="Password" />
+      <button type="button" id="loginBtn">Sign In</button>
+      <button type="button" id="logoutBtn">Sign Out</button>
+      <div id="loginStatus">Not signed in</div>
     </div>
 
-</div>
+    <div id="libraryToolbar">
+      <button type="button" id="createTopicBtn">+ Create Topic</button>
+      <button type="button" id="createFolderBtn">+ Create Folder</button>
+      <button type="button" id="createCategoryBtn">+ Create Category</button>
+    </div>
+    <div id="categoryCreator" style="display: none">
+      <div class="category-creator-box">
+        <h3>Create Category</h3>
+
+        <input type="text" id="categoryNameInput" placeholder="Category name" />
+
+        <div class="category-colour-swatches">
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#dbeafe"
+            title="Blue"
+            aria-label="Blue"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#dcfce7"
+            title="Green"
+            aria-label="Green"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#f3e8ff"
+            title="Purple"
+            aria-label="Purple"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#fef3c7"
+            title="Amber"
+            aria-label="Amber"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#fee2e2"
+            title="Red"
+            aria-label="Red"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#e5e7eb"
+            title="Grey"
+            aria-label="Grey"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#ccfbf1"
+            title="Teal"
+            aria-label="Teal"
+          ></button>
+
+          <button
+            type="button"
+            class="category-colour-swatch"
+            data-colour="#fce7f3"
+            title="Pink"
+            aria-label="Pink"
+          ></button>
+
+          <label class="category-custom-colour">
+            <span>Custom</span>
+
+            <input
+              type="color"
+              id="categoryCustomColour"
+              value="#60a5fa"
+              title="Choose a custom colour"
+            />
+          </label>
+        </div>
+
+        <button type="button" id="saveCategoryBtn">Create</button>
+
+        <button type="button" id="cancelCategoryBtn">Cancel</button>
+      </div>
+    </div>
 
     <h2>My Topics</h2>
 
     <ul id="topicList"></ul>
 
-    <div id="topicPage" style="display:none;">
-    <button type="button" id="backBtn">← Back</button>
+    <div id="topicPage" style="display: none">
+      <button type="button" id="backBtn">← Back</button>
 
-    <h2 id="topicTitle" contenteditable="true" title="Click to rename mind map"></h2>
+      <h2
+        id="topicTitle"
+        contenteditable="true"
+        title="Click to rename mind map"
+      ></h2>
 
-<div id="canvasWorkspace">
+      <div id="canvasWorkspace">
+        <div id="canvasToolbar">
+          <div class="toolbar-group" id="shapeToolsGroup">
+            <span class="toolbar-label">Shapes</span>
 
-<div id="canvasToolbar">
+            <select id="shapeType">
+              <option value="rounded">Rounded box</option>
+              <option value="rectangle">Rectangle</option>
+              <option value="circle">Circle</option>
+              <option value="diamond">Diamond</option>
+              <option value="textbox">Text box</option>
+              <option value="checkbox">Checkbox</option>
+              <option value="beacon">Urgent Beacon</option>
+              <option value="bookmark">Bookmark</option>
+              <option value="hover">Hover Symbol</option>
+            </select>
 
-    <div class="toolbar-group" id="shapeToolsGroup">
-    <span class="toolbar-label">Shapes</span>
+            <button type="button" id="addShapeBtn">+ Add</button>
+            <button type="button" id="deleteShapeBtn">Delete</button>
+            <button type="button" id="addLinkBtn">Add Link</button>
+            <button type="button" id="removeLinkBtn">Remove Link</button>
+            <button type="button" id="editLinkBtn">Edit Link</button>
+            <button type="button" id="attachFileBtn">Attach File</button>
+            <button type="button" id="deleteAttachmentBtn">
+              Delete Attachment
+            </button>
 
-        <select id="shapeType">
-            <option value="rounded">Rounded box</option>
-            <option value="rectangle">Rectangle</option>
-            <option value="circle">Circle</option>
-            <option value="diamond">Diamond</option>
-            <option value="textbox">Text box</option>
-            <option value="checkbox">Checkbox</option>
-<option value="beacon">Urgent Beacon</option>
-<option value="bookmark">Bookmark</option>
-<option value="hover">Hover Symbol</option>
-        </select>
+            <input
+              type="file"
+              id="hoverImageFileInput"
+              accept="image/*"
+              style="display: none"
+            />
+            <input type="file" id="hoverFileInput" style="display: none" />
+            <input type="file" id="attachmentFileInput" style="display: none" />
 
-        <button type="button" id="addShapeBtn">+ Add</button>
-        <button type="button" id="deleteShapeBtn">Delete</button>
-        <button type="button" id="addLinkBtn">Add Link</button>
-        <button type="button" id="removeLinkBtn">Remove Link</button>
-        <button type="button" id="editLinkBtn">Edit Link</button>
-        <button type="button" id="attachFileBtn">Attach File</button>
-        <button type="button" id="deleteAttachmentBtn">Delete Attachment</button>
-        
-        <input
-    type="file"
-    id="hoverImageFileInput"
-    accept="image/*"
-    style="display:none;"
->
-<input
-    type="file"
-    id="hoverFileInput"
-    style="display:none;"
->
-<input
-    type="file"
-    id="attachmentFileInput"
-    style="display:none;"
->
+            <label class="colour-control">
+              <span>Fill</span>
+              <input
+                type="color"
+                id="colourPicker"
+                value="#facc15"
+                title="Shape fill colour"
+              />
+            </label>
 
-        <label class="colour-control">
-    <span>Fill</span>
-    <input type="color" id="colourPicker" value="#facc15" title="Shape fill colour">
-</label>
+            <label class="colour-control">
+              <span>Border</span>
+              <input
+                type="color"
+                id="borderColourPicker"
+                value="#111827"
+                title="Shape border colour"
+              />
+            </label>
+          </div>
+          <div id="hoverToolsGroup" class="toolbar-group hover-tools-group">
+            <span class="toolbar-label">ⓘ Info</span>
+            <button type="button" id="editHoverBtn" class="hover-tool">
+              Edit Text
+            </button>
+            <button type="button" id="addHoverLinkBtn" class="hover-tool">
+              Add Link
+            </button>
+            <button type="button" id="editHoverLinkBtn" class="hover-tool">
+              Edit Link
+            </button>
+            <button type="button" id="removeHoverLinkBtn" class="hover-tool">
+              Remove Link
+            </button>
+            <button type="button" id="addHoverFileBtn" class="hover-tool">
+              Add File
+            </button>
+            <button type="button" id="removeHoverFileBtn" class="hover-tool">
+              Remove File
+            </button>
+            <button type="button" id="addHoverImageBtn" class="hover-tool">
+              Add Image
+            </button>
+            <button type="button" id="removeHoverImageBtn" class="hover-tool">
+              Remove Image
+            </button>
+            <button type="button" id="deleteHoverBtn" class="hover-tool">
+              Delete Info
+            </button>
+          </div>
 
-<label class="colour-control">
-    <span>Border</span>
-    <input type="color" id="borderColourPicker" value="#111827" title="Shape border colour">
-</label>
+          <div class="toolbar-group" id="textToolsGroup">
+            <span class="toolbar-label">Text</span>
+
+            <button type="button" id="boldBtn"><strong>B</strong></button>
+            <button type="button" id="underlineBtn"><u>U</u></button>
+            <button type="button" id="fontDecreaseBtn">A−</button>
+            <button type="button" id="fontIncreaseBtn">A+</button>
+            <label class="colour-control">
+              <span>Text</span>
+              <input
+                type="color"
+                id="fontColourPicker"
+                value="#111827"
+                title="Text colour"
+              />
+            </label>
+          </div>
+
+          <div class="toolbar-group" id="lineToolsGroup">
+            <span class="toolbar-label">Lines</span>
+
+            <button type="button" id="connectBtn">+ Add Line</button>
+            <button type="button" id="linkShapesBtn">Link Shapes</button>
+            <button type="button" id="deleteLineBtn">Delete</button>
+            <button type="button" id="addBendBtn">+ Bend</button>
+            <button type="button" id="deleteBendBtn">Delete Bend</button>
+            <button type="button" id="arrowEndBtn">Arrow</button>
+          </div>
+
+          <div class="toolbar-group" id="canvasToolsGroup">
+            <span class="toolbar-label">Canvas</span>
+
+            <select id="canvasSizeSelect">
+              <option value="custom">Custom size</option>
+              <option value="a4-portrait">A4 Portrait</option>
+              <option value="a4-landscape">A4 Landscape</option>
+            </select>
+            <div id="zoomControls">
+              <button type="button" id="zoomOutBtn">−</button>
+              <span id="zoomLevel">100%</span>
+              <button type="button" id="zoomInBtn">+</button>
+              <button type="button" id="zoomFitBtn">Fit</button>
+            </div>
+            <button type="button" id="saveMindMapBtn">Save Mind Map</button>
+            <button type="button" id="openMindMapBtn">Open Mind Map</button>
+            <button type="button" id="printMindMapBtn">Print</button>
+
+            <input
+              type="file"
+              id="mindMapFileInput"
+              accept=".json,application/json"
+              style="display: none"
+            />
+          </div>
+        </div>
+
+        <div id="attachmentPanel" style="display: none">
+          <button type="button" id="closeAttachmentPanelBtn">×</button>
+          <h3>Attachments</h3>
+          <div id="attachmentList"></div>
+        </div>
+        <div id="hoverPopup" class="hover-popup"></div>
+
+        <div id="canvasViewport">
+          <div id="canvas">
+            <svg id="connectionLayer"></svg>
+
+            <div id="canvasResizeHandle"></div>
+          </div>
+        </div>
+      </div>
+      <!-- canvasWorkspace -->
     </div>
-    <div id="hoverToolsGroup" class="toolbar-group hover-tools-group">
-    <span class="toolbar-label">ⓘ Info</span>
-    <button type="button" id="editHoverBtn" class="hover-tool">Edit Text</button>
-    <button type="button" id="addHoverLinkBtn" class="hover-tool">Add Link</button>
-    <button type="button" id="editHoverLinkBtn" class="hover-tool">Edit Link</button>
-    <button type="button" id="removeHoverLinkBtn" class="hover-tool">Remove Link</button>
-    <button type="button" id="addHoverFileBtn" class="hover-tool">Add File</button>
-    <button type="button" id="removeHoverFileBtn" class="hover-tool">Remove File</button>
-    <button type="button" id="addHoverImageBtn" class="hover-tool">Add Image</button>
-    <button type="button" id="removeHoverImageBtn" class="hover-tool">Remove Image</button>
-    <button type="button" id="deleteHoverBtn" class="hover-tool">Delete Info</button>
-</div>
-
-  <div class="toolbar-group" id="textToolsGroup">
-    <span class="toolbar-label">Text</span>
-
-        <button type="button" id="boldBtn"><strong>B</strong></button>
-        <button type="button" id="underlineBtn"><u>U</u></button>
-        <button type="button" id="fontDecreaseBtn">A−</button>
-        <button type="button" id="fontIncreaseBtn">A+</button>
-        <label class="colour-control">
-    <span>Text</span>
-    <input type="color" id="fontColourPicker" value="#111827" title="Text colour">
-</label>
-    </div>
-
-   <div class="toolbar-group" id="lineToolsGroup">
-        <span class="toolbar-label">Lines</span>
-
-        <button type="button" id="connectBtn">+ Add Line</button>
-        <button type="button" id="deleteLineBtn">Delete</button>
-        <button type="button" id="addBendBtn">+ Bend</button>
-        <button type="button" id="deleteBendBtn">Delete Bend</button>
-        <button type="button" id="arrowEndBtn">Arrow</button>
-    </div>
-
-    <div class="toolbar-group" id="canvasToolsGroup">
-        <span class="toolbar-label">Canvas</span>
-
-        <select id="canvasSizeSelect">
-            <option value="custom">Custom size</option>
-            <option value="a4-portrait">A4 Portrait</option>
-            <option value="a4-landscape">A4 Landscape</option>
-        </select>
-        <div id="zoomControls">
-    <button type="button" id="zoomOutBtn">−</button>
-    <span id="zoomLevel">100%</span>
-    <button type="button" id="zoomInBtn">+</button>
-    <button type="button" id="zoomFitBtn">Fit</button>
-</div>
-        <button type="button" id="saveMindMapBtn">Save Mind Map</button>
-        <button type="button" id="openMindMapBtn">Open Mind Map</button>
-        <button type="button" id="printMindMapBtn">Print</button>
-
-<input
-    type="file"
-    id="mindMapFileInput"
-    accept=".json,application/json"
-    style="display:none;"
->
-    </div>
-
-</div>
-
-<div id="attachmentPanel" style="display:none;">
-    <button type="button" id="closeAttachmentPanelBtn">×</button>
-    <h3>Attachments</h3>
-    <div id="attachmentList"></div>
-</div>
-<div id="hoverPopup" class="hover-popup"></div>
-
-<div id="canvasViewport">
-
-    <div id="canvas">
-        <svg id="connectionLayer"></svg>
-
-        <div id="canvasResizeHandle"></div>
-    </div>
-
-</div>
-
-</div> <!-- canvasWorkspace -->
-
-</div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js?v=156"></script>
-
-</body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js?v=158"></script>
+  </body>
 </html>
