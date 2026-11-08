@@ -1153,6 +1153,24 @@ updateConnections();
     );
 }
 let selectedEndpoint = null;
+
+function setEndpointLinkColour(
+    handle,
+    isLinked
+) {
+
+    if (!handle) {
+        return;
+    }
+
+    handle.setAttribute(
+        "fill",
+        isLinked
+            ? "#dc2626"
+            : "#2563eb"
+    );
+}
+
 let firstConnectionShape = null;
 let secondConnectionShape = null;
 let connectionMode = false;
@@ -3102,7 +3120,10 @@ startHandle = document.createElementNS(
 startHandle.setAttribute("cx", savedConnection.x1);
 startHandle.setAttribute("cy", savedConnection.y1);
 startHandle.setAttribute("r", "7");
-startHandle.setAttribute("fill", "#111827");
+setEndpointLinkColour(
+    startHandle,
+    savedConnection.shape1Id != null
+);
 
 endHandle = document.createElementNS(
     "http://www.w3.org/2000/svg",
@@ -3112,7 +3133,10 @@ endHandle = document.createElementNS(
 endHandle.setAttribute("cx", savedConnection.x2);
 endHandle.setAttribute("cy", savedConnection.y2);
 endHandle.setAttribute("r", "7");
-endHandle.setAttribute("fill", "#111827");
+setEndpointLinkColour(
+    endHandle,
+    savedConnection.shape2Id != null
+);
 startHandle.style.pointerEvents = "all";
 startHandle.style.cursor = "grab";
 startHandle.style.touchAction = "none";
@@ -3140,6 +3164,10 @@ startHandle.addEventListener("click", function (event) {
 startHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
     function moveStartHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
@@ -3160,7 +3188,10 @@ const snap = findNearestSnapPort(newX, newY);
     savedConnection.shape1Id = null;
     savedConnection.point1Index = null;
 }
-
+setEndpointLinkColour(
+    startHandle,
+    savedConnection.shape1Id != null
+);
        startHandle.setAttribute("cx", savedConnection.x1);
 startHandle.setAttribute("cy", savedConnection.y1);
 
@@ -3173,6 +3204,9 @@ updateConnections();
     }
 
    function stopMovingStartHandle() {
+    canvas.classList.remove(
+    "endpoint-dragging"
+);
     document.removeEventListener("pointermove", moveStartHandle);
     document.removeEventListener("pointerup", stopMovingStartHandle);
 
@@ -3214,6 +3248,10 @@ endHandle.addEventListener("click", function (event) {
 endHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
     function moveEndHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
@@ -3234,6 +3272,10 @@ const snap = findNearestSnapPort(newX, newY);
     savedConnection.shape2Id = null;
     savedConnection.point2Index = null;
 }
+setEndpointLinkColour(
+    endHandle,
+    savedConnection.shape2Id != null
+);
 
         endHandle.setAttribute("cx", savedConnection.x2);
 endHandle.setAttribute("cy", savedConnection.y2);
@@ -3246,6 +3288,9 @@ extendWorkspaceForPoint(
 updateConnections();
 }
    function stopMovingEndHandle() {
+    canvas.classList.remove(
+    "endpoint-dragging"
+);
     document.removeEventListener("pointermove", moveEndHandle);
     document.removeEventListener("pointerup", stopMovingEndHandle);
 
@@ -4980,7 +5025,10 @@ startHandle = document.createElementNS(
 startHandle.setAttribute("cx", savedFreeLine.x1);
 startHandle.setAttribute("cy", savedFreeLine.y1);
 startHandle.setAttribute("r", "7");
-startHandle.setAttribute("fill", "#111827");
+setEndpointLinkColour(
+    startHandle,
+    savedFreeLine.shape1Id != null
+);
 
 endHandle = document.createElementNS(
     "http://www.w3.org/2000/svg",
@@ -4990,7 +5038,10 @@ endHandle = document.createElementNS(
 endHandle.setAttribute("cx", savedFreeLine.x2);
 endHandle.setAttribute("cy", savedFreeLine.y2);
 endHandle.setAttribute("r", "7");
-endHandle.setAttribute("fill", "#111827");
+setEndpointLinkColour(
+    endHandle,
+    savedFreeLine.shape2Id != null
+);
 startHandle.style.pointerEvents = "all";
 startHandle.style.cursor = "grab";
 startHandle.style.touchAction = "none";
@@ -5018,6 +5069,9 @@ startHandle.addEventListener("click", function (event) {
 
 startHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
+    canvas.classList.add(
+    "endpoint-dragging"
+);
 
     function moveStartHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
@@ -5041,6 +5095,10 @@ if (snap && snap.distance <= 30) {
     savedFreeLine.shape1Id = null;
     savedFreeLine.point1Index = null;
 }
+setEndpointLinkColour(
+    startHandle,
+    savedFreeLine.shape1Id != null
+);
       startHandle.setAttribute("cx", savedFreeLine.x1);
 startHandle.setAttribute("cy", savedFreeLine.y1);
 
@@ -5053,6 +5111,9 @@ updateConnections();
     }
 
     function stopMovingStartHandle() {
+        canvas.classList.remove(
+    "endpoint-dragging"
+);
     document.removeEventListener("pointermove", moveStartHandle);
     document.removeEventListener("pointerup", stopMovingStartHandle);
 
@@ -5094,6 +5155,10 @@ endHandle.addEventListener("click", function (event) {
 endHandle.addEventListener("pointerdown", function (event) {
     event.stopPropagation();
 
+    canvas.classList.add(
+        "endpoint-dragging"
+    );
+
     function moveEndHandle(event) {
         const canvasRect = canvas.getBoundingClientRect();
 
@@ -5116,6 +5181,10 @@ if (snap && snap.distance <= 30) {
     savedFreeLine.shape2Id = null;
     savedFreeLine.point2Index = null;
 }
+setEndpointLinkColour(
+    endHandle,
+    savedFreeLine.shape2Id != null
+);
 
         endHandle.setAttribute("cx", savedFreeLine.x2);
 endHandle.setAttribute("cy", savedFreeLine.y2);
@@ -5129,6 +5198,9 @@ updateConnections();
     }
 
     function stopMovingEndHandle() {
+        canvas.classList.remove(
+    "endpoint-dragging"
+);
     document.removeEventListener("pointermove", moveEndHandle);
     document.removeEventListener("pointerup", stopMovingEndHandle);
 
@@ -7551,7 +7623,11 @@ point.offsetY = y - baseY;
     );
 
     startHandle.setAttribute("r", "7");
-    startHandle.setAttribute("fill", "#111827");
+    setEndpointLinkColour(
+    startHandle,
+    connection.savedData &&
+    connection.savedData.shape1Id != null
+);
     startHandle.style.pointerEvents = "all";
     startHandle.style.cursor = "move";
 
@@ -7595,7 +7671,11 @@ point.offsetY = y - baseY;
     );
 
     endHandle.setAttribute("r", "7");
-    endHandle.setAttribute("fill", "#111827");
+    setEndpointLinkColour(
+    endHandle,
+    connection.savedData &&
+    connection.savedData.shape2Id != null
+);
     endHandle.style.pointerEvents = "all";
     endHandle.style.cursor = "move";
 
@@ -7908,6 +7988,9 @@ document.body.style.overflow =
         function (event) {
 
             event.stopPropagation();
+                    canvas.classList.add(
+            "endpoint-dragging"
+        );
 
             endHandle.setPointerCapture(
                 event.pointerId
@@ -7926,6 +8009,11 @@ const y =
 
                 const nearest =
                     findNearestSnapPort(x, y);
+                    setEndpointLinkColour(
+    endHandle,
+    nearest &&
+    nearest.distance <= 30
+);
 
                 let endX = x;
                 let endY = y;
@@ -7950,6 +8038,9 @@ const y =
             }
 
             function stopEnd(event) {
+                canvas.classList.remove(
+    "endpoint-dragging"
+);
 
                 const endX =
                     Number(
@@ -7999,6 +8090,11 @@ if (savedConnection) {
                 }
 
                 updateConnections();
+                setEndpointLinkColour(
+    endHandle,
+    connection.savedData &&
+    connection.savedData.shape2Id != null
+);
 
                 endHandle.releasePointerCapture(
                     event.pointerId
@@ -8033,6 +8129,9 @@ if (savedConnection) {
         function (event) {
 
             event.stopPropagation();
+                    canvas.classList.add(
+            "endpoint-dragging"
+        );
 
             startHandle.setPointerCapture(
                 event.pointerId
@@ -8049,8 +8148,14 @@ if (savedConnection) {
 const y =
     (event.clientY - canvasRect.top) / canvasZoom;
 
-                const nearest =
+                               const nearest =
                     findNearestSnapPort(x, y);
+
+                setEndpointLinkColour(
+                    startHandle,
+                    nearest &&
+                    nearest.distance <= 30
+                );
 
                 let startX = x;
                 let startY = y;
@@ -8081,7 +8186,11 @@ const y =
                 );
             }
 
-            function stopStart(event) {
+                        function stopStart(event) {
+
+                canvas.classList.remove(
+                    "endpoint-dragging"
+                );
 
                 const startX =
                     Number(
@@ -8130,7 +8239,13 @@ if (savedConnection) {
 }
                 }
 
-                updateConnections();
+                                updateConnections();
+
+                setEndpointLinkColour(
+                    startHandle,
+                    connection.savedData &&
+                    connection.savedData.shape1Id != null
+                );
 
                 startHandle.releasePointerCapture(
                     event.pointerId

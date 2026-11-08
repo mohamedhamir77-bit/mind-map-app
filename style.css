@@ -249,6 +249,36 @@ button:hover {
 .connection-point {
     display: none;
 }
+/* Tiny snap nodes while dragging a line endpoint */
+/* Tiny connection nodes while dragging an endpoint */
+
+#canvas.endpoint-dragging
+.shape.rounded > .connection-point,
+
+#canvas.endpoint-dragging
+.shape.rectangle > .connection-point,
+
+#canvas.endpoint-dragging
+.shape.circle > .connection-point,
+
+#canvas.endpoint-dragging
+.shape.diamond > .connection-point {
+    display: block !important;
+
+    width: 8px;
+    height: 8px;
+
+    background: #2563eb;
+    border: 1px solid white;
+
+    box-shadow:
+        0 0 0 1px
+        rgba(17, 24, 39, 0.35);
+
+    pointer-events: none;
+
+
+}
 #canvasResizeHandle {
     position: absolute;
     width: 18px;
