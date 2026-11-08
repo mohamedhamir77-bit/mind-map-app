@@ -1030,6 +1030,15 @@ const startY = event.clientY;
 
                     savedLine.shape2Id = null;
                     savedLine.point2Index = null;
+                    setEndpointLinkColour(
+    startHandle,
+    false
+);
+
+setEndpointLinkColour(
+    endHandle,
+    false
+);
                 }
 
                 event.preventDefault();
@@ -1251,6 +1260,42 @@ document.addEventListener(
     hideSnapPortIndicator,
     true
 );
+
+function isLineConnectableShape(shape) {
+
+    if (
+        !shape ||
+        !shape.savedData
+    ) {
+        return false;
+    }
+
+    if (
+        shape.classList.contains("hover-symbol") ||
+        shape.classList.contains("bookmark") ||
+        shape.classList.contains("checkbox") ||
+        shape.classList.contains("beacon") ||
+        shape.classList.contains("textbox")
+    ) {
+        return false;
+    }
+
+    const type =
+        shape.savedData.type ||
+        (
+            shape.classList.contains("rounded")
+                ? "rounded"
+                : ""
+        );
+
+    return (
+        type === "rounded" ||
+        type === "rectangle" ||
+        type === "circle" ||
+        type === "diamond"
+    );
+}
+
 let firstConnectionShape = null;
 let secondConnectionShape = null;
 let connectionMode = false;
@@ -7446,12 +7491,14 @@ function findNearestSnapPort(x, y) {
 
     const allShapes = Array.from(
     canvas.querySelectorAll(
-        ".shape.rounded, " +
-        ".shape.rectangle, " +
-        ".shape.circle, " +
-        ".shape.diamond"
+        ".shape"
     )
-);
+).filter(function (shape) {
+
+    return isLineConnectableShape(
+        shape
+    );
+});
 
 
     allShapes.forEach(function (shape) {
